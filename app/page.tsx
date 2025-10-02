@@ -120,6 +120,7 @@ const UsersIcon = ({ className }: { className?: string }) => (
 );
 
 // Car data with theme colors
+// Car data with theme colors
 const carsData = [
   {
     id: 1,
@@ -133,8 +134,7 @@ const carsData = [
     color: "from-orange-400 to-orange-600",
     image: "🚗",
     price: "$28,400",
-    imageUrl:
-      "https://i.pinimg.com/1200x/6f/7d/a7/6f7da7de89f960dfe449850a9c0c2829.jpg",
+    imageUrl: "/car2.jpg",
   },
   {
     id: 2,
@@ -148,8 +148,7 @@ const carsData = [
     color: "from-indigo-700 to-indigo-900",
     image: "/car.jpg",
     price: "$56,300",
-    imageUrl:
-      "https://i.pinimg.com/736x/0a/62/ca/0a62ca78c00654a4c765ba7ab0ae4321.jpg",
+    imageUrl: "/car.jpg",
   },
   {
     id: 3,
@@ -163,8 +162,7 @@ const carsData = [
     color: "from-orange-500 to-orange-700",
     image: "🏎️",
     price: "$43,735",
-    imageUrl:
-      "https://i.pinimg.com/1200x/53/c8/47/53c8476c7dd1c94d649fe7859491cdcf.jpg",
+    imageUrl: "/car.jpg",
   },
   {
     id: 4,
@@ -178,8 +176,7 @@ const carsData = [
     color: "from-indigo-600 to-indigo-800",
     image: "⚡",
     price: "$38,990",
-    imageUrl:
-      "https://i.pinimg.com/736x/09/1d/c8/091dc87501bf392b7a929e4d8a345d49.jpg",
+    imageUrl: "/car.jpg",
   },
   {
     id: 5,
@@ -193,8 +190,7 @@ const carsData = [
     color: "from-orange-600 to-orange-800",
     image: "🛻",
     price: "$59,974",
-    imageUrl:
-      "https://i.pinimg.com/1200x/ea/91/fe/ea91fe9b92f8cb748b064f7806ef9161.jpg",
+    imageUrl: "/car.jpg",
   },
   {
     id: 6,
@@ -208,8 +204,7 @@ const carsData = [
     color: "from-orange-500 to-orange-700",
     image: "🏁",
     price: "$230,400",
-    imageUrl:
-      "https://i.pinimg.com/1200x/1a/e1/b7/1ae1b7bb9e49e1111ab78ef596bbd337.jpg",
+    imageUrl: "/car.jpg",
   },
 ];
 
@@ -362,7 +357,7 @@ const HeroSection = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
             <Link
-              href="/discussions"
+              href="/forum/home"
               className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg flex items-center justify-center"
             >
               <MessageIcon className="w-6 h-6 mr-2" />
@@ -595,8 +590,12 @@ const CTASection = () => (
             href="/discussions"
             className="text-white px-10 py-4 rounded-xl text-lg font-semibold transition-all transform hover:scale-105 shadow-lg flex items-center justify-center"
             style={{ backgroundColor: "#FF8E05" }} // Initial background color
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#E87D04")} // Change on hover
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#FF8E05")} // Revert on mouse leave
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "#E87D04")
+            } // Change on hover
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "#FF8E05")
+            } // Revert on mouse leave
           >
             <MessageIcon className="w-6 h-6 mr-3" />
             Start Discussing Now

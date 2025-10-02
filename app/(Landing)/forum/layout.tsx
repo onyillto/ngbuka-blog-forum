@@ -1,20 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 
 import Navbar from "../../component/Navbar";
 import ForumSidebar from "../../component/ForumSidebar";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -61,28 +48,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-      
-      >
-        <div className="flex min-h-screen">
-          {/* Sidebar - fixed width */}
-          <aside className="w-72 bg-white border-r border-gray-200 shadow-lg">
-            <ForumSidebar />
-          </aside>
+    <div className="flex min-h-screen bg-gray-50">
+      {/* ForumSidebar handles its own responsive behavior */}
+      <ForumSidebar />
 
-          {/* Main Area - grows to fill */}
-          <div className="flex-1 flex flex-col">
-            {/* Navbar on top */}
-            <header className="h-16 bg-gray-100 border-b border-gray-200 shadow-sm">
-              <Navbar />
-            </header>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col md:ml-0">
+        {/* Navbar */}
+        <header className="sticky top-0 z-30">
+          <Navbar />
+        </header>
 
-            {/* Page Content */}
-            <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="container mx-auto px-4 py-6 pb-24 md:pb-6">
+            {children}
           </div>
-        </div>
-      </body>
-    </html>
+        </main>
+      </div>
+    </div>
   );
 }
