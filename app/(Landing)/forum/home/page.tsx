@@ -1,7 +1,7 @@
 // NgbukaForumDashboard.tsx (Clean Version)
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MessageIcon,
   CheckCircleIcon,
@@ -17,29 +17,47 @@ import {
   ChatBot,
 } from "../../../component/index";
 
+interface Category {
+  _id: string;
+  name: string;
+}
+
 const NgbukaForumDashboard = () => {
-  const [selectedParts, setSelectedParts] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const spareParts = [
-    "Brake Pads",
-    "Oil Filter",
-    "Air Filter",
-    "Spark Plugs",
-    "Battery",
-    "Tires",
-    "Brake Rotors",
-    "Transmission",
-    "Engine Parts",
-    "Suspension",
-    "Exhaust System",
-    "Cooling System",
-    "Fuel System",
-    "Electrical",
-  ];
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setCategoriesLoading(true);
+      setCategoriesError(null);
+      try {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+        const response = await fetch(`${apiBaseUrl}/categories`);
+        const result = await response.json();
 
-  const togglePart = (part: string) => {
-    setSelectedParts((prev) =>
-      prev.includes(part) ? prev.filter((p) => p !== part) : [...prev, part]
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Failed to fetch categories.");
+        }
+
+        setCategories(result.data);
+      } catch (error: unknown) {
+        setCategoriesError(
+          error instanceof Error ? error.message : "An unknown error occurred"
+        );
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const toggleCategory = (categoryName: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryName)
+        ? prev.filter((c) => c !== categoryName)
+        : [...prev, categoryName]
     );
   };
 
@@ -80,37 +98,44 @@ const NgbukaForumDashboard = () => {
 
         {/* Search Bar */}
 
-
         {/* Spare Parts Filter */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">
               Popular Spare Parts & Categories
             </h3>
-            {selectedParts.length > 0 && (
+            {selectedCategories.length > 0 && (
               <button
-                onClick={() => setSelectedParts([])}
+                onClick={() => setSelectedCategories([])}
                 className="text-sm text-gray-600 hover:text-gray-900"
               >
-                Clear all ({selectedParts.length})
+                Clear all ({selectedCategories.length})
               </button>
             )}
           </div>
           <div className="flex flex-wrap gap-3">
-            {spareParts.map((part) => (
-              <SparePartChip
-                key={part}
-                part={part}
-                selected={selectedParts.includes(part)}
-                onClick={() => togglePart(part)}
-              />
-            ))}
+            {categoriesLoading ? (
+              <p className="text-sm text-gray-500">Loading categories...</p>
+            ) : categoriesError ? (
+              <p className="text-sm text-red-500">{categoriesError}</p>
+            ) : (
+              categories.map((category) => (
+                <SparePartChip
+                  key={category._id}
+                  part={category.name}
+                  selected={selectedCategories.includes(category.name)}
+                  onClick={() => toggleCategory(category.name)}
+                />
+              ))
+            )}
           </div>
-          {selectedParts.length > 0 && (
+          {selectedCategories.length > 0 && (
             <div className="mt-4 p-3 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-800">
                 Filtering by:{" "}
-                <span className="font-medium">{selectedParts.join(", ")}</span>
+                <span className="font-medium">
+                  {selectedCategories.join(", ")}
+                </span>
               </p>
             </div>
           )}

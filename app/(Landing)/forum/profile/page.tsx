@@ -120,8 +120,8 @@ export default function ProfilePage() {
             dealerLicense: true,
           }, // Assuming dealerLicense logic is separate
         });
-      } catch (error: any) {
-        setPageError(error.message);
+      } catch (error: unknown) {
+        setPageError(error instanceof Error ? error.message : 'An unknown error occurred');
       } finally {
         setIsLoading(false);
       }
@@ -192,8 +192,8 @@ export default function ProfilePage() {
       localStorage.setItem("user_info", JSON.stringify(updatedUser));
 
       setIsEditModalOpen(false);
-    } catch (error: any) {
-      setSaveError(error.message);
+    } catch (error: unknown) {
+      setSaveError(error instanceof Error ? error.message : 'An unknown error occurred');
       console.error("Failed to save profile:", error);
     } finally {
       setIsSaving(false);
