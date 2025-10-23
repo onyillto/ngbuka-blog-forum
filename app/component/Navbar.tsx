@@ -20,15 +20,23 @@ const Navbar = () => {
     if (token) {
       setIsLoggedIn(true);
       if (userInfo) {
-        const user = JSON.parse(userInfo);
-        setUsername(user.firstName || user.email);
+        try {
+          const user = JSON.parse(userInfo);
+          setUsername(user.firstName || user.email);
+        } catch (e) {
+          console.error("Failed to parse user info from localStorage:", e);
+          // Clear corrupted data
+          localStorage.removeItem("user_info");
+        }
       }
     }
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && event.target instanceof Node &&
+        !((dropdownRef.current as HTMLElement).contains(event.target))
+      ) {
         setIsDropdownOpen(false);
       }
     };
@@ -52,7 +60,7 @@ const Navbar = () => {
     setIsDropdownOpen(false);
   };
 
-  const toggleDropdown = (e) => {
+  const toggleDropdown = (e: { stopPropagation: () => void; }) => {
     e.stopPropagation();
     setIsDropdownOpen(!isDropdownOpen);
   };
@@ -119,7 +127,7 @@ const Navbar = () => {
             {isDropdownOpen && (
               <div className="absolute top-full right-0 md:right-auto mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200/50 z-20 py-1">
                 <Link
-                  href="/profile"
+                  href="/forum/profile"
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
                   onClick={() => setIsDropdownOpen(false)}
                 >

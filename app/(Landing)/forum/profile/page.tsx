@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Cookies from "js-cookie";
 import EditProfileModal, {
   ProfileFormData,
 } from "../../../component/EditPRofile";
@@ -25,6 +26,8 @@ interface ProfileData {
   lastName: string;
   email: string;
   phone: string;
+  avatar?: string;
+  coverImage?: string;
   dealerLicense: string;
   location: {
     city: string;
@@ -51,67 +54,205 @@ export default function ProfilePage() {
     "about" | "details" | "verification"
   >("about");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [profileData, setProfileData] = useState<ProfileData>({
-    // Initial empty state or default data
-    firstName: "John",
-    lastName: "Doe",
-    email: "achomaduonyinye@gmail.com",
-    phone: "07011136719",
-    dealerLicense: "DL-12345",
-    location: { city: "New York", state: "NY" },
-    role: "Dealer",
-    bio: "Experienced car dealer with 10 years in the industry, specializing in luxury vehicles.",
-    stats: { reputation: 0, posts: 0, comments: 0 },
-    memberSince: "October 23, 2025 at 09:01 AM",
-    lastSeen: "October 23, 2025 at 09:56 AM",
-    verification: { email: false, account: false, dealerLicense: true },
-  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
-  const handleSaveProfile = (data: ProfileFormData) => {
-    console.log("Saving profile data:", data);
-    // Here you would typically make an API call to save the data
-    setProfileData((prev) => ({
-      ...prev,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phone: data.phoneNumber,
-      dealerLicense: data.dealerLicense,
-      location: {
-        city: data.city,
-        state: data.state,
-      },
-      bio: data.bio,
-      // You might need to handle image uploads and update URLs here
-    }));
-    setIsEditModalOpen(false);
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoading(true);
+      setPageError(null);
+
+      const userInfo = localStorage.getItem("user_info");
+      if (!userInfo) {
+        setPageError("User not found. Please log in.");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const user = JSON.parse(userInfo);
+        const token = Cookies.get("token");
+        const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+
+        const response = await fetch(`${apiBaseUrl}/user/profile/${user._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Failed to fetch profile data.");
+        }
+
+        const apiData = result.data;
+
+        // Map API data to local state structure
+        setProfileData({
+          firstName: apiData.firstName,
+          lastName: apiData.lastName,
+          email: apiData.email,
+          phone: apiData.phoneNumber,
+          avatar: apiData.avatar || "/api/placeholder/128/128",
+          coverImage: apiData.coverImage || "/api/placeholder/1200/300",
+          dealerLicense: apiData.dealerLicense,
+          location: { city: apiData.city, state: apiData.state },
+          role: apiData.role,
+          bio: apiData.bio,
+          stats: {
+            reputation: apiData.reputation,
+            posts: apiData.postCount,
+            comments: apiData.commentCount,
+          },
+          memberSince: new Date(apiData.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          lastSeen: new Date(apiData.lastSeen).toLocaleString(),
+          verification: {
+            email: apiData.isEmailVerified,
+            account: apiData.isVerified,
+            dealerLicense: true,
+          }, // Assuming dealerLicense logic is separate
+        });
+      } catch (error: any) {
+        setPageError(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const handleSaveProfile = async (data: ProfileFormData) => {
+    setIsSaving(true);
+    setSaveError(null);
+
+    const userInfo = localStorage.getItem("user_info");
+    if (!userInfo) {
+      setSaveError("User not found. Please log in again.");
+      setIsSaving(false);
+      return;
+    }
+    const user = JSON.parse(userInfo);
+    const token = Cookies.get("token");
+    const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+
+    const formData = new FormData();
+    formData.append("firstName", data.firstName);
+    formData.append("lastName", data.lastName);
+    formData.append("phoneNumber", data.phoneNumber);
+    formData.append("dealerLicense", data.dealerLicense);
+    formData.append("city", data.city);
+    formData.append("state", data.state);
+    formData.append("bio", data.bio);
+    if (data.avatar) {
+      formData.append("avatar", data.avatar);
+    }
+    if (data.coverImage) {
+      formData.append("coverImage", data.coverImage);
+    }
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/user/${user._id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to update profile.");
+      }
+
+      // Assuming the API returns the updated user object
+      const updatedUser = result.data; // The user object is directly in result.data
+      // Update localStorage and local state, merging with existing data
+      setProfileData((prev) => ({
+        ...prev!, // We know prev is not null here
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        phone: updatedUser.phoneNumber, // remap phone number
+        avatar: updatedUser.avatar,
+        coverImage: updatedUser.coverImage,
+        bio: updatedUser.bio,
+        location: { city: updatedUser.city, state: updatedUser.state },
+        dealerLicense: updatedUser.dealerLicense,
+      }));
+      localStorage.setItem("user_info", JSON.stringify(updatedUser));
+
+      setIsEditModalOpen(false);
+    } catch (error: any) {
+      setSaveError(error.message);
+      console.error("Failed to save profile:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (pageError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center text-red-500">
+        {pageError}
+      </div>
+    );
+  }
+
+  // This check is important now that profileData can be null
+  if (!profileData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">No profile data available.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleSaveProfile}
+        isSaving={isSaving}
+        error={saveError}
+        initialData={{
+          firstName: profileData.firstName,
+          lastName: profileData.lastName,
+          phoneNumber: profileData.phone,
+          dealerLicense: profileData.dealerLicense,
+          city: profileData.location.city,
+          state: profileData.location.state,
+          bio: profileData.bio,
+          // You can pass avatar and cover image URLs if available
+          // avatarPreview: profileData.avatarUrl,
+          // coverPreview: profileData.coverUrl,
+        }}
+      />
       <div className="max-w-6xl mx-auto px-4">
-        <EditProfileModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSave={handleSaveProfile}
-          initialData={{
-            firstName: profileData.firstName,
-            lastName: profileData.lastName,
-            phoneNumber: profileData.phone,
-            dealerLicense: profileData.dealerLicense,
-            city: profileData.location.city,
-            state: profileData.location.state,
-            bio: profileData.bio,
-            // You can pass avatar and cover image URLs if available
-            // avatarPreview: profileData.avatarUrl,
-            // coverPreview: profileData.coverUrl,
-          }}
-        />
         {/* Profile Header Card */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
           {/* Cover Photo */}
           <div className="relative h-64 bg-gradient-to-r from-gray-800 to-gray-600">
             <Image
-              src="/api/placeholder/1200/300"
+              src={profileData.coverImage || "/api/placeholder/1200/300"}
               alt="Cover"
               fill
               className="object-cover"
@@ -130,7 +271,7 @@ export default function ProfilePage() {
                 <div className="relative">
                   <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-200 overflow-hidden">
                     <Image
-                      src="/api/placeholder/128/128"
+                      src={profileData.avatar || "/api/placeholder/128/128"}
                       alt="Profile"
                       width={128}
                       height={128}
