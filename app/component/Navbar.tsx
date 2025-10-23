@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Search, User, LogOut, LogIn, X } from "lucide-react";
+import Cookies from "js-cookie";
 import Link from "next/link";
 
 const Navbar = () => {
@@ -10,17 +11,23 @@ const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+    const token = typeof window !== "undefined" ? Cookies.get("token") : null; // Read token from cookie
+    const userInfo =
+      typeof window !== "undefined" ? localStorage.getItem("user_info") : null;
+
     if (token) {
       setIsLoggedIn(true);
-      setUsername("JohnDoe"); // Replace with real user data
+      if (userInfo) {
+        const user = JSON.parse(userInfo);
+        setUsername(user.firstName || user.email); // Use firstName if available, otherwise email
+      }
     }
   }, []);
 
   const handleLogout = () => {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("auth_token");
+      Cookies.remove("token"); // Remove token from cookie
+      localStorage.removeItem("user_info"); // Remove user info from localStorage
     }
     setIsLoggedIn(false);
     setUsername("Guest");
@@ -61,7 +68,9 @@ const Navbar = () => {
             {/* Desktop User Info */}
             <div className="hidden md:flex items-center space-x-2">
               <User className="h-5 w-5 text-gray-600" />
-              <span className="text-gray-900 font-medium">{username}</span>
+              <span className="text-gray-900 font-medium capitalize">
+                {username}
+              </span>
             </div>
 
             {/* Mobile User Avatar */}
@@ -82,11 +91,11 @@ const Navbar = () => {
           </>
         ) : (
           <Link
-            href="/login"
+            href="/auth/signin"
             className="px-3 md:px-4 py-1.5 md:py-2 bg-orange-600 text-white rounded-md md:rounded-lg hover:bg-orange-700 font-medium flex items-center space-x-1 md:space-x-2 text-sm md:text-base"
           >
             <LogIn className="h-4 w-4 md:h-5 md:w-5" />
-            <span>Login</span>
+            <span>Get Started</span>
           </Link>
         )}
       </div>
