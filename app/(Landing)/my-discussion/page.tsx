@@ -579,7 +579,7 @@ interface Discussion {
   likes: number;
   views: number;
   timeAgo: string;
-  status: 'Open' | 'Solved' | 'In Progress';
+  status: "Open" | "Solved" | "In Progress";
   category: string;
   tags: string[];
   isUrgent: boolean;
@@ -640,9 +640,11 @@ const DiscussionCard = ({ discussion }: { discussion: Discussion }) => {
 
       {/* Content */}
       <div className="mb-4">
-        <h3 className="font-semibold text-gray-900 text-lg mb-2 group-hover:text-blue-600 transition-colors cursor-pointer">
-          {discussion.title}
-        </h3>
+        <Link href={`/forum/post/${discussion.id}`}>
+          <h3 className="font-semibold text-gray-900 text-lg mb-2 group-hover:text-blue-600 transition-colors cursor-pointer">
+            {discussion.title}
+          </h3>
+        </Link>
         <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
           {discussion.content}
         </p>
@@ -687,9 +689,12 @@ const DiscussionCard = ({ discussion }: { discussion: Discussion }) => {
           <span className="text-xs text-gray-500">
             Last reply {discussion.lastReplyTime}
           </span>
-          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+          <Link
+            href={`/forum/post/${discussion.id}`}
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+          >
             View Discussion →
-          </button>
+          </Link>
         </div>
       </div>
     </div>
@@ -753,7 +758,6 @@ const NgbukaDiscussionsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      
 
       {/* Main Content */}
       <main

@@ -1,6 +1,7 @@
 // UnreadRepliesPage.tsx
 "use client";
 
+import Link from "next/link";
 import React, { useState } from "react";
 import {
   MessageIcon,
@@ -299,9 +300,11 @@ const UnreadRepliesPage = () => {
                       <CarIcon className="text-blue-600 w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">
-                        {post.originalPost.title}
-                      </h3>
+                      <Link href={`/forum/post/${post.originalPost.id}`}>
+                        <h3 className="font-semibold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">
+                          {post.originalPost.title}
+                        </h3>
+                      </Link>
                       <div className="flex items-center text-sm text-gray-600">
                         <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs mr-2">
                           {post.originalPost.category}
@@ -310,9 +313,12 @@ const UnreadRepliesPage = () => {
                       </div>
                     </div>
                   </div>
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  <Link
+                    href={`/forum/post/${post.originalPost.id}`}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
                     View Post →
-                  </button>
+                  </Link>
                 </div>
               </div>
 

@@ -1,4 +1,5 @@
 // components/TrendingDiscussions.tsx
+import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import {
   MessageIcon,
@@ -143,9 +144,11 @@ export const TrendingDiscussions = () => {
                       {discussion.category?.name || "Uncategorized"}
                     </span>
                   </div>
-                  <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2">
-                    {discussion.title}
-                  </h3>
+                  <Link href={`/forum/post/${discussion._id}`}>
+                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2">
+                      {discussion.title}
+                    </h3>
+                  </Link>
                   <div className="flex items-center text-sm text-gray-600">
                     <UserIcon className="w-4 h-4 mr-1" />
                     <span className="font-medium">
@@ -171,9 +174,12 @@ export const TrendingDiscussions = () => {
                     <span>{discussion.views} views</span>
                   </div>
                 </div>
-                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                <Link
+                  href={`/forum/post/${discussion._id}`}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+                >
                   Join Discussion →
-                </button>
+                </Link>
               </div>
             </div>
           ))
