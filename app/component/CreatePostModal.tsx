@@ -103,10 +103,10 @@ export default function CreatePostModal({
   return (
     <>
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40"
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[99]"
         onClick={onClose}
       />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
           <div className="flex items-center justify-between px-6 py-4 border-b">
             <h2 className="text-xl font-semibold text-gray-900">
