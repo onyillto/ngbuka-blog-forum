@@ -236,18 +236,18 @@ export const TrendingDiscussions = () => {
         <div className="flex items-center mb-3">
           <div className="h-4 bg-gray-200 rounded w-24"></div>
         </div>
-        <div className="h-6 bg-gray-200 rounded w-full mb-3"></div>
-        <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-      </div>
-      <div className="h-48 bg-gray-200"></div>
-      <div className="p-4">
-        <div className="flex items-center mb-3">
+        <div className="flex items-center mb-4">
           <div className="h-10 w-10 bg-gray-200 rounded-full mr-3"></div>
           <div className="flex-1">
             <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
             <div className="h-3 bg-gray-200 rounded w-24"></div>
           </div>
         </div>
+      </div>
+      <div className="h-48 bg-gray-200"></div>
+      <div className="p-4">
+        <div className="h-6 bg-gray-200 rounded w-full mb-3"></div>
+        <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
         <div className="flex items-center space-x-4 pt-3 border-t border-gray-100">
           <div className="h-4 bg-gray-200 rounded w-16"></div>
           <div className="h-4 bg-gray-200 rounded w-16"></div>
@@ -294,8 +294,9 @@ export const TrendingDiscussions = () => {
               key={discussion._id}
               className="block border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 group"
             >
-              {/* Header with badges */}
+              {/* Header with badges and author */}
               <div className="p-4 pb-2">
+                {/* Category badges */}
                 <div className="flex items-center mb-3">
                   {discussion.isPinned && (
                     <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded-full mr-2">
@@ -307,28 +308,8 @@ export const TrendingDiscussions = () => {
                   </span>
                 </div>
 
-                {/* Title */}
-                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-3">
-                  {discussion.title}
-                </h3>
-              </div>
-
-              {/* Featured Image - Full Width */}
-              {discussion.images.length > 0 && (
-                <div className="relative w-full h-64 bg-gray-100">
-                  <Image
-                    src={discussion.images[0]}
-                    alt={discussion.title}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
-
-              {/* Author Info & Stats */}
-              <div className="p-4">
-                {/* Author Section - More Prominent */}
-                <div className="flex items-center mb-4">
+                {/* Author Section - Now at Top */}
+                <div className="flex items-center mb-3">
                   <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold mr-3">
                     {discussion.author?.avatar ? (
                       <Image
@@ -353,6 +334,26 @@ export const TrendingDiscussions = () => {
                     </p>
                   </div>
                 </div>
+              </div>
+
+              {/* Featured Image - Full Width */}
+              {discussion.images.length > 0 && (
+                <div className="relative w-full h-64 bg-gray-100">
+                  <Image
+                    src={discussion.images[0]}
+                    alt={discussion.title}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
+
+              {/* Title & Stats */}
+              <div className="p-4">
+                {/* Title - Now Below Image */}
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-4">
+                  {discussion.title}
+                </h3>
 
                 {/* Stats Section */}
                 <div className="flex items-center justify-between pt-3 border-t border-gray-100">
