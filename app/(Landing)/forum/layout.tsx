@@ -53,7 +53,7 @@ export default function RootLayout({
       <ForumSidebar />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col md:ml-0">
+      <div className="flex-1 flex flex-col md:ml-72">
         {/* Navbar */}
         <header className="sticky top-0 z-30">
           <Navbar />

@@ -122,7 +122,7 @@ const ForumSidebar = () => {
 
   // Desktop Sidebar
   const DesktopSidebar = () => (
-    <div className="hidden md:flex w-72 bg-white shadow-lg border-r border-gray-200 h-screen flex-col">
+    <div className="hidden md:flex w-72 bg-white shadow-lg border-r border-gray-200 h-screen flex-col fixed top-0 left-0 z-40">
       {/* Logo */}
       <div className="flex items-center space-x-2 px-6 py-4 border-b">
         <Car className="h-6 w-6 text-orange-600" />
@@ -130,7 +130,7 @@ const ForumSidebar = () => {
       </div>
 
       {/* Sidebar Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-1">
+      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
         {/* Main Navigation Items */}
         {desktopSidebarItems.map((item) => (
           <a
