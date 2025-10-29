@@ -1,6 +1,7 @@
 // components/TrendingDiscussions.tsx
 import Link from "next/link";
-import CreatePostModal from "./CreatePostModal";
+import CreatePostModal, { PostPayload } from "./CreatePostModal";
+import Cookies from "js-cookie"; // Import js-cookie
 import React, { useState, useEffect } from "react";
 import {
   MessageIcon,
@@ -58,58 +59,119 @@ export const TrendingDiscussions = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchDiscussions = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
-        // Fetching only the top 5 trending posts
-        const response = await fetch(`${apiBaseUrl}/posts?limit=5&sort=-views`);
-        const result = await response.json();
+  const fetchDiscussions = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      // Fetching only the top 5 trending posts
+      const response = await fetch(`${apiBaseUrl}/posts?limit=5&sort=-views`);
+      const result = await response.json();
 
-        if (!response.ok || !result.success) {
-          throw new Error(result.message || "Failed to fetch discussions.");
-        }
-        setDiscussions(result.data);
-      } catch (err: unknown) {
-        setError(
-          err instanceof Error ? err.message : "An unknown error occurred"
-        );
-      } finally {
-        setLoading(false);
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to fetch discussions.");
       }
-    };
+      setDiscussions(result.data);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchDiscussions();
   }, []);
 
-  const handleSavePost = async (formData: FormData) => {
+  const handleSavePost = async (postData: PostPayload) => {
     setIsSaving(true);
     setSaveError(null);
 
     try {
       const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
-      // You'll need to get the token, e.g., from cookies
-      // const token = Cookies.get("token");
+      let imageUrls: string[] = [];
 
-      const response = await fetch(`${apiBaseUrl}/posts`, {
+      // Step 1: Upload images if any exist
+      if (postData.images.length > 0) {
+        const token = Cookies.get("token"); // Get the token from cookies
+
+        const imageFormData = new FormData();
+        postData.images.forEach((image) => {
+          imageFormData.append("images", image);
+        });
+
+        const imageUploadResponse = await fetch(
+          `${apiBaseUrl}/posts/upload-images`,
+          {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: imageFormData,
+          }
+        );
+
+        console.log(
+          "Image upload response status:",
+          imageUploadResponse.status
+        ); // Debug log
+
+        const imageResult = await imageUploadResponse.json();
+        console.log("Image upload response body:", imageResult); // Debug log
+
+        if (!imageUploadResponse.ok || !imageResult.success) {
+          throw new Error(imageResult.message || "Failed to upload images.");
+        }
+        // The API returns an array of objects with a 'url' property.
+        // We need to extract the URL from each object.
+        const imageData: { url: string }[] = Array.isArray(imageResult.data)
+          ? imageResult.data
+          : [imageResult.data];
+        imageUrls = imageData.map((img) => img.url);
+      }
+
+      // Step 2: Create the post with image URLs
+      const finalPostPayload = {
+        title: postData.title,
+        content: postData.content,
+        categoryId: postData.categoryId,
+        tags: postData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        images: imageUrls,
+      };
+
+      console.log(
+        "Sending post payload:",
+        JSON.stringify(finalPostPayload, null, 2)
+      ); // Debug log for payload
+
+      const token = Cookies.get("token"); // Get the token again for the post creation request
+      const postResponse = await fetch(`${apiBaseUrl}/posts`, {
         method: "POST",
-        // headers: {
-        //   Authorization: `Bearer ${token}`,
-        // },
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}), // Add authorization header if token exists
+        },
+        body: JSON.stringify(finalPostPayload),
       });
 
-      const result = await response.json();
+      console.log("Post response status:", postResponse.status); // Debug log
+      console.log("Post response statusText:", postResponse.statusText); // Debug log
 
-      if (!response.ok || !result.success) {
+      const result = await postResponse.json();
+      console.log("Post response body:", result); // Debug log
+
+      if (!postResponse.ok || !result.success) {
         throw new Error(result.message || "Failed to create post.");
       }
 
-      // Optionally, refresh discussions or add the new post to the list
+      // Refresh discussions to include the new post
+      await fetchDiscussions();
       setCreatePostModalOpen(false);
     } catch (error: unknown) {
+      console.error("Error in handleSavePost:", error); // Debug log
       setSaveError(
         error instanceof Error ? error.message : "An unknown error occurred"
       );

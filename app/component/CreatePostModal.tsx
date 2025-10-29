@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, ChangeEvent, FormEvent, useEffect } from "react";
-import { X, Upload, Image as ImageIcon, Plus, Loader2 } from "lucide-react";
+import { X, Upload, Loader2 } from "lucide-react";
 import Image from "next/image";
 
 interface Category {
@@ -9,10 +9,18 @@ interface Category {
   name: string;
 }
 
+export interface PostPayload {
+  title: string;
+  content: string;
+  categoryId: string;
+  tags: string;
+  images: File[];
+}
+
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: FormData) => void;
+  onSave: (data: PostPayload) => void;
   isSaving?: boolean;
   error?: string | null;
 }
@@ -88,26 +96,21 @@ export default function CreatePostModal({
     e.preventDefault();
     if (!validateForm()) return;
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("content", content);
-    formData.append("categoryId", categoryId);
-    formData.append("tags", tags);
-    images.forEach((image) => {
-      formData.append("images", image);
-    });
-
-    onSave(formData);
+    onSave({ title, content, categoryId, tags, images });
   };
 
   return (
     <>
+      {/* Backdrop - ONLY ONE */}
       <div
         className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[99]"
         onClick={onClose}
       />
+
+      {/* Modal Container */}
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+          {/* Modal Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b">
             <h2 className="text-xl font-semibold text-gray-900">
               Create New Post
@@ -119,8 +122,11 @@ export default function CreatePostModal({
               <X size={24} />
             </button>
           </div>
+
+          {/* Modal Form */}
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-6">
+              {/* Title Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Title
@@ -139,6 +145,7 @@ export default function CreatePostModal({
                 )}
               </div>
 
+              {/* Content Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Content
@@ -157,6 +164,7 @@ export default function CreatePostModal({
                 )}
               </div>
 
+              {/* Category and Tags */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -198,6 +206,7 @@ export default function CreatePostModal({
                 </div>
               </div>
 
+              {/* Images Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Images
@@ -240,6 +249,8 @@ export default function CreatePostModal({
                 />
               </div>
             </div>
+
+            {/* Modal Footer */}
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t bg-gray-50">
               <button
                 type="button"
@@ -258,6 +269,8 @@ export default function CreatePostModal({
               </button>
             </div>
           </form>
+
+          {/* Error Message */}
           {saveError && (
             <div className="px-6 py-3 bg-red-50 border-t border-red-200">
               <p className="text-sm text-red-600 text-center">
