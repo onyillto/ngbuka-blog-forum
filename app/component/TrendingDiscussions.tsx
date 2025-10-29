@@ -1,5 +1,6 @@
 // components/TrendingDiscussions.tsx
 import Link from "next/link";
+import CreatePostModal from "./CreatePostModal";
 import React, { useState, useEffect } from "react";
 import {
   MessageIcon,
@@ -53,6 +54,9 @@ export const TrendingDiscussions = () => {
   const [discussions, setDiscussions] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreatePostModalOpen, setCreatePostModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDiscussions = async () => {
@@ -80,6 +84,40 @@ export const TrendingDiscussions = () => {
     fetchDiscussions();
   }, []);
 
+  const handleSavePost = async (formData: FormData) => {
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      // You'll need to get the token, e.g., from cookies
+      // const token = Cookies.get("token");
+
+      const response = await fetch(`${apiBaseUrl}/posts`, {
+        method: "POST",
+        // headers: {
+        //   Authorization: `Bearer ${token}`,
+        // },
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to create post.");
+      }
+
+      // Optionally, refresh discussions or add the new post to the list
+      setCreatePostModalOpen(false);
+    } catch (error: unknown) {
+      setSaveError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
       <div className="flex items-center justify-between mb-6">
@@ -91,7 +129,10 @@ export const TrendingDiscussions = () => {
           <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
             View all
           </button>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center">
+          <button
+            onClick={() => setCreatePostModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center"
+          >
             <PlusIcon className="w-4 h-4 mr-1" />
             New Post
           </button>
@@ -176,7 +217,7 @@ export const TrendingDiscussions = () => {
                 </div>
                 <Link
                   href={`/forum/post/${discussion._id}`}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="text-blue-800 hover:text-blue-900 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   Join Discussion →
                 </Link>
@@ -185,6 +226,13 @@ export const TrendingDiscussions = () => {
           ))
         )}
       </div>
+      <CreatePostModal
+        isOpen={isCreatePostModalOpen}
+        onClose={() => setCreatePostModalOpen(false)}
+        onSave={handleSavePost}
+        isSaving={isSaving}
+        error={saveError}
+      />
     </div>
   );
 };
