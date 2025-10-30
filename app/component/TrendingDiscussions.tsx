@@ -338,14 +338,39 @@ export const TrendingDiscussions = () => {
               </div>
 
               {/* Featured Image - Full Width */}
-              {discussion.images && discussion.images[0] && (
-                <div className="relative w-full h-64 bg-gray-100">
-                  <Image
-                    src={discussion.images[0]}
-                    alt={discussion.title || "Post image"}
-                    fill
-                    className="object-cover"
-                  />
+              {discussion.images && discussion.images.length > 0 && (
+                <div className="w-full h-64 grid grid-cols-2 grid-rows-2 gap-1">
+                  {discussion.images.slice(0, 3).map((image, index) => {
+                    const isFirst = index === 0;
+                    const imageCount = discussion.images.length;
+
+                    if (!image) return null;
+
+                    return (
+                      <div
+                        key={index}
+                        className={`relative ${
+                          isFirst && imageCount > 1
+                            ? "col-span-1 row-span-2"
+                            : "col-span-1 row-span-1"
+                        } ${imageCount === 1 ? "col-span-2 row-span-2" : ""}`}
+                      >
+                        <Image
+                          src={image}
+                          alt={discussion.title || `Post image ${index + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                        {index === 2 && imageCount > 3 && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <span className="text-white text-2xl font-bold">
+                              +{imageCount - 3}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
