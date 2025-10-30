@@ -173,10 +173,11 @@ export const TrendingDiscussions = () => {
         if (!imageUploadResponse.ok || !imageResult.success) {
           throw new Error(imageResult.message || "Failed to upload images.");
         }
-        const imageData: { url: string }[] = Array.isArray(imageResult.data)
-          ? imageResult.data
-          : [imageResult.data];
-        imageUrls = imageData.map((img) => img.url);
+
+        // Correctly handle the { data: { urls: [...] } } response structure
+        if (imageResult.data && Array.isArray(imageResult.data.urls)) {
+          imageUrls = imageResult.data.urls.filter(Boolean); // Filter out any potential null/undefined values
+        }
       }
 
       // Step 2: Create the post with image URLs
@@ -311,7 +312,7 @@ export const TrendingDiscussions = () => {
                 {/* Author Section - Now at Top */}
                 <div className="flex items-center mb-3">
                   <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold mr-3">
-                    {discussion.author?.avatar ? (
+                    {discussion.author && discussion.author.avatar ? (
                       <Image
                         src={discussion.author.avatar}
                         alt={discussion.author.fullName}
@@ -337,11 +338,11 @@ export const TrendingDiscussions = () => {
               </div>
 
               {/* Featured Image - Full Width */}
-              {discussion.images.length > 0 && (
+              {discussion.images && discussion.images[0] && (
                 <div className="relative w-full h-64 bg-gray-100">
                   <Image
                     src={discussion.images[0]}
-                    alt={discussion.title}
+                    alt={discussion.title || "Post image"}
                     fill
                     className="object-cover"
                   />

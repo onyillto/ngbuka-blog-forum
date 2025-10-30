@@ -117,13 +117,15 @@ export default async function PostDetailPage({
             {/* Author Info */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center space-x-3">
-                <Image
-                  src={post.author.avatar}
-                  alt={post.author.firstName}
-                  width={48}
-                  height={48}
-                  className="rounded-full object-cover border-2 border-gray-200"
-                />
+                {post.author.avatar && (
+                  <Image
+                    src={post.author.avatar}
+                    alt={post.author.firstName}
+                    width={48}
+                    height={48}
+                    className="rounded-full object-cover border-2 border-gray-200"
+                  />
+                )}
                 <div>
                   <div className="flex items-center space-x-2">
                     <span className="font-semibold text-gray-900">
@@ -220,7 +222,7 @@ export default async function PostDetailPage({
                     post.images.length === 1 ? "grid-cols-1" : "grid-cols-2"
                   }`}
                 >
-                  {post.images.map((image, index) => (
+                  {post.images.filter(Boolean).map((image, index) => (
                     <a
                       key={index}
                       href={image}

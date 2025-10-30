@@ -9,16 +9,9 @@ const nextConfig = {
         pathname: "/**",
       },
       {
-        protocol: "https",
-        hostname: "res.cloudinary.com", // Keep this for https
-        port: "",
-        pathname: "/**",
-      },
-      {
-        protocol: "http",
+        // This single entry allows both http and https
         hostname: "res.cloudinary.com",
-        port: "",
-        pathname: "/**",
+        pathname: "/diemc336d/**", // More specific pathname for your Cloudinary account
       },
     ],
   },
