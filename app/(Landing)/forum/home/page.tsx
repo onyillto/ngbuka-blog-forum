@@ -10,7 +10,7 @@ import {
   StatsCard,
   SparePartChip,
   SearchBar,
-  TrendingCars,
+  // TrendingCars,
   TrendingDiscussions,
   Leaderboard,
   SolvedIssues,
@@ -151,7 +151,7 @@ const NgbukaForumDashboard = () => {
 
           {/* Right Column */}
           <div className="space-y-8">
-            <TrendingCars />
+            {/* <TrendingCars /> */}
             <Leaderboard />
             <ChatBot />
           </div>
