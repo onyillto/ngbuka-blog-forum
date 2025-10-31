@@ -142,41 +142,36 @@ const NgbukaForumDashboard = () => {
         </div>
 
         {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
-            <TrendingDiscussions />
-            <SolvedIssues />
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-8">
-            {/* <TrendingCars /> */}
-            <Leaderboard />
-            <ChatBot />
-          </div>
+        <div className="space-y-8">
+          {/* Main Content */}
+          <TrendingDiscussions />
+          {/* <SolvedIssues /> */}
         </div>
 
         {/* Footer Section */}
-        <div className="mt-12 bg-white rounded-xl shadow-lg p-8">
-          <div className="text-center">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              Need More Help?
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Connect with our community of car experts or browse our extensive
-              knowledge base.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-                Browse Knowledge Base
-              </button>
-              <button className="border border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-3 rounded-lg font-medium transition-colors">
-                Contact Expert
-              </button>
-            </div>
-          </div>
-        </div>
+       <div className="mt-12 bg-white rounded-xl shadow-lg p-8">
+  <div className="text-center">
+    <h3 className="text-xl font-bold text-gray-900 mb-2">
+      In Need of Spare Parts?
+    </h3>
+    <p className="text-gray-600 mb-6">
+      Visit our marketplace to buy genuine and quality spare parts for your vehicle.
+    </p>
+    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <a
+        href="https://app.ngbuka.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+      >
+        Buy Spare Parts Now
+      </a>
+      <button className="border border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-3 rounded-lg font-medium transition-colors">
+        Contact Supplier
+      </button>
+    </div>
+  </div>
+</div>
       </main>
     </div>
   );

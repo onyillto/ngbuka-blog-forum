@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   ChevronUp,
   MessageCircle,
@@ -16,11 +17,21 @@ import {
   LogOut,
 } from "lucide-react";
 
+interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  postCount: number;
+  icon: string; // Emoji from API
+}
+
 const ForumSidebar = () => {
   const [openCategories, setOpenCategories] = useState(true);
   const [activeCategory, setActiveCategory] = useState("home");
   const [isMobile, setIsMobile] = useState(false);
-
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
   // Check if we're on mobile
   useEffect(() => {
     const checkMobile = () => {
@@ -32,50 +43,30 @@ const ForumSidebar = () => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const categories = [
-    {
-      id: "general",
-      name: "General Discussion",
-      count: 1234,
-      icon: Users,
-      color: "bg-blue-100 text-blue-700",
-    },
-    {
-      id: "performance",
-      name: "Engine & Performance",
-      count: 856,
-      icon: Zap,
-      color: "bg-red-100 text-red-700",
-    },
-    {
-      id: "ev",
-      name: "Electric Vehicles",
-      count: 432,
-      icon: Car,
-      color: "bg-green-100 text-green-700",
-    },
-    {
-      id: "buysell",
-      name: "Buy & Sell",
-      count: 567,
-      icon: ShoppingBag,
-      color: "bg-yellow-100 text-yellow-700",
-    },
-    {
-      id: "reviews",
-      name: "Car Reviews",
-      count: 389,
-      icon: Star,
-      color: "bg-purple-100 text-purple-700",
-    },
-    {
-      id: "events",
-      name: "Events & Meetups",
-      count: 145,
-      icon: Calendar,
-      color: "bg-pink-100 text-pink-700",
-    },
-  ];
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setCategoriesLoading(true);
+      setCategoriesError(null);
+      try {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+        const response = await fetch(`${apiBaseUrl}/categories`);
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Failed to fetch categories.");
+        }
+
+        setCategories(result.data);
+      } catch (error: unknown) {
+        setCategoriesError(
+          error instanceof Error ? error.message : "An unknown error occurred"
+        );
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const desktopSidebarItems = [
     { id: "home", name: "Home", icon: Home, href: "/forum/home" },
@@ -114,12 +105,6 @@ const ForumSidebar = () => {
     { id: "profile", name: "Profile", icon: User, href: "/profile" },
   ];
 
-  const handleItemClick = (itemId: string, href: string) => {
-    setActiveCategory(itemId);
-    // Handle navigation here
-    console.log("Navigate to:", href);
-  };
-
   // Desktop Sidebar
   const DesktopSidebar = () => (
     <div className="hidden md:flex w-72 bg-white shadow-lg border-r border-gray-200 h-screen flex-col fixed top-0 left-0 z-40">
@@ -133,10 +118,10 @@ const ForumSidebar = () => {
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
         {/* Main Navigation Items */}
         {desktopSidebarItems.map((item) => (
-          <a
+          <Link
             key={item.id}
             href={item.href}
-            onClick={() => handleItemClick(item.id, item.href)}
+            onClick={() => setActiveCategory(item.id)}
             className={`flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
               activeCategory === item.id
                 ? "text-orange-600 bg-orange-50"
@@ -149,7 +134,7 @@ const ForumSidebar = () => {
               }`}
             />
             {item.name}
-          </a>
+          </Link>
         ))}
 
         {/* Categories Divider */}
@@ -174,31 +159,33 @@ const ForumSidebar = () => {
 
         {/* Categories Section */}
         {openCategories && (
-          <div className="space-y-1 mt-2">
-            {categories.map((category) => {
-              const Icon = category.icon;
-              return (
-                <button
-                  key={category.id}
-                  onClick={() => setActiveCategory(category.id)}
+          <div className="space-y-1 mt-2 pl-3">
+            {categoriesLoading ? (
+              <p className="text-xs text-gray-500 p-3">Loading categories...</p>
+            ) : categoriesError ? (
+              <p className="text-xs text-red-500 p-3">{categoriesError}</p>
+            ) : (
+              categories.map((category) => (
+                <Link
+                  key={category._id}
+                  href={`/forum/category/${category.slug}`}
+                  onClick={() => setActiveCategory(category.slug)}
                   className={`w-full flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
-                    activeCategory === category.id
+                    activeCategory === category.slug
                       ? "text-orange-600 bg-orange-50"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className={`p-1.5 rounded-full ${category.color}`}>
-                      <Icon className="h-4 w-4" />
-                    </div>
+                    <span className="text-lg">{category.icon}</span>
                     <span>{category.name}</span>
                   </div>
                   <span className="text-xs text-gray-400 bg-white px-2 py-1 rounded-full border">
-                    {category.count}
+                    {category.postCount}
                   </span>
-                </button>
-              );
-            })}
+                </Link>
+              ))
+            )}
           </div>
         )}
       </nav>
@@ -212,10 +199,10 @@ const ForumSidebar = () => {
       <div className="bg-white border-t border-gray-200 px-2 py-2 shadow-lg">
         <div className="flex items-center justify-around">
           {mobileNavItems.map((item) => (
-            <button
+            <Link
               key={item.id}
-              onClick={() => handleItemClick(item.id, item.href)}
-              className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+              href={item.href}
+              className={`flex flex-col items-center p-2 rounded-lg transition-colors w-1/5 ${
                 activeCategory === item.id
                   ? "text-orange-600"
                   : "text-gray-600 hover:text-gray-900"
@@ -228,7 +215,7 @@ const ForumSidebar = () => {
                     : "text-gray-400"
                 }`}
               />
-            </button>
+            </Link>
           ))}
         </div>
       </div>
