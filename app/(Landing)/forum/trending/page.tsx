@@ -1,352 +1,533 @@
-// TrendingPageDashboard.tsx
 "use client";
 
-import React, { useState } from "react";
+import Link from "next/link";
+import CreatePostModal, {
+  PostPayload,
+} from "../../../component/CreatePostModal";
+import Cookies from "js-cookie";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import {
   MessageIcon,
   CheckCircleIcon,
   UserIcon,
-  CarIcon,
-  FireIcon,
-  TrophyIcon,
-  SearchIcon,
-  FilterIcon,
-  StatsCard,
-  SparePartChip,
-  TrendingCars,
-  TrendingDiscussions,
-  ChatBot,
-} from "../../../component/index";
+  HeartIcon,
+  PlusIcon,
+  Loader2,
+} from "../../../component/Icons";
 
-const TrendingPageDashboard = () => {
-  const [selectedTimeframe, setSelectedTimeframe] = useState("week");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+interface Author {
+  _id: string;
+  fullName: string;
+  avatar?: string;
+}
 
-  const timeframes = [
-    { value: "today", label: "Today" },
-    { value: "week", label: "This Week" },
-    { value: "month", label: "This Month" },
-    { value: "year", label: "This Year" },
-  ];
+interface Category {
+  _id: string;
+  name: string;
+}
 
-  const categories = [
-    { value: "all", label: "All Categories" },
-    { value: "engine", label: "Engine Issues" },
-    { value: "brakes", label: "Brake Problems" },
-    { value: "electrical", label: "Electrical" },
-    { value: "transmission", label: "Transmission" },
-    { value: "maintenance", label: "Maintenance" },
-  ];
+interface Post {
+  _id: string;
+  title: string;
+  slug?: string;
+  author: Author | null;
+  category: Category;
+  commentCount: number;
+  likes: string[];
+  hasLiked?: boolean; // Add this to track liked status
+  views: number;
+  createdAt: string;
+  isPinned: boolean;
+  images: string[];
+}
 
-  // Trending Topics Component
-  const TrendingTopics = () => {
-    const trendingTopics = [
-      {
-        id: 1,
-        topic: "Winter tire recommendations",
-        posts: 234,
-        trend: "+45%",
-        category: "Maintenance",
-        urgent: false,
+const LIMIT = 5;
+
+const formatTimeAgo = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  let interval = seconds / 31536000;
+  if (interval > 1) return `${Math.floor(interval)} years ago`;
+  interval = seconds / 2592000;
+  if (interval > 1) return `${Math.floor(interval)} months ago`;
+  interval = seconds / 86400;
+  if (interval > 1) return `${Math.floor(interval)} days ago`;
+  interval = seconds / 3600;
+  if (interval > 1) return `${Math.floor(interval)} hours ago`;
+  interval = seconds / 60;
+  if (interval > 1) return `${Math.floor(interval)} minutes ago`;
+  return `${Math.floor(seconds)} seconds ago`;
+};
+
+const TrendingPage = () => {
+  const [discussions, setDiscussions] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isCreatePostModalOpen, setCreatePostModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  const observerRef = useRef<HTMLDivElement>(null);
+
+  const fetchPosts = useCallback(
+    async (page: number, append = false) => {
+      try {
+        if (!append) setLoading(true);
+
+        const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+        const url = `${apiBaseUrl}/posts?page=${page}&limit=${LIMIT}&sort=-views,-likes&likes[gt]=0&commentCount[gt]=0`;
+        const response = await fetch(url);
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Failed to fetch posts.");
+        }
+
+        if (append) {
+          setDiscussions((prev) => [...prev, ...result.data]);
+        } else {
+          // Check if the current user has liked each post
+          const postsWithLikeStatus = result.data.map((post: Post) => ({
+            ...post,
+            hasLiked: currentUserId
+              ? post.likes.includes(currentUserId)
+              : false,
+          }));
+          setDiscussions(postsWithLikeStatus);
+        }
+
+        setHasMore(
+          result.data.length === LIMIT && result.pagination?.pages > page
+        );
+      } catch (err: unknown) {
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [currentUserId]
+  );
+
+  useEffect(() => {
+    // Get current user ID from localStorage to determine liked status
+    const userInfo = localStorage.getItem("user_info");
+    if (userInfo) {
+      try {
+        const user = JSON.parse(userInfo);
+        setCurrentUserId(user._id);
+      } catch (e) {
+        console.error("Failed to parse user info:", e);
+      }
+    }
+
+    fetchPosts(1, false);
+  }, [fetchPosts]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || loading) return;
+    setLoadingMore(true);
+    const nextPage = currentPage + 1;
+    await fetchPosts(nextPage, true);
+    setCurrentPage(nextPage);
+  }, [currentPage, hasMore, loadingMore, loading, fetchPosts]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
       },
-      {
-        id: 2,
-        topic: "EV charging issues",
-        posts: 189,
-        trend: "+38%",
-        category: "Electrical",
-        urgent: true,
-      },
-      {
-        id: 3,
-        topic: "Oil change frequency",
-        posts: 156,
-        trend: "+25%",
-        category: "Maintenance",
-        urgent: false,
-      },
-      {
-        id: 4,
-        topic: "Brake noise diagnosis",
-        posts: 143,
-        trend: "+22%",
-        category: "Brakes",
-        urgent: false,
-      },
-      {
-        id: 5,
-        topic: "Check engine light",
-        posts: 132,
-        trend: "+18%",
-        category: "Engine",
-        urgent: true,
-      },
-    ];
-
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900 flex items-center">
-            <FireIcon className="mr-2 text-orange-500" />
-            Trending Topics
-          </h2>
-          <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-            {selectedTimeframe === "today"
-              ? "Today"
-              : selectedTimeframe === "week"
-              ? "This Week"
-              : selectedTimeframe === "month"
-              ? "This Month"
-              : "This Year"}
-          </span>
-        </div>
-
-        <div className="space-y-4">
-          {trendingTopics.map((topic, index) => (
-            <div
-              key={topic.id}
-              className="flex items-center p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100 group"
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white mr-4 ${
-                  index === 0
-                    ? "bg-gradient-to-r from-red-500 to-orange-500"
-                    : index === 1
-                    ? "bg-gradient-to-r from-orange-500 to-yellow-500"
-                    : index === 2
-                    ? "bg-gradient-to-r from-yellow-500 to-green-500"
-                    : "bg-gradient-to-r from-blue-500 to-purple-500"
-                }`}
-              >
-                {index + 1}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center mb-2">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mr-3">
-                    {topic.topic}
-                  </h3>
-                  {topic.urgent && (
-                    <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded-full">
-                      HOT
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs mr-3">
-                    {topic.category}
-                  </span>
-                  <span>{topic.posts} posts</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-lg font-bold text-green-600">
-                  {topic.trend}
-                </span>
-                <div className="text-xs text-gray-500">vs last period</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      { threshold: 1 }
     );
+
+    if (observerRef.current) {
+      observer.observe(observerRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observer.unobserve(observerRef.current);
+      }
+    };
+  }, [loadMore]);
+
+  const handleLikeClick = async (e: React.MouseEvent, discussionId: string) => {
+    e.preventDefault(); // Prevent the Link from navigating
+    e.stopPropagation(); // Stop the event from bubbling up
+
+    const token = Cookies.get("token");
+    if (!token) {
+      // Optionally, redirect to login or show a message
+      console.log("User not logged in. Cannot like post.");
+      return;
+    }
+
+    // Optimistic UI update
+    setDiscussions((prevDiscussions) =>
+      prevDiscussions.map((disc) => {
+        if (disc._id === discussionId) {
+          const wasLiked = disc.hasLiked;
+          return {
+            ...disc,
+            hasLiked: !wasLiked,
+            likes: wasLiked
+              ? disc.likes.filter((id) => id !== currentUserId)
+              : [...disc.likes, currentUserId!],
+          };
+        }
+        return disc;
+      })
+    );
+
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      await fetch(`${apiBaseUrl}/posts/${discussionId}/like`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // The UI is already updated, so we don't need to do anything on success.
+      // You could re-fetch for consistency, but it's not necessary for a good UX.
+    } catch (error) {
+      console.error("Failed to like post:", error);
+      // Revert the optimistic update on error
+      setDiscussions((prevDiscussions) =>
+        prevDiscussions.map((disc) => {
+          if (disc._id === discussionId) {
+            const wasLiked = !disc.hasLiked; // Revert the hasLiked status
+            return {
+              ...disc,
+              hasLiked: wasLiked,
+              likes: wasLiked
+                ? disc.likes.filter((id) => id !== currentUserId)
+                : [...disc.likes, currentUserId!],
+            };
+          }
+          return disc;
+        })
+      );
+    }
   };
 
-  // Trending Searches Component
-  const TrendingSearches = () => {
-    const trendingSearches = [
-      "Toyota Camry engine problems",
-      "BMW brake replacement cost",
-      "Honda Civic oil change",
-      "Tesla charging stations",
-      "Ford F-150 transmission",
-      "Nissan Altima recalls",
-      "Chevy Silverado parts",
-      "Audi maintenance schedule",
-    ];
+  const handleSavePost = async (postData: PostPayload) => {
+    setIsSaving(true);
+    setSaveError(null);
 
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-          <SearchIcon className="mr-2 text-blue-500" />
-          Trending Searches
-        </h3>
-        <div className="space-y-2">
-          {trendingSearches.map((search, index) => (
-            <div
-              key={index}
-              className="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors group"
-            >
-              <span className="text-sm font-medium text-gray-600 mr-2">
-                {index + 1}.
-              </span>
-              <span className="text-sm text-gray-900 group-hover:text-blue-600 transition-colors">
-                {search}
-              </span>
-            </div>
-          ))}
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      let imageUrls: string[] = [];
+
+      // Step 1: Upload images if any exist
+      if (postData.images.length > 0) {
+        const token = Cookies.get("token");
+
+        const imageFormData = new FormData();
+        postData.images.forEach((image) => {
+          imageFormData.append("images", image);
+        });
+
+        const imageUploadResponse = await fetch(
+          `${apiBaseUrl}/posts/upload-images`,
+          {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: imageFormData,
+          }
+        );
+
+        console.log(
+          "Image upload response status:",
+          imageUploadResponse.status
+        );
+
+        const imageResult = await imageUploadResponse.json();
+        console.log("Image upload response body:", imageResult);
+
+        if (!imageUploadResponse.ok || !imageResult.success) {
+          throw new Error(imageResult.message || "Failed to upload images.");
+        }
+
+        // Correctly handle the { data: { urls: [...] } } response structure
+        if (imageResult.data && Array.isArray(imageResult.data.urls)) {
+          imageUrls = imageResult.data.urls.filter(Boolean); // Filter out any potential null/undefined values
+        }
+      }
+
+      // Step 2: Create the post with image URLs
+      const finalPostPayload = {
+        title: postData.title,
+        content: postData.content,
+        categoryId: postData.categoryId,
+        tags: postData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        images: imageUrls,
+      };
+
+      console.log(
+        "Sending post payload:",
+        JSON.stringify(finalPostPayload, null, 2)
+      );
+
+      const token = Cookies.get("token");
+      const postResponse = await fetch(`${apiBaseUrl}/posts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(finalPostPayload),
+      });
+
+      console.log("Post response status:", postResponse.status);
+      console.log("Post response statusText:", postResponse.statusText);
+
+      const result = await postResponse.json();
+      console.log("Post response body:", result);
+
+      if (!postResponse.ok || !result.success) {
+        throw new Error(result.message || "Failed to create post.");
+      }
+
+      // Refresh first page to include the new post
+      setCurrentPage(1);
+      await fetchPosts(1, false);
+      setCreatePostModalOpen(false);
+    } catch (error: unknown) {
+      console.error("Error in handleSavePost:", error);
+      setSaveError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const renderSkeleton = () => (
+    <div className="border border-gray-200 rounded-lg overflow-hidden animate-pulse">
+      <div className="p-4">
+        <div className="flex items-center mb-3">
+          <div className="h-4 bg-gray-200 rounded w-24"></div>
+        </div>
+        <div className="flex items-center mb-4">
+          <div className="h-10 w-10 bg-gray-200 rounded-full mr-3"></div>
+          <div className="flex-1">
+            <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+            <div className="h-3 bg-gray-200 rounded w-24"></div>
+          </div>
         </div>
       </div>
-    );
-  };
+      <div className="h-48 bg-gray-200"></div>
+      <div className="p-4">
+        <div className="h-6 bg-gray-200 rounded w-full mb-3"></div>
+        <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+        <div className="flex items-center space-x-4 pt-3 border-t border-gray-100">
+          <div className="h-4 bg-gray-200 rounded w-16"></div>
+          <div className="h-4 bg-gray-200 rounded w-16"></div>
+          <div className="h-4 bg-gray-200 rounded w-16"></div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
-            <FireIcon className="mr-3 text-red-500" />
-            Trending Now
-          </h1>
-          <p className="text-gray-600">
-            Discover what's hot in the automotive community right now
-          </p>
+    <div className="bg-white rounded-xl shadow-lg p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-gray-900 flex items-center">
+          <MessageIcon className="mr-2 text-green-600" />
+          Trending Discussions
+        </h2>
+        <div className="flex items-center space-x-2">
+          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            View all
+          </button>
+          <button
+            onClick={() => setCreatePostModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center"
+          >
+            <PlusIcon className="w-4 h-4 mr-1" />
+            New Post
+          </button>
         </div>
+      </div>
 
-        {/* Trending Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <StatsCard
-            title="Trending Discussions"
-            value="1,234"
-            change="+12%"
-            icon={<FireIcon />}
-            color="red"
-          />
-          <StatsCard
-            title="Hot Topics"
-            value="89"
-            change="+25%"
-            icon={<MessageIcon />}
-            color="blue"
-          />
-          <StatsCard
-            title="Rising Contributors"
-            value="456"
-            change="+8%"
-            icon={<TrophyIcon />}
-            color="yellow"
-          />
-          <StatsCard
-            title="Popular Cars"
-            value="2,567"
-            change="+15%"
-            icon={<CarIcon />}
-            color="green"
-          />
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-            <div className="flex items-center space-x-4">
-              <FilterIcon className="text-gray-500" />
-              <span className="font-semibold text-gray-900">
-                Filter Trends:
-              </span>
-
-              {/* Timeframe Filter */}
-              <div className="flex space-x-2">
-                {timeframes.map((timeframe) => (
-                  <button
-                    key={timeframe.value}
-                    onClick={() => setSelectedTimeframe(timeframe.value)}
-                    className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-                      selectedTimeframe === timeframe.value
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    {timeframe.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Category Filter */}
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Category:</span>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {categories.map((category) => (
-                  <option key={category.value} value={category.value}>
-                    {category.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Trending Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
-            <TrendingTopics />
-            <TrendingDiscussions />
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-8">
-            <TrendingCars />
-            <TrendingSearches />
-            <ChatBot />
-          </div>
-        </div>
-
-        {/* Trending Categories Section */}
-        <div className="mt-12 bg-white rounded-xl shadow-lg p-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-            <FireIcon className="mr-2 text-orange-500" />
-            Trending by Category
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                name: "Engine Issues",
-                count: 234,
-                trend: "+15%",
-                color: "red",
-              },
-              {
-                name: "Brake Problems",
-                count: 189,
-                trend: "+12%",
-                color: "orange",
-              },
-              { name: "Electrical", count: 156, trend: "+8%", color: "yellow" },
-              {
-                name: "Maintenance",
-                count: 143,
-                trend: "+22%",
-                color: "green",
-              },
-            ].map((category, index) => (
-              <div
-                key={index}
-                className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer group"
-              >
-                <h4 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-2">
-                  {category.name}
-                </h4>
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-gray-900">
-                    {category.count}
-                  </span>
-                  <span className="text-sm font-semibold text-green-600">
-                    {category.trend}
+      <div className="space-y-4">
+        {loading ? (
+          Array.from({ length: LIMIT }).map((_, index) => (
+            <div key={`skeleton-${index}`}>{renderSkeleton()}</div>
+          ))
+        ) : error ? (
+          <p className="text-red-500 text-center">{error}</p>
+        ) : discussions.length === 0 ? (
+          <p className="text-gray-500 text-center">No trending posts yet.</p>
+        ) : (
+          discussions.map((discussion) => (
+            <Link
+              href={`/forum/post/${discussion._id}`}
+              key={discussion._id}
+              className="block border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 group"
+            >
+              {/* Header with badges and author */}
+              <div className="p-4 pb-2">
+                {/* Category badges */}
+                <div className="flex items-center mb-3">
+                  {discussion.isPinned && (
+                    <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded-full mr-2">
+                      PINNED
+                    </span>
+                  )}
+                  <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2 py-1 rounded-full">
+                    {discussion.category?.name || "Uncategorized"}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mt-1">trending posts</p>
+
+                {/* Author Section - Now at Top */}
+                <div className="flex items-center mb-3">
+                  <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold mr-3">
+                    {discussion.author && discussion.author.avatar ? (
+                      <Image
+                        src={discussion.author.avatar}
+                        alt={discussion.author.fullName}
+                        fill
+                        className="rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-sm">
+                        {discussion.author?.fullName?.charAt(0).toUpperCase() ||
+                          "A"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900">
+                      {discussion.author?.fullName || "Anonymous"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {formatTimeAgo(discussion.createdAt)}
+                    </p>
+                  </div>
+                </div>
               </div>
+
+              {/* Featured Image - Full Width */}
+              {discussion.images && discussion.images.length > 0 && (
+                <div className="w-full h-64 grid grid-cols-2 grid-rows-2 gap-1">
+                  {discussion.images.slice(0, 3).map((image, index) => {
+                    const isFirst = index === 0;
+                    const imageCount = discussion.images.length;
+
+                    if (!image) return null;
+
+                    return (
+                      <div
+                        key={index}
+                        className={`relative ${
+                          isFirst && imageCount > 1
+                            ? "col-span-1 row-span-2"
+                            : "col-span-1 row-span-1"
+                        } ${imageCount === 1 ? "col-span-2 row-span-2" : ""}`}
+                      >
+                        <Image
+                          src={image}
+                          alt={discussion.title || `Post image ${index + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                        {index === 2 && imageCount > 3 && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <span className="text-white text-2xl font-bold">
+                              +{imageCount - 3}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Title & Stats */}
+              <div className="p-4">
+                {/* Title - Now Below Image */}
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-4">
+                  {discussion.title}
+                </h3>
+
+                {/* Stats Section */}
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <div className="flex items-center space-x-4 text-sm text-gray-600">
+                    <div className="flex items-center">
+                      <MessageIcon className="w-4 h-4 mr-1.5 text-gray-400" />
+                      <span className="font-medium">
+                        {discussion.commentCount}
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => handleLikeClick(e, discussion._id)}
+                      className="flex items-center group/like"
+                    >
+                      <HeartIcon
+                        className={`w-4 h-4 mr-1.5 transition-colors ${
+                          discussion.hasLiked
+                            ? "text-red-500"
+                            : "text-gray-400 group-hover/like:text-red-400"
+                        }`}
+                        filled={discussion.hasLiked}
+                      />
+                      <span className="font-medium">
+                        {discussion.likes.length}
+                      </span>
+                    </button>
+                    <div className="flex items-center text-gray-500">
+                      <span className="font-medium">{discussion.views}</span>
+                      <span className="ml-1 text-xs">views</span>
+                    </div>
+                  </div>
+                  <div className="text-blue-600 group-hover:text-blue-700 text-sm font-medium flex items-center">
+                    <span>Join Discussion</span>
+                    <span className="ml-1 transform group-hover:translate-x-1 transition-transform">
+                      →
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))
+        )}
+        {loadingMore && (
+          <>
+            {Array.from({ length: LIMIT }).map((_, index) => (
+              <div key={`loading-more-${index}`}>{renderSkeleton()}</div>
             ))}
+          </>
+        )}
+        {hasMore && !loadingMore && (
+          <div ref={observerRef} className="p-4 text-center text-gray-500">
+            <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+            <p className="text-sm mt-1">Loading more...</p>
           </div>
-        </div>
-      </main>
+        )}
+      </div>
+      <CreatePostModal
+        isOpen={isCreatePostModalOpen}
+        onClose={() => setCreatePostModalOpen(false)}
+        onSave={handleSavePost}
+        isSaving={isSaving}
+        error={saveError}
+      />
     </div>
   );
 };
 
-export default TrendingPageDashboard;
+export default TrendingPage;

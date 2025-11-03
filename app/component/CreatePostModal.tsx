@@ -23,6 +23,7 @@ interface CreatePostModalProps {
   onSave: (data: PostPayload) => void;
   isSaving?: boolean;
   error?: string | null;
+  initialCategoryId?: string;
 }
 
 export default function CreatePostModal({
@@ -31,6 +32,7 @@ export default function CreatePostModal({
   onSave,
   isSaving,
   error: saveError,
+  initialCategoryId,
 }: CreatePostModalProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -59,6 +61,9 @@ export default function CreatePostModal({
 
     if (isOpen) {
       fetchCategories();
+      if (initialCategoryId) {
+        setCategoryId(initialCategoryId);
+      }
     }
   }, [isOpen]);
 

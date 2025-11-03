@@ -33,6 +33,7 @@ interface Post {
   category: Category;
   commentCount: number;
   likes: string[];
+  hasLiked?: boolean; // Add this to track liked status
   views: number;
   createdAt: string;
   isPinned: boolean;
@@ -59,7 +60,11 @@ const formatTimeAgo = (dateString: string) => {
   return `${Math.floor(seconds)} seconds ago`;
 };
 
-export const TrendingDiscussions = () => {
+export const TrendingDiscussions = ({
+  filterCategories,
+}: {
+  filterCategories?: string[];
+}) => {
   const [discussions, setDiscussions] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -69,41 +74,68 @@ export const TrendingDiscussions = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const observerRef = useRef<HTMLDivElement>(null);
 
-  const fetchPosts = useCallback(async (page: number, append = false) => {
-    try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
-      const response = await fetch(
-        `${apiBaseUrl}/posts?page=${page}&limit=${LIMIT}&sort=-views`
-      );
-      const result = await response.json();
+  const fetchPosts = useCallback(
+    async (page: number, append = false) => {
+      try {
+        if (!append) setLoading(true);
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Failed to fetch posts.");
+        const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+        let url = `${apiBaseUrl}/posts?page=${page}&limit=${LIMIT}&sort=-views`;
+        if (filterCategories && filterCategories.length > 0) {
+          const categoryParams = filterCategories.join(",");
+          url = `${apiBaseUrl}/posts?category=${categoryParams}&page=${page}&limit=${LIMIT}&sort=-createdAt`;
+        }
+        const response = await fetch(url);
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Failed to fetch posts.");
+        }
+
+        if (append) {
+          setDiscussions((prev) => [...prev, ...result.data]);
+        } else {
+          // Check if the current user has liked each post
+          const postsWithLikeStatus = result.data.map((post: Post) => ({
+            ...post,
+            hasLiked: currentUserId
+              ? post.likes.includes(currentUserId)
+              : false,
+          }));
+          setDiscussions(postsWithLikeStatus);
+        }
+
+        setHasMore(
+          result.data.length === LIMIT && result.pagination?.pages > page
+        );
+      } catch (err: unknown) {
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
       }
-
-      if (append) {
-        setDiscussions((prev) => [...prev, ...result.data]);
-      } else {
-        setDiscussions(result.data);
-      }
-
-      setHasMore(
-        result.data.length === LIMIT && result.pagination?.pages > page
-      );
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, []);
+    },
+    [filterCategories, currentUserId]
+  );
 
   useEffect(() => {
+    // Get current user ID from localStorage to determine liked status
+    const userInfo = localStorage.getItem("user_info");
+    if (userInfo) {
+      try {
+        const user = JSON.parse(userInfo);
+        setCurrentUserId(user._id);
+      } catch (e) {
+        console.error("Failed to parse user info:", e);
+      }
+    }
+
     fetchPosts(1, false);
   }, [fetchPosts]);
 
@@ -135,6 +167,63 @@ export const TrendingDiscussions = () => {
       }
     };
   }, [loadMore]);
+
+  const handleLikeClick = async (e: React.MouseEvent, discussionId: string) => {
+    e.preventDefault(); // Prevent the Link from navigating
+    e.stopPropagation(); // Stop the event from bubbling up
+
+    const token = Cookies.get("token");
+    if (!token) {
+      // Optionally, redirect to login or show a message
+      console.log("User not logged in. Cannot like post.");
+      return;
+    }
+
+    // Optimistic UI update
+    setDiscussions((prevDiscussions) =>
+      prevDiscussions.map((disc) => {
+        if (disc._id === discussionId) {
+          const wasLiked = disc.hasLiked;
+          return {
+            ...disc,
+            hasLiked: !wasLiked,
+            likes: wasLiked
+              ? disc.likes.filter((id) => id !== currentUserId)
+              : [...disc.likes, currentUserId!],
+          };
+        }
+        return disc;
+      })
+    );
+
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      await fetch(`${apiBaseUrl}/posts/${discussionId}/like`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // The UI is already updated, so we don't need to do anything on success.
+      // You could re-fetch for consistency, but it's not necessary for a good UX.
+    } catch (error) {
+      console.error("Failed to like post:", error);
+      // Revert the optimistic update on error
+      setDiscussions((prevDiscussions) =>
+        prevDiscussions.map((disc) => {
+          if (disc._id === discussionId) {
+            const wasLiked = !disc.hasLiked; // Revert the hasLiked status
+            return {
+              ...disc,
+              hasLiked: wasLiked,
+              likes: wasLiked
+                ? disc.likes.filter((id) => id !== currentUserId)
+                : [...disc.likes, currentUserId!],
+            };
+          }
+          return disc;
+        })
+      );
+    }
+  };
 
   const handleSavePost = async (postData: PostPayload) => {
     setIsSaving(true);
@@ -263,7 +352,9 @@ export const TrendingDiscussions = () => {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900 flex items-center">
           <MessageIcon className="mr-2 text-green-600" />
-          Hot Discussions
+          {filterCategories && filterCategories.length > 0
+            ? "Filtered Discussions"
+            : "Hot Discussions"}
         </h2>
         <div className="flex items-center space-x-2">
           <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
@@ -390,12 +481,22 @@ export const TrendingDiscussions = () => {
                         {discussion.commentCount}
                       </span>
                     </div>
-                    <div className="flex items-center">
-                      <HeartIcon className="w-4 h-4 mr-1.5 text-gray-400" />
+                    <button
+                      onClick={(e) => handleLikeClick(e, discussion._id)}
+                      className="flex items-center group/like"
+                    >
+                      <HeartIcon
+                        className={`w-4 h-4 mr-1.5 transition-colors ${
+                          discussion.hasLiked
+                            ? "text-red-500"
+                            : "text-gray-400 group-hover/like:text-red-400"
+                        }`}
+                        filled={discussion.hasLiked}
+                      />
                       <span className="font-medium">
                         {discussion.likes.length}
                       </span>
-                    </div>
+                    </button>
                     <div className="flex items-center text-gray-500">
                       <span className="font-medium">{discussion.views}</span>
                       <span className="ml-1 text-xs">views</span>

@@ -166,7 +166,7 @@ const MyPostsPage = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "open":
-        return "bg-blue-100 text-blue-800";
+        return "bg-purple-100 text-blue-900";
       case "solved":
         return "bg-green-100 text-green-800";
       case "closed":
@@ -228,7 +228,7 @@ const MyPostsPage = () => {
                 Manage and track all your forum posts and discussions
               </p>
             </div>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center">
+            <button className="bg-blue-900 hover:bg-blue-900 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center">
               <PlusIcon className="w-4 h-4 mr-2" />
               New Post
             </button>
@@ -245,8 +245,8 @@ const MyPostsPage = () => {
                   {userPosts.length}
                 </p>
               </div>
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-100">
-                <MessageIcon className="text-blue-600" />
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-purple-100">
+                <MessageIcon className="text-blue-800" />
               </div>
             </div>
           </div>
@@ -305,7 +305,7 @@ const MyPostsPage = () => {
                 onClick={() => setActiveTab(tab.value)}
                 className={`px-4 py-3 text-sm font-medium rounded-t-lg transition-colors flex items-center ${
                   activeTab === tab.value
-                    ? "bg-blue-600 text-white"
+                    ? "bg-blue-900 text-white"
                     : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                 }`}
               >
@@ -334,7 +334,7 @@ const MyPostsPage = () => {
                   <button className="text-red-600 hover:text-red-700 text-sm font-medium">
                     Delete
                   </button>
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  <button className="text-blue-800 hover:text-blue-900 text-sm font-medium">
                     Mark as Solved
                   </button>
                 </div>
@@ -400,7 +400,7 @@ const MyPostsPage = () => {
                       </p>
                     </div>
                     <div className="flex items-center space-x-2 ml-4">
-                      <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                      <button className="text-blue-800 hover:text-blue-900 text-sm font-medium">
                         Continue Editing
                       </button>
                       <button className="text-gray-400 hover:text-gray-600">
@@ -424,7 +424,7 @@ const MyPostsPage = () => {
                           type="checkbox"
                           checked={selectedPosts.includes(post.id)}
                           onChange={() => toggleSelectPost(post.id)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          className="w-4 h-4 text-blue-800 border-gray-300 rounded focus:ring-blue-500"
                         />
                       </div>
 
@@ -461,7 +461,7 @@ const MyPostsPage = () => {
                         </div>
 
                         {/* Title and Content */}
-                        <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-800 transition-colors cursor-pointer mb-2">
                           {post.title}
                         </h3>
                         <p className="text-gray-600 text-sm mb-3 line-clamp-2">
@@ -473,7 +473,7 @@ const MyPostsPage = () => {
                           {post.tags.map((tag, index) => (
                             <span
                               key={index}
-                              className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md"
+                              className="bg-blue-50 text-blue-900 text-xs px-2 py-1 rounded-md"
                             >
                               #{tag}
                             </span>
@@ -517,7 +517,7 @@ const MyPostsPage = () => {
                               </span>
                             </div>
                           </div>
-                          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                          <button className="text-blue-800 hover:text-blue-900 text-sm font-medium">
                             View Post →
                           </button>
                         </div>
@@ -544,7 +544,7 @@ const MyPostsPage = () => {
                     activeTab === "all" ? "" : activeTab
                   } posts yet.`}
             </p>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+            <button className="bg-blue-900 hover:bg-blue-900 text-white px-6 py-3 rounded-lg font-medium transition-colors">
               Create Your First Post
             </button>
           </div>
