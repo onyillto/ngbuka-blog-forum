@@ -1,4 +1,3 @@
-// ProfilePage.tsx (Updated with fixes: Tailwind v3 opacity, body overflow lock, and minor enhancements)
 "use client";
 
 import { useState, useEffect } from "react";
@@ -46,7 +45,7 @@ interface ProfileData {
   _id: string;
   firstName: string;
   lastName: string;
-  fullName: string;
+  fullName?: string;
   email: string;
   phoneNumber: string;
   avatar?: string;
@@ -66,12 +65,12 @@ interface ProfileData {
   bannedUntil: Date | null;
   lastSeen: string;
   createdAt: string;
-  posts: {
+  posts?: {
     data: Post[];
     total: number;
     showing: number;
   };
-  statistics: {
+  statistics?: {
     posts: {
       total: number;
       totalViews: number;
@@ -90,12 +89,12 @@ interface ProfileData {
       engagementRate: number;
     };
   };
-  recentActivity: {
+  recentActivity?: {
     postsLast30Days: number;
     commentsLast30Days: number;
     totalActivityLast30Days: number;
   };
-  topPosts: any[];
+  topPosts?: any[];
 }
 
 const formatTimeAgo = (dateString: string) => {
@@ -128,16 +127,16 @@ export default function ProfilePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
-  // New: Lock body scroll when modal is open
+  // Lock body scroll when modal is open
   useEffect(() => {
     if (isEditModalOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     // Cleanup on unmount
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isEditModalOpen]);
 
@@ -158,14 +157,12 @@ export default function ProfilePage() {
         const token = Cookies.get("token");
         const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
 
-        const response = await fetch(
-          `${apiBaseUrl}/user/${user._id}/profile?includePosts=true&postsLimit=20`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        // Updated: Call the new endpoint /user/profile/:id using the _id from localStorage
+        const response = await fetch(`${apiBaseUrl}/user/profile/${user._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         const result = await response.json();
 
@@ -173,7 +170,13 @@ export default function ProfilePage() {
           throw new Error(result.message || "Failed to fetch profile data.");
         }
 
-        setProfileData(result.data);
+        // Compute fullName if not present
+        const dataWithFullName = {
+          ...result.data,
+          fullName: `${result.data.firstName} ${result.data.lastName}`,
+        };
+
+        setProfileData(dataWithFullName);
       } catch (error: unknown) {
         setPageError(
           error instanceof Error ? error.message : "An unknown error occurred"
@@ -286,7 +289,11 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className={`min-h-screen bg-gray-50 py-8 ${isEditModalOpen ? 'overflow-hidden' : ''}`}>
+    <div
+      className={`min-h-screen bg-gray-50 py-8 ${
+        isEditModalOpen ? "overflow-hidden" : ""
+      }`}
+    >
       <EditProfileModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -469,7 +476,7 @@ export default function ProfilePage() {
                 }`}
               >
                 <FileText size={18} className="inline mr-2" />
-                Posts ({profileData.posts?.total || 0})
+                Posts ({profileData.posts?.total || profileData.postCount || 0})
               </button>
               <button
                 onClick={() => setActiveTab("about")}
@@ -514,7 +521,8 @@ export default function ProfilePage() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-gray-900">
-                    My Posts ({profileData.posts?.total || 0})
+                    My Posts (
+                    {profileData.posts?.total || profileData.postCount || 0})
                   </h3>
                 </div>
 
@@ -694,7 +702,9 @@ export default function ProfilePage() {
                             Total Posts
                           </span>
                           <span className="font-semibold">
-                            {profileData.statistics?.posts?.total || 0}
+                            {profileData.statistics?.posts?.total ||
+                              profileData.postCount ||
+                              0}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -736,7 +746,9 @@ export default function ProfilePage() {
                             Comments Made
                           </span>
                           <span className="font-semibold">
-                            {profileData.statistics?.comments?.total || 0}
+                            {profileData.statistics?.comments?.total ||
+                              profileData.commentCount ||
+                              0}
                           </span>
                         </div>
                         <div className="flex justify-between">

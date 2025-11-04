@@ -11,7 +11,7 @@ const nextConfig = {
       {
         // This single entry allows both http and https
         hostname: "res.cloudinary.com",
-        pathname: "/diemc336d/**", // More specific pathname for your Cloudinary account
+        pathname: "/diemc336d/image/upload/**", // Allow all images from your Cloudinary account
       },
     ],
   },
