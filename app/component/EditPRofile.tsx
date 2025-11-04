@@ -1,3 +1,4 @@
+// EditProfileModal.tsx (Updated with fixes: bg-black/50 for Tailwind v3, higher z-index for safety, and backdrop-blur for better UX)
 "use client";
 
 import { useState, useRef, ChangeEvent, FormEvent } from "react";
@@ -96,14 +97,14 @@ export default function EditProfileModal({
       if (type === "avatar") {
         setFormData((prev) => ({
           ...prev,
-          avatar: file, // Now correctly updates the state
+          avatar: file,
           avatarPreview: previewUrl,
         }));
         setErrors((prev) => ({ ...prev, avatar: undefined }));
       } else {
         setFormData((prev) => ({
           ...prev,
-          coverImage: file, // Now correctly updates the state
+          coverImage: file,
           coverPreview: previewUrl,
         }));
         setErrors((prev) => ({ ...prev, coverImage: undefined }));
@@ -138,7 +139,6 @@ export default function EditProfileModal({
     e.preventDefault();
 
     if (validateForm()) {
-      // onSave is now async, handled by the parent
       onSave(formData);
     }
   };
@@ -156,14 +156,14 @@ export default function EditProfileModal({
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - Updated: bg-black/50 for Tailwind v3, higher z-index, isolate for stacking */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
+        className="fixed inset-0 bg-black/50 z-[9999] isolate transition-opacity"
         onClick={handleCancel}
       />
 
-      {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Modal - Updated: Added backdrop-blur-sm for better UX */}
+      <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 backdrop-blur-sm">
         <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
@@ -172,7 +172,7 @@ export default function EditProfileModal({
                 Edit Profile
               </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Update your profile information and click save when you&apos;re done.
+                Update your profile information and click save when you're done.
               </p>
             </div>
             <button

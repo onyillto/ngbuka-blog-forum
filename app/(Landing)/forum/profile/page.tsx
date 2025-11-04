@@ -1,3 +1,4 @@
+// ProfilePage.tsx (Updated with fixes: Tailwind v3 opacity, body overflow lock, and minor enhancements)
 "use client";
 
 import { useState, useEffect } from "react";
@@ -16,7 +17,6 @@ import {
   MessageSquare,
   Calendar,
   MapPin,
-  Camera,
   Edit2,
   CheckCircle,
   AlertCircle,
@@ -128,6 +128,19 @@ export default function ProfilePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
+  // New: Lock body scroll when modal is open
+  useEffect(() => {
+    if (isEditModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isEditModalOpen]);
+
   useEffect(() => {
     const fetchProfile = async () => {
       setIsLoading(true);
@@ -222,6 +235,7 @@ export default function ProfilePage() {
         ...prev!,
         firstName: updatedUser.firstName,
         lastName: updatedUser.lastName,
+        fullName: `${updatedUser.firstName} ${updatedUser.lastName}`,
         email: updatedUser.email,
         phoneNumber: updatedUser.phoneNumber,
         avatar: updatedUser.avatar,
@@ -272,7 +286,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className={`min-h-screen bg-gray-50 py-8 ${isEditModalOpen ? 'overflow-hidden' : ''}`}>
       <EditProfileModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -294,14 +308,15 @@ export default function ProfilePage() {
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
           {/* Cover Photo */}
           <div className="relative h-64 bg-gradient-to-r from-blue-600 to-purple-600">
-            {profileData.coverImage && (
+            {profileData.coverImage ? (
               <Image
                 src={profileData.coverImage}
                 alt="Cover"
                 fill
                 className="object-cover"
+                priority
               />
-            )}
+            ) : null}
           </div>
 
           {/* Profile Info */}
@@ -310,13 +325,14 @@ export default function ProfilePage() {
               <div className="flex items-end gap-4">
                 {/* Profile Picture */}
                 <div className="relative">
-                  <div className="w-32 h-32 rounded-full border-4 border-white bg-gradient-to-br from-blue-400 to-purple-400 overflow-hidden flex items-center justify-center text-white text-4xl font-bold">
+                  <div className="w-32 h-32 rounded-full border-4 border-white bg-gradient-to-br from-blue-400 to-purple-400 overflow-hidden flex items-center justify-center text-white text-4xl font-bold shadow-lg">
                     {profileData.avatar ? (
                       <Image
                         src={profileData.avatar}
                         alt="Profile"
                         fill
                         className="object-cover"
+                        priority
                       />
                     ) : (
                       <span>
@@ -330,7 +346,8 @@ export default function ProfilePage() {
                 <div className="mb-2">
                   <div className="flex items-center gap-2">
                     <h1 className="text-2xl font-bold text-gray-900">
-                      {profileData.fullName}
+                      {profileData.fullName ||
+                        `${profileData.firstName} ${profileData.lastName}`}
                     </h1>
                     {profileData.isVerified && (
                       <CheckCircle
@@ -344,7 +361,7 @@ export default function ProfilePage() {
                     <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs px-3 py-1 rounded-full font-medium">
                       {profileData.level}
                     </span>
-                    <span className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full font-medium">
+                    <span className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full font-medium capitalize">
                       {profileData.role}
                     </span>
                     <div className="flex items-center gap-1 text-gray-600 text-sm">
@@ -393,10 +410,12 @@ export default function ProfilePage() {
                 </div>
                 <p className="text-sm text-gray-600 mb-1">Total Posts</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {profileData.statistics.posts.total}
+                  {profileData.statistics?.posts?.total ||
+                    profileData.postCount ||
+                    0}
                 </p>
                 <p className="text-xs text-purple-600 mt-1">
-                  {profileData.statistics.posts.totalViews} views
+                  {profileData.statistics?.posts?.totalViews || 0} views
                 </p>
               </div>
 
@@ -409,10 +428,11 @@ export default function ProfilePage() {
                 </div>
                 <p className="text-sm text-gray-600 mb-1">Total Likes</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {profileData.statistics.engagement.totalLikes}
+                  {profileData.statistics?.engagement?.totalLikes || 0}
                 </p>
                 <p className="text-xs text-green-600 mt-1">
-                  {profileData.statistics.engagement.engagementRate}% engagement
+                  {profileData.statistics?.engagement?.engagementRate || 0}%
+                  engagement
                 </p>
               </div>
 
@@ -425,10 +445,10 @@ export default function ProfilePage() {
                 </div>
                 <p className="text-sm text-gray-600 mb-1">Activity (30d)</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {profileData.recentActivity.totalActivityLast30Days}
+                  {profileData.recentActivity?.totalActivityLast30Days || 0}
                 </p>
                 <p className="text-xs text-orange-600 mt-1">
-                  {profileData.recentActivity.postsLast30Days} posts
+                  {profileData.recentActivity?.postsLast30Days || 0} posts
                 </p>
               </div>
             </div>
@@ -449,7 +469,7 @@ export default function ProfilePage() {
                 }`}
               >
                 <FileText size={18} className="inline mr-2" />
-                Posts ({profileData.posts.total})
+                Posts ({profileData.posts?.total || 0})
               </button>
               <button
                 onClick={() => setActiveTab("about")}
@@ -494,11 +514,12 @@ export default function ProfilePage() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-gray-900">
-                    My Posts ({profileData.posts.total})
+                    My Posts ({profileData.posts?.total || 0})
                   </h3>
                 </div>
 
-                {profileData.posts.data.length === 0 ? (
+                {!profileData.posts?.data ||
+                profileData.posts.data.length === 0 ? (
                   <div className="text-center py-12">
                     <FileText
                       size={48}
@@ -516,7 +537,7 @@ export default function ProfilePage() {
                       >
                         <div className="flex gap-4 p-4">
                           {/* Post Image */}
-                          {post.images.length > 0 && (
+                          {post.images && post.images.length > 0 && (
                             <div className="relative w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                               <Image
                                 src={post.images[0]}
@@ -531,7 +552,7 @@ export default function ProfilePage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-2">
                               <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
-                                {post.category.name}
+                                {post.category?.name || "Uncategorized"}
                               </span>
                               <span className="text-xs text-gray-500">
                                 {formatTimeAgo(post.createdAt)}
@@ -548,15 +569,15 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-4 text-sm text-gray-500">
                               <div className="flex items-center gap-1">
                                 <Eye size={16} />
-                                <span>{post.views}</span>
+                                <span>{post.views || 0}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Heart size={16} />
-                                <span>{post.likes.length}</span>
+                                <span>{post.likes?.length || 0}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <MessageSquare size={16} />
-                                <span>{post.commentCount}</span>
+                                <span>{post.commentCount || 0}</span>
                               </div>
                             </div>
                           </div>
@@ -673,7 +694,7 @@ export default function ProfilePage() {
                             Total Posts
                           </span>
                           <span className="font-semibold">
-                            {profileData.statistics.posts.total}
+                            {profileData.statistics?.posts?.total || 0}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -681,7 +702,7 @@ export default function ProfilePage() {
                             Total Views
                           </span>
                           <span className="font-semibold">
-                            {profileData.statistics.posts.totalViews}
+                            {profileData.statistics?.posts?.totalViews || 0}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -689,7 +710,7 @@ export default function ProfilePage() {
                             Total Likes
                           </span>
                           <span className="font-semibold">
-                            {profileData.statistics.posts.totalLikes}
+                            {profileData.statistics?.posts?.totalLikes || 0}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -697,7 +718,8 @@ export default function ProfilePage() {
                             Avg Views
                           </span>
                           <span className="font-semibold">
-                            {profileData.statistics.posts.avgViewsPerPost}
+                            {profileData.statistics?.posts?.avgViewsPerPost ||
+                              0}
                           </span>
                         </div>
                       </div>
@@ -714,7 +736,7 @@ export default function ProfilePage() {
                             Comments Made
                           </span>
                           <span className="font-semibold">
-                            {profileData.statistics.comments.total}
+                            {profileData.statistics?.comments?.total || 0}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -722,7 +744,7 @@ export default function ProfilePage() {
                             Comments Received
                           </span>
                           <span className="font-semibold">
-                            {profileData.statistics.comments.received}
+                            {profileData.statistics?.comments?.received || 0}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -730,7 +752,7 @@ export default function ProfilePage() {
                             Likes on Comments
                           </span>
                           <span className="font-semibold">
-                            {profileData.statistics.comments.totalLikes}
+                            {profileData.statistics?.comments?.totalLikes || 0}
                           </span>
                         </div>
                       </div>
@@ -747,10 +769,8 @@ export default function ProfilePage() {
                             Total Interactions
                           </span>
                           <span className="font-semibold">
-                            {
-                              profileData.statistics.engagement
-                                .totalInteractions
-                            }
+                            {profileData.statistics?.engagement
+                              ?.totalInteractions || 0}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -758,7 +778,9 @@ export default function ProfilePage() {
                             Engagement Rate
                           </span>
                           <span className="font-semibold">
-                            {profileData.statistics.engagement.engagementRate}%
+                            {profileData.statistics?.engagement
+                              ?.engagementRate || 0}
+                            %
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -766,7 +788,8 @@ export default function ProfilePage() {
                             30-Day Activity
                           </span>
                           <span className="font-semibold">
-                            {profileData.recentActivity.totalActivityLast30Days}
+                            {profileData.recentActivity
+                              ?.totalActivityLast30Days || 0}
                           </span>
                         </div>
                       </div>
@@ -791,7 +814,7 @@ export default function ProfilePage() {
                     className={`rounded-xl p-6 flex items-start gap-3 ${
                       profileData.isVerified
                         ? "bg-green-50 border border-green-200"
-                        : "bg-gray-50"
+                        : "bg-gray-50 border border-gray-200"
                     }`}
                   >
                     {profileData.isVerified ? (
