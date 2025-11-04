@@ -187,6 +187,32 @@ export default function ProfilePage() {
     };
 
     fetchProfile();
+
+    const fetchUserPosts = async () => {
+      const userInfo = localStorage.getItem("user_info");
+      if (!userInfo) {
+        // No user, no posts to fetch
+        return;
+      }
+
+      try {
+        const user = JSON.parse(userInfo);
+        const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+        const response = await fetch(`${apiBaseUrl}/user/${user._id}/posts`);
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Failed to fetch posts.");
+        }
+
+        // Assuming the posts are in result.data
+        setProfileData((prev) => (prev ? { ...prev, posts: { data: result.data, total: result.pagination.total, showing: result.data.length } } : null));
+      } catch (error) {
+        console.error("Failed to fetch user posts:", error);
+      }
+    };
+
+    fetchUserPosts();
   }, []);
 
   const handleSaveProfile = async (data: ProfileFormData) => {
