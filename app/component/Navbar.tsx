@@ -1,142 +1,212 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Search, User, LogOut, LogIn, X, ChevronDown } from "lucide-react";
+import {
+  Search,
+  User,
+  LogOut,
+  LogIn,
+  X,
+  ChevronDown,
+  Menu,
+} from "lucide-react";
 import Cookies from "js-cookie";
 import Link from "next/link";
 
-const Navbar = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState("Guest");
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
+interface UserInfo {
+  _id: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  fullName?: string;
+  avatar?: string;
+}
 
+interface AuthState {
+  isLoggedIn: boolean;
+  user: UserInfo | null;
+  isLoading: boolean;
+}
+
+const Navbar: React.FC = () => {
+  const [authState, setAuthState] = useState<AuthState>({
+    isLoggedIn: false,
+    user: null,
+    isLoading: true,
+  });
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // --- AUTH CHECK ---
   useEffect(() => {
-    const token = typeof window !== "undefined" ? Cookies.get("token") : null;
-    const userInfo =
-      typeof window !== "undefined" ? localStorage.getItem("user_info") : null;
+    const token = Cookies.get("token");
+    const userInfoStr = localStorage.getItem("user_info");
 
-    if (token) {
-      setIsLoggedIn(true);
-      if (userInfo) {
-        try {
-          const user = JSON.parse(userInfo);
-          setUsername(user.firstName || user.email);
-        } catch (e) {
-          console.error("Failed to parse user info from localStorage:", e);
-          // Clear corrupted data
-          localStorage.removeItem("user_info");
-        }
-      }
+    if (!token || !userInfoStr) {
+      setAuthState({ isLoggedIn: false, user: null, isLoading: false });
+      return;
+    }
+
+    try {
+      const userInfo: UserInfo = JSON.parse(userInfoStr);
+      if (!userInfo._id || !userInfo.email) throw new Error("Invalid info");
+      setAuthState({ isLoggedIn: true, user: userInfo, isLoading: false });
+    } catch {
+      Cookies.remove("token");
+      localStorage.removeItem("user_info");
+      setAuthState({ isLoggedIn: false, user: null, isLoading: false });
     }
   }, []);
 
+  // --- CLOSE DROPDOWN WHEN CLICKING OUTSIDE ---
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && event.target instanceof Node &&
-        !((dropdownRef.current as HTMLElement).contains(event.target))
-      ) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        e.target instanceof Node &&
+        !dropdownRef.current.contains(e.target)
+      )
         setIsDropdownOpen(false);
-      }
     };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    if (isDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isDropdownOpen]);
-
+  // --- LOGOUT ---
   const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      Cookies.remove("token");
-      localStorage.removeItem("user_info");
-    }
-    setIsLoggedIn(false);
-    setUsername("Guest");
+    Cookies.remove("token");
+    localStorage.removeItem("user_info");
+    setAuthState({ isLoggedIn: false, user: null, isLoading: false });
     setIsDropdownOpen(false);
+    window.location.href = "/";
   };
 
-  const toggleDropdown = (e: { stopPropagation: () => void; }) => {
-    e.stopPropagation();
-    setIsDropdownOpen(!isDropdownOpen);
+  const getDisplayName = (): string => {
+    if (!authState.user) return "Guest";
+    return (
+      authState.user.firstName ||
+      authState.user.fullName ||
+      authState.user.email.split("@")[0] ||
+      "User"
+    );
   };
+
+  // --- LOADING STATE ---
+  if (authState.isLoading) {
+    return (
+      <nav className="h-14 flex items-center justify-between px-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+        <div className="w-24 h-6 bg-gray-100 rounded animate-pulse"></div>
+        <div className="w-20 h-6 bg-gray-100 rounded animate-pulse"></div>
+      </nav>
+    );
+  }
 
   return (
-    <nav className="relative h-12 md:h-16 flex items-center justify-between px-3 md:px-4 bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200/50 w-full">
-      {/* Search Bar */}
-      <div className="flex-1 flex justify-start md:justify-center">
-        {/* Desktop Search */}
-        <div className="hidden md:block relative w-full max-w-xs md:max-w-md">
+    <nav className="relative h-14 sm:h-16 flex items-center justify-between px-4 bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100 z-50">
+      {/* --- LEFT: MENU (mobile) + LOGO --- */}
+      <div className="flex items-center space-x-3">
+        <button
+          className="sm:hidden p-2 rounded-lg hover:bg-gray-100 transition"
+          aria-label="Menu"
+        >
+          <Menu className="h-5 w-5 text-gray-700" />
+        </button>
+
+        <Link href="/" className="flex items-center">
+          <span className="text-lg font-bold text-orange-600">Forum</span>
+        </Link>
+      </div>
+
+      {/* --- CENTER: SEARCH --- */}
+      <div className="flex-1 mx-3 sm:mx-6">
+        <div className="hidden sm:block relative">
           <input
             type="text"
             placeholder="Search topics..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 bg-white/50"
+            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white hover:bg-gray-50 transition"
           />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
         </div>
-        {/* Mobile Search Icon */}
-        <div className="md:hidden">
-          <button
-            onClick={() => setIsSearchOpen(true)}
-            className="p-2 -ml-2 text-gray-600 hover:text-gray-900 transition-colors duration-150"
-          >
+
+        {/* --- Mobile Search Button --- */}
+        <button
+          onClick={() => setIsSearchOpen((p) => !p)}
+          className="sm:hidden p-2 rounded-lg hover:bg-gray-100 transition text-gray-700"
+        >
+          {isSearchOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
             <Search className="h-5 w-5" />
-          </button>
-        </div>
+          )}
+        </button>
       </div>
 
-      {/* Auth Section */}
-      <div
-        ref={dropdownRef}
-        className={`relative flex items-center space-x-0 md:space-x-0 ml-3 md:ml-6 ${
-          isSearchOpen ? "hidden" : "flex"
-        }`}
-      >
-        {isLoggedIn ? (
+      {/* --- RIGHT: AUTH --- */}
+      <div ref={dropdownRef} className="relative flex items-center">
+        {authState.isLoggedIn ? (
           <>
-            {/* User Trigger - Desktop */}
-            <div
-              className="hidden md:flex items-center space-x-2 cursor-pointer"
-              onClick={toggleDropdown}
+            <button
+              onClick={() => setIsDropdownOpen((p) => !p)}
+              className="flex items-center space-x-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition"
             >
-              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center hover:bg-orange-200 transition-colors duration-150">
-                <User className="h-4 w-4 text-orange-600" />
+              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-700 rounded-full flex items-center justify-center">
+                {authState.user?.avatar ? (
+                  <img
+                    src={authState.user.avatar}
+                    alt="avatar"
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="text-white h-4 w-4" />
+                )}
               </div>
-              <span className="text-gray-900 font-medium capitalize pr-2">
-                {username}
-              </span>
               <ChevronDown
-                className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
+                className={`h-4 w-4 text-gray-500 transition-transform ${
                   isDropdownOpen ? "rotate-180" : ""
                 }`}
               />
-            </div>
+            </button>
 
-            {/* User Trigger - Mobile */}
-            <div className="md:hidden cursor-pointer" onClick={toggleDropdown}>
-              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center hover:bg-orange-200 transition-colors duration-150">
-                <User className="h-4 w-4 text-orange-600" />
-              </div>
-            </div>
-
-            {/* Dropdown Menu */}
             {isDropdownOpen && (
-              <div className="absolute top-full right-0 md:right-auto mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200/50 z-20 py-1">
+              <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg py-2">
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="text-sm font-semibold text-gray-800">
+                    {getDisplayName()}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {authState.user?.email}
+                  </p>
+                </div>
                 <Link
                   href="/forum/profile"
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
-                  onClick={() => setIsDropdownOpen(false)}
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   <User className="h-4 w-4 mr-3 text-gray-500" />
                   Profile
                 </Link>
+                <Link
+                  href="/forum/my-posts"
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  <svg
+                    className="h-4 w-4 mr-3 text-gray-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  My Posts
+                </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150"
+                  className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                 >
                   <LogOut className="h-4 w-4 mr-3" />
                   Logout
@@ -147,32 +217,26 @@ const Navbar = () => {
         ) : (
           <Link
             href="/auth/signin"
-            className="px-4 md:px-5 py-2 md:py-2.5 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-lg hover:from-orange-700 hover:to-orange-800 font-medium flex items-center space-x-2 text-sm md:text-base shadow-sm hover:shadow-md transition-all duration-200"
+            className="flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm"
           >
-            <LogIn className="h-4 w-4 md:h-5 md:w-5" />
-            <span>Get Started</span>
+            <LogIn className="h-4 w-4" />
+            <span>Login</span>
           </Link>
         )}
       </div>
 
-      {/* Mobile Search Overlay */}
+      {/* --- Mobile Search Dropdown --- */}
       {isSearchOpen && (
-        <div className="md:hidden absolute top-0 left-0 w-full h-full bg-white/95 backdrop-blur-sm flex items-center px-3 z-10">
-          <div className="relative flex-1">
+        <div className="absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-md py-2 px-4 sm:hidden animate-in slide-in-from-top-1">
+          <div className="relative">
             <input
               type="text"
               placeholder="Search topics..."
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg text-base text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 bg-white"
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               autoFocus
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-          <button
-            onClick={() => setIsSearchOpen(false)}
-            className="ml-3 p-2 text-gray-600 hover:text-gray-900 transition-colors duration-150"
-          >
-            <X className="h-6 w-6" />
-          </button>
         </div>
       )}
     </nav>
