@@ -65,7 +65,7 @@ export default function CreatePostModal({
         setCategoryId(initialCategoryId);
       }
     }
-  }, [isOpen]);
+  }, [isOpen, initialCategoryId]);
 
   if (!isOpen) return null;
 

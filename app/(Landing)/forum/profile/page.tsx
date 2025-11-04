@@ -94,7 +94,7 @@ interface ProfileData {
     commentsLast30Days: number;
     totalActivityLast30Days: number;
   };
-  topPosts?: any[];
+  topPosts?: Post[];
 }
 
 const formatTimeAgo = (dateString: string) => {
@@ -206,7 +206,18 @@ export default function ProfilePage() {
         }
 
         // Assuming the posts are in result.data
-        setProfileData((prev) => (prev ? { ...prev, posts: { data: result.data, total: result.pagination.total, showing: result.data.length } } : null));
+        setProfileData((prev) =>
+          prev
+            ? {
+                ...prev,
+                posts: {
+                  data: result.data,
+                  total: result.pagination.total,
+                  showing: result.data.length,
+                },
+              }
+            : null
+        );
       } catch (error) {
         console.error("Failed to fetch user posts:", error);
       }
@@ -418,70 +429,98 @@ export default function ProfilePage() {
             </div>
 
             {/* Stats Cards - Enhanced */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border border-blue-200">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <Star size={20} className="text-white" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+              {/* Reputation Card */}
+              <div className="group bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Star size={22} className="text-white" />
                   </div>
-                  <span className="text-xs text-blue-600 font-medium">
+                  <div className="flex items-center text-blue-600 text-sm font-semibold bg-blue-50 px-2.5 py-1 rounded-full">
                     {profileData.level}
-                  </span>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Reputation</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {profileData.reputation}
-                </p>
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Reputation Score
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {profileData.reputation}
+                  </p>
+                </div>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-5 border border-purple-200">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-                    <FileText size={20} className="text-white" />
+              {/* Total Posts Card */}
+              <div className="group bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 md:col-span-1">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <FileText size={22} className="text-white" />
                   </div>
-                  <Eye size={16} className="text-purple-600" />
+                  <Eye size={18} className="text-purple-600 ml-auto" />
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Total Posts</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {profileData.statistics?.posts?.total ||
-                    profileData.postCount ||
-                    0}
-                </p>
-                <p className="text-xs text-purple-600 mt-1">
-                  {profileData.statistics?.posts?.totalViews || 0} views
-                </p>
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Posts Published
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {profileData.statistics?.posts?.total ||
+                      profileData.postCount ||
+                      0}
+                  </p>
+                  <p className="text-sm text-purple-600 font-medium flex items-center">
+                    <Eye size={14} className="mr-1" />
+                    {profileData.statistics?.posts?.totalViews || 0} total views
+                  </p>
+                </div>
               </div>
 
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border border-green-200">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                    <Heart size={20} className="text-white" />
+              {/* Total Likes Card */}
+              <div className="group bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Heart size={22} className="text-white" />
                   </div>
-                  <TrendingUp size={16} className="text-green-600" />
+                  <TrendingUp size={18} className="text-emerald-600 ml-auto" />
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Total Likes</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {profileData.statistics?.engagement?.totalLikes || 0}
-                </p>
-                <p className="text-xs text-green-600 mt-1">
-                  {profileData.statistics?.engagement?.engagementRate || 0}%
-                  engagement
-                </p>
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Likes Received
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {profileData.statistics?.engagement?.totalLikes || 0}
+                  </p>
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <span className="text-sm text-emerald-600 font-medium">
+                      {profileData.statistics?.engagement?.engagementRate || 0}%
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      engagement rate
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-5 border border-orange-200">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
-                    <Activity size={20} className="text-white" />
+              {/* Activity Card */}
+              <div className="group bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 md:col-span-1">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Activity size={22} className="text-white" />
                   </div>
-                  <Calendar size={16} className="text-orange-600" />
+                  <Calendar size={18} className="text-orange-600 ml-auto" />
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Activity (30d)</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {profileData.recentActivity?.totalActivityLast30Days || 0}
-                </p>
-                <p className="text-xs text-orange-600 mt-1">
-                  {profileData.recentActivity?.postsLast30Days || 0} posts
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Recent Activity
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {profileData.recentActivity?.totalActivityLast30Days || 0}
+                  </p>
+                  <p className="text-sm text-orange-600 font-medium flex items-center">
+                    {profileData.recentActivity?.postsLast30Days || 0} new posts
+                  </p>
+                </div>
+                <p className="text-xs text-gray-400 mt-2 italic">
+                  Last 30 days
                 </p>
               </div>
             </div>

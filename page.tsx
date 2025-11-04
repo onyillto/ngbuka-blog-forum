@@ -113,7 +113,9 @@ const CategoryPage = ({ params }: { params: { slug: string } }) => {
         }
 
         setPosts((prev) => (append ? [...prev, ...result.data] : result.data));
-        setHasMore(result.data.length === LIMIT && result.pagination?.pages > page);
+        setHasMore(
+          result.data.length === LIMIT && result.pagination?.pages > page
+        );
       } catch (err: unknown) {
         setError(
           err instanceof Error ? err.message : "An unknown error occurred"
@@ -170,30 +172,49 @@ const CategoryPage = ({ params }: { params: { slug: string } }) => {
 
       if (postData.images.length > 0) {
         const imageFormData = new FormData();
-        postData.images.forEach((image) => imageFormData.append("images", image));
-        const imageUploadResponse = await fetch(`${apiBaseUrl}/posts/upload-images`, {
-          method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: imageFormData,
-        });
+        postData.images.forEach((image) =>
+          imageFormData.append("images", image)
+        );
+        const imageUploadResponse = await fetch(
+          `${apiBaseUrl}/posts/upload-images`,
+          {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: imageFormData,
+          }
+        );
         const imageResult = await imageUploadResponse.json();
-        if (!imageUploadResponse.ok || !imageResult.success) throw new Error(imageResult.message || "Failed to upload images.");
+        if (!imageUploadResponse.ok || !imageResult.success)
+          throw new Error(imageResult.message || "Failed to upload images.");
         if (imageResult.data?.urls) imageUrls = imageResult.data.urls;
       }
 
-      const finalPostPayload = { ...postData, images: imageUrls, tags: postData.tags.split(",").map(tag => tag.trim()).filter(Boolean) };
+      const finalPostPayload = {
+        ...postData,
+        images: imageUrls,
+        tags: postData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      };
       const postResponse = await fetch(`${apiBaseUrl}/posts`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(finalPostPayload),
       });
       const result = await postResponse.json();
-      if (!postResponse.ok || !result.success) throw new Error(result.message || "Failed to create post.");
+      if (!postResponse.ok || !result.success)
+        throw new Error(result.message || "Failed to create post.");
 
       await fetchPosts(1, false);
       setCreatePostModalOpen(false);
     } catch (error: unknown) {
-      setSaveError(error instanceof Error ? error.message : "An unknown error occurred");
+      setSaveError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
     } finally {
       setIsSaving(false);
     }
@@ -215,31 +236,70 @@ const CategoryPage = ({ params }: { params: { slug: string } }) => {
   );
 
   const PostCard = ({ post }: { post: Post }) => (
-    <Link href={`/forum/post/${post._id}`} className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 group">
+    <Link
+      href={`/forum/post/${post._id}`}
+      className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 group"
+    >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="relative w-10 h-10 rounded-full bg-gray-200">
-            {post.author?.avatar ? <Image src={post.author.avatar} alt={post.author.fullName} fill className="rounded-full object-cover" /> : <span className="absolute inset-0 flex items-center justify-center text-gray-600 font-semibold">{post.author?.fullName?.charAt(0) || 'A'}</span>}
+            {post.author?.avatar ? (
+              <Image
+                src={post.author.avatar}
+                alt={post.author.fullName}
+                fill
+                className="rounded-full object-cover"
+              />
+            ) : (
+              <span className="absolute inset-0 flex items-center justify-center text-gray-600 font-semibold">
+                {post.author?.fullName?.charAt(0) || "A"}
+              </span>
+            )}
           </div>
           <div>
-            <p className="font-semibold text-gray-900">{post.author?.fullName || "Anonymous"}</p>
-            <p className="text-xs text-gray-500">{formatTimeAgo(post.createdAt)}</p>
+            <p className="font-semibold text-gray-900">
+              {post.author?.fullName || "Anonymous"}
+            </p>
+            <p className="text-xs text-gray-500">
+              {formatTimeAgo(post.createdAt)}
+            </p>
           </div>
         </div>
       </div>
-      <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-800 transition-colors mb-3 line-clamp-2">{post.title}</h3>
+      <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-800 transition-colors mb-3 line-clamp-2">
+        {post.title}
+      </h3>
       {post.images && post.images.length > 0 && (
         <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4 bg-gray-100">
-          <Image src={post.images[0]} alt={post.title} fill className="object-cover" />
+          <Image
+            src={post.images[0]}
+            alt={post.title}
+            fill
+            className="object-cover"
+          />
         </div>
       )}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-sm text-gray-600">
         <div className="flex items-center space-x-4">
-          <div className="flex items-center"><MessageIcon className="w-4 h-4 mr-1.5 text-gray-400" /><span>{post.commentCount}</span></div>
-          <div className="flex items-center"><HeartIcon className="w-4 h-4 mr-1.5 text-gray-400" /><span>{post.likes.length}</span></div>
-          <div className="flex items-center"><span className="font-medium">{post.views}</span><span className="ml-1 text-xs">views</span></div>
+          <div className="flex items-center">
+            <MessageIcon className="w-4 h-4 mr-1.5 text-gray-400" />
+            <span>{post.commentCount}</span>
+          </div>
+          <div className="flex items-center">
+            <HeartIcon className="w-4 h-4 mr-1.5 text-gray-400" />
+            <span>{post.likes.length}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="font-medium">{post.views}</span>
+            <span className="ml-1 text-xs">views</span>
+          </div>
         </div>
-        <div className="text-blue-800 group-hover:text-blue-900 font-medium flex items-center"><span>Read More</span><span className="ml-1 transform group-hover:translate-x-1 transition-transform">→</span></div>
+        <div className="text-blue-800 group-hover:text-blue-900 font-medium flex items-center">
+          <span>Read More</span>
+          <span className="ml-1 transform group-hover:translate-x-1 transition-transform">
+            →
+          </span>
+        </div>
       </div>
     </Link>
   );
@@ -256,30 +316,60 @@ const CategoryPage = ({ params }: { params: { slug: string } }) => {
         ) : category ? (
           <div className="bg-white rounded-xl shadow-lg p-8 mb-8 text-center">
             <div className="text-6xl mx-auto mb-4">{category.icon}</div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">{category.name}</h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">{category.description}</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              {category.name}
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              {category.description}
+            </p>
           </div>
         ) : null}
 
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Discussions</h2>
-          <button onClick={() => setCreatePostModalOpen(true)} className="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+          <button
+            onClick={() => setCreatePostModalOpen(true)}
+            className="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+          >
             <PlusIcon className="w-4 h-4" /> New Post
           </button>
         </div>
 
         <div className="space-y-6">
           {loadingPosts ? (
-            Array.from({ length: 5 }).map((_, index) => <div key={`skeleton-${index}`}>{renderPostSkeleton()}</div>)
+            Array.from({ length: 5 }).map((_, index) => (
+              <div key={`skeleton-${index}`}>{renderPostSkeleton()}</div>
+            ))
           ) : error ? (
-            <div className="bg-white rounded-xl shadow-lg p-12 text-center border border-red-200"><ServerCrash className="mx-auto h-12 w-12 text-red-400 mb-4" /><h3 className="text-xl font-semibold text-red-800 mb-2">Failed to Load Posts</h3><p className="text-red-600">{error}</p></div>
+            <div className="bg-white rounded-xl shadow-lg p-12 text-center border border-red-200">
+              <ServerCrash className="mx-auto h-12 w-12 text-red-400 mb-4" />
+              <h3 className="text-xl font-semibold text-red-800 mb-2">
+                Failed to Load Posts
+              </h3>
+              <p className="text-red-600">{error}</p>
+            </div>
           ) : posts.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-lg p-12 text-center"><FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" /><h3 className="text-xl font-semibold text-gray-900 mb-2">No Posts Yet</h3><p className="text-gray-600">Be the first to start a discussion in this category!</p></div>
+            <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+              <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                No Posts Yet
+              </h3>
+              <p className="text-gray-600">
+                Be the first to start a discussion in this category!
+              </p>
+            </div>
           ) : (
             posts.map((post) => <PostCard key={post._id} post={post} />)
           )}
-          {loadingMore && Array.from({ length: 3 }).map((_, index) => <div key={`loading-more-${index}`}>{renderPostSkeleton()}</div>)}
-          {hasMore && !loadingMore && <div ref={observerRef} className="p-4 text-center text-gray-500"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div>}
+          {loadingMore &&
+            Array.from({ length: 3 }).map((_, index) => (
+              <div key={`loading-more-${index}`}>{renderPostSkeleton()}</div>
+            ))}
+          {hasMore && !loadingMore && (
+            <div ref={observerRef} className="p-4 text-center text-gray-500">
+              <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+            </div>
+          )}
         </div>
       </main>
 

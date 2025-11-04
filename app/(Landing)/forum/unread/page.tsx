@@ -1,430 +1,512 @@
-// UnreadRepliesPage.tsx
 "use client";
 
 import Link from "next/link";
-import React, { useState } from "react";
+import CreatePostModal, {
+  PostPayload,
+} from "../../../component/CreatePostModal";
+import Cookies from "js-cookie";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import {
   MessageIcon,
-  CheckCircleIcon,
-  UserIcon,
-  FireIcon,
-  XIcon,
-  FilterIcon,
-  SearchIcon,
   HeartIcon,
-  CarIcon,
-} from "../../../component/index";
+  PlusIcon,
+  Loader2,
+} from "../../../component/Icons";
+import { Eye } from "lucide-react";
 
-const UnreadRepliesPage = () => {
-  const [selectedFilter, setSelectedFilter] = useState("all");
-  const [selectedSort, setSelectedSort] = useState("newest");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedReplies, setSelectedReplies] = useState<number[]>([]);
+interface Author {
+  _id: string;
+  fullName: string;
+  avatar?: string;
+}
 
-  // Sample unread replies data
-  const unreadReplies = [
-    {
-      id: 1,
-      originalPost: {
-        title: "Toyota Camry engine overheating - urgent help needed!",
-        id: 101,
-        category: "Engine Issues",
-      },
-      replies: [
-        {
-          id: 201,
-          author: "MechExpert_Pro",
-          avatar: "ME",
-          content:
-            "Have you checked the coolant level? This sounds like a classic coolant leak. Check around the radiator and hoses for any visible leaks.",
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-          isExpert: true,
-          likes: 5,
-        },
-        {
-          id: 202,
-          author: "CamryOwner2020",
-          avatar: "CO",
-          content:
-            "I had the exact same issue last month! Turned out to be a faulty thermostat. Cost me about $150 to fix.",
-          timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
-          isExpert: false,
-          likes: 3,
-        },
-      ],
+interface Category {
+  _id: string;
+  name: string;
+}
+
+interface Post {
+  _id: string;
+  title: string;
+  slug?: string;
+  author: Author | null;
+  category: Category;
+  commentCount: number;
+  likes: string[];
+  hasLiked?: boolean;
+  views: number;
+  createdAt: string;
+  isPinned: boolean;
+  images: string[];
+}
+
+const LIMIT = 5;
+
+const formatTimeAgo = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  let interval = seconds / 31536000;
+  if (interval > 1) return `${Math.floor(interval)} years ago`;
+  interval = seconds / 2592000;
+  if (interval > 1) return `${Math.floor(interval)} months ago`;
+  interval = seconds / 86400;
+  if (interval > 1) return `${Math.floor(interval)} days ago`;
+  interval = seconds / 3600;
+  if (interval > 1) return `${Math.floor(interval)} hours ago`;
+  interval = seconds / 60;
+  if (interval > 1) return `${Math.floor(interval)} minutes ago`;
+  return `${Math.floor(seconds)} seconds ago`;
+};
+
+const UnreadPage = () => {
+  const [discussions, setDiscussions] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isCreatePostModalOpen, setCreatePostModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  const observerRef = useRef<HTMLDivElement>(null);
+
+  const fetchPosts = useCallback(
+    async (page: number, append = false) => {
+      try {
+        if (!append) setLoading(true);
+
+        const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+        // Fetch posts with less than 2 likes, sorted by newest first
+        const url = `${apiBaseUrl}/posts?page=${page}&limit=${LIMIT}&sort=-createdAt&likes[lt]=2`;
+        const response = await fetch(url);
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Failed to fetch posts.");
+        }
+
+        if (append) {
+          setDiscussions((prev) => [...prev, ...result.data]);
+        } else {
+          const postsWithLikeStatus = result.data.map((post: Post) => ({
+            ...post,
+            hasLiked: currentUserId
+              ? post.likes.includes(currentUserId)
+              : false,
+          }));
+          setDiscussions(postsWithLikeStatus);
+        }
+
+        setHasMore(
+          result.data.length === LIMIT && result.pagination?.pages > page
+        );
+      } catch (err: unknown) {
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     },
-    {
-      id: 2,
-      originalPost: {
-        title: "Best brake pads for Honda Civic 2023?",
-        id: 102,
-        category: "Brakes",
+    [currentUserId]
+  );
+
+  useEffect(() => {
+    const userInfo = localStorage.getItem("user_info");
+    if (userInfo) {
+      try {
+        const user = JSON.parse(userInfo);
+        setCurrentUserId(user._id);
+      } catch (e) {
+        console.error("Failed to parse user info:", e);
+      }
+    }
+
+    fetchPosts(1, false);
+  }, [fetchPosts]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || loading) return;
+    setLoadingMore(true);
+    const nextPage = currentPage + 1;
+    await fetchPosts(nextPage, true);
+    setCurrentPage(nextPage);
+  }, [currentPage, hasMore, loadingMore, loading, fetchPosts]);
+
+  useEffect(() => {
+    const currentObserverRef = observerRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
       },
-      replies: [
-        {
-          id: 203,
-          author: "BrakeMaster",
-          avatar: "BM",
-          content:
-            "I'd recommend ceramic brake pads for daily driving. They're quieter and produce less dust. Brands like Akebono or Bosch are great options.",
-          timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
-          isExpert: true,
-          likes: 8,
-        },
-      ],
-    },
-    {
-      id: 3,
-      originalPost: {
-        title: "Strange noise from BMW X5 transmission",
-        id: 103,
-        category: "Transmission",
-      },
-      replies: [
-        {
-          id: 204,
-          author: "BMWSpecialist",
-          avatar: "BS",
-          content:
-            "This could be a sign of low transmission fluid or worn transmission mounts. When did you last service the transmission?",
-          timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-          isExpert: true,
-          likes: 2,
-        },
-        {
-          id: 205,
-          author: "X5Driver",
-          avatar: "XD",
-          content:
-            "I'm having the same issue! Following this thread for updates.",
-          timestamp: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
-          isExpert: false,
-          likes: 1,
-        },
-        {
-          id: 206,
-          author: "AutoTechGuru",
-          avatar: "AT",
-          content:
-            "Could also be related to the transfer case if it's an AWD model. Have you noticed any issues during turns?",
-          timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
-          isExpert: true,
-          likes: 0,
-        },
-      ],
-    },
-    {
-      id: 4,
-      originalPost: {
-        title: "DIY oil change tips for beginners",
-        id: 104,
-        category: "Maintenance",
-      },
-      replies: [
-        {
-          id: 207,
-          author: "DIYMechanic",
-          avatar: "DM",
-          content:
-            "Great guide! I'd add that it's important to let the engine cool down for at least 30 minutes before starting.",
-          timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
-          isExpert: false,
-          likes: 12,
-        },
-      ],
-    },
-  ];
-
-  const filters = [
-    { value: "all", label: "All Replies", count: 7 },
-    { value: "experts", label: "Expert Replies", count: 4 },
-    { value: "today", label: "Today", count: 5 },
-    { value: "urgent", label: "Urgent Posts", count: 2 },
-  ];
-
-  const sortOptions = [
-    { value: "newest", label: "Newest First" },
-    { value: "oldest", label: "Oldest First" },
-    { value: "most_liked", label: "Most Liked" },
-    { value: "post_title", label: "By Post Title" },
-  ];
-
-  const formatTimeAgo = (timestamp: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - timestamp.getTime();
-    const minutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
-  };
-
-  const toggleSelectReply = (replyId: number) => {
-    setSelectedReplies((prev) =>
-      prev.includes(replyId)
-        ? prev.filter((id) => id !== replyId)
-        : [...prev, replyId]
+      { threshold: 1 }
     );
-  };
 
-  const markAsRead = (replyIds: number[]) => {
-    // Implementation for marking replies as read
-    console.log("Marking as read:", replyIds);
-    setSelectedReplies([]);
-  };
+    if (currentObserverRef) {
+      observer.observe(currentObserverRef);
+    }
 
-  const markAllAsRead = () => {
-    const allReplyIds = unreadReplies.flatMap((post) =>
-      post.replies.map((reply) => reply.id)
+    return () => {
+      if (currentObserverRef) {
+        observer.unobserve(currentObserverRef);
+      }
+    };
+  }, [loadMore]);
+
+  const handleLikeClick = async (e: React.MouseEvent, discussionId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const token = Cookies.get("token");
+    if (!token) {
+      console.log("User not logged in. Cannot like post.");
+      return;
+    }
+
+    setDiscussions((prevDiscussions) =>
+      prevDiscussions.map((disc) => {
+        if (disc._id === discussionId) {
+          const wasLiked = disc.hasLiked;
+          return {
+            ...disc,
+            hasLiked: !wasLiked,
+            likes: wasLiked
+              ? disc.likes.filter((id) => id !== currentUserId)
+              : [...disc.likes, currentUserId!],
+          };
+        }
+        return disc;
+      })
     );
-    markAsRead(allReplyIds);
+
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      await fetch(`${apiBaseUrl}/posts/${discussionId}/like`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (error) {
+      console.error("Failed to like post:", error);
+      setDiscussions((prevDiscussions) =>
+        prevDiscussions.map((disc) => {
+          if (disc._id === discussionId) {
+            const wasLiked = !disc.hasLiked;
+            return {
+              ...disc,
+              hasLiked: wasLiked,
+              likes: wasLiked
+                ? disc.likes.filter((id) => id !== currentUserId)
+                : [...disc.likes, currentUserId!],
+            };
+          }
+          return disc;
+        })
+      );
+    }
   };
 
-  const getTotalUnreadCount = () => {
-    return unreadReplies.reduce(
-      (total, post) => total + post.replies.length,
-      0
-    );
+  const handleSavePost = async (postData: PostPayload) => {
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      let imageUrls: string[] = [];
+
+      if (postData.images.length > 0) {
+        const token = Cookies.get("token");
+
+        const imageFormData = new FormData();
+        postData.images.forEach((image) => {
+          imageFormData.append("images", image);
+        });
+
+        const imageUploadResponse = await fetch(
+          `${apiBaseUrl}/posts/upload-images`,
+          {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: imageFormData,
+          }
+        );
+
+        const imageResult = await imageUploadResponse.json();
+
+        if (!imageUploadResponse.ok || !imageResult.success) {
+          throw new Error(imageResult.message || "Failed to upload images.");
+        }
+
+        if (imageResult.data && Array.isArray(imageResult.data.urls)) {
+          imageUrls = imageResult.data.urls.filter(Boolean);
+        }
+      }
+
+      const finalPostPayload = {
+        title: postData.title,
+        content: postData.content,
+        categoryId: postData.categoryId,
+        tags: postData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        images: imageUrls,
+      };
+
+      const token = Cookies.get("token");
+      const postResponse = await fetch(`${apiBaseUrl}/posts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(finalPostPayload),
+      });
+
+      const result = await postResponse.json();
+
+      if (!postResponse.ok || !result.success) {
+        throw new Error(result.message || "Failed to create post.");
+      }
+
+      setCurrentPage(1);
+      await fetchPosts(1, false);
+      setCreatePostModalOpen(false);
+    } catch (error: unknown) {
+      console.error("Error in handleSavePost:", error);
+      setSaveError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const renderSkeleton = () => (
+    <div className="border border-gray-200 rounded-lg overflow-hidden animate-pulse">
+      <div className="p-4">
+        <div className="flex items-center mb-3">
+          <div className="h-4 bg-gray-200 rounded w-24"></div>
+        </div>
+        <div className="flex items-center mb-4">
+          <div className="h-10 w-10 bg-gray-200 rounded-full mr-3"></div>
+          <div className="flex-1">
+            <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+            <div className="h-3 bg-gray-200 rounded w-24"></div>
+          </div>
+        </div>
+      </div>
+      <div className="h-48 bg-gray-200"></div>
+      <div className="p-4">
+        <div className="h-6 bg-gray-200 rounded w-full mb-3"></div>
+        <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+        <div className="flex items-center space-x-4 pt-3 border-t border-gray-100">
+          <div className="h-4 bg-gray-200 rounded w-16"></div>
+          <div className="h-4 bg-gray-200 rounded w-16"></div>
+          <div className="h-4 bg-gray-200 rounded w-16"></div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
-                <MessageIcon className="mr-3 text-blue-500" />
-                Unread Replies
-                <span className="ml-3 bg-red-500 text-white text-lg px-3 py-1 rounded-full">
-                  {getTotalUnreadCount()}
-                </span>
-              </h1>
-              <p className="text-gray-600">
-                Catch up on all the replies to your discussions and posts
-              </p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={markAllAsRead}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center"
-              >
-                <CheckCircleIcon className="w-4 h-4 mr-2" />
-                Mark All Read
-              </button>
-              {selectedReplies.length > 0 && (
-                <button
-                  onClick={() => markAsRead(selectedReplies)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                >
-                  Mark Selected Read ({selectedReplies.length})
-                </button>
-              )}
-            </div>
-          </div>
+    <div className="bg-white rounded-xl shadow-lg p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-gray-900 flex items-center">
+          <Eye className="mr-2 text-orange-600 w-5 h-5" />
+          Unread Discussions
+        </h2>
+        <div className="flex items-center space-x-2">
+          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            View all
+          </button>
+          <button
+            onClick={() => setCreatePostModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center"
+          >
+            <PlusIcon className="w-4 h-4 mr-1" />
+            New Post
+          </button>
         </div>
+      </div>
 
-        {/* Filters and Search */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-            {/* Filter Tabs */}
-            <div className="flex items-center space-x-1">
-              {filters.map((filter) => (
-                <button
-                  key={filter.value}
-                  onClick={() => setSelectedFilter(filter.value)}
-                  className={`px-4 py-2 text-sm rounded-lg transition-colors flex items-center ${
-                    selectedFilter === filter.value
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {filter.label}
-                  <span
-                    className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
-                      selectedFilter === filter.value
-                        ? "bg-white/20 text-white"
-                        : "bg-gray-300 text-gray-600"
-                    }`}
-                  >
-                    {filter.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <div className="flex items-center space-x-4">
-              {/* Search */}
-              <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search replies..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
-                />
-              </div>
-
-              {/* Sort */}
-              <select
-                value={selectedSort}
-                onChange={(e) => setSelectedSort(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {sortOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+      <div className="space-y-4">
+        {loading ? (
+          Array.from({ length: LIMIT }).map((_, index) => (
+            <div key={`skeleton-${index}`}>{renderSkeleton()}</div>
+          ))
+        ) : error ? (
+          <p className="text-red-500 text-center">{error}</p>
+        ) : discussions.length === 0 ? (
+          <div className="text-center py-12">
+            <Eye className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+            <p className="text-gray-500 text-lg font-medium">
+              No unread posts found
+            </p>
+            <p className="text-gray-400 text-sm mt-2">
+              All posts have been engaged with!
+            </p>
           </div>
-        </div>
-
-        {/* Unread Replies List */}
-        <div className="space-y-6">
-          {unreadReplies.map((post) => (
-            <div
-              key={post.id}
-              className="bg-white rounded-xl shadow-lg overflow-hidden"
+        ) : (
+          discussions.map((discussion) => (
+            <Link
+              href={`/forum/post/${discussion._id}`}
+              key={discussion._id}
+              className="block border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 group"
             >
-              {/* Original Post Header */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <CarIcon className="text-blue-600 w-5 h-5" />
-                    </div>
-                    <div>
-                      <Link href={`/forum/post/${post.originalPost.id}`}>
-                        <h3 className="font-semibold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">
-                          {post.originalPost.title}
-                        </h3>
-                      </Link>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs mr-2">
-                          {post.originalPost.category}
-                        </span>
-                        <span>{post.replies.length} new replies</span>
-                      </div>
-                    </div>
+              <div className="p-4 pb-2">
+                <div className="flex items-center mb-3">
+                  {discussion.isPinned && (
+                    <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded-full mr-2">
+                      PINNED
+                    </span>
+                  )}
+                  <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2 py-1 rounded-full">
+                    {discussion.category?.name || "Uncategorized"}
+                  </span>
+                  <span className="bg-orange-100 text-orange-700 text-xs font-medium px-2 py-1 rounded-full ml-2">
+                    Low Engagement
+                  </span>
+                </div>
+
+                <div className="flex items-center mb-3">
+                  <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold mr-3">
+                    {discussion.author && discussion.author.avatar ? (
+                      <Image
+                        src={discussion.author.avatar}
+                        alt={discussion.author.fullName}
+                        fill
+                        className="rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-sm">
+                        {discussion.author?.fullName?.charAt(0).toUpperCase() ||
+                          "A"}
+                      </span>
+                    )}
                   </div>
-                  <Link
-                    href={`/forum/post/${post.originalPost.id}`}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                  >
-                    View Post →
-                  </Link>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900">
+                      {discussion.author?.fullName || "Anonymous"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {formatTimeAgo(discussion.createdAt)}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* Replies */}
-              <div className="divide-y divide-gray-100">
-                {post.replies.map((reply) => (
-                  <div
-                    key={reply.id}
-                    className={`p-6 hover:bg-gray-50 transition-colors ${
-                      selectedReplies.includes(reply.id)
-                        ? "bg-blue-50 border-l-4 border-blue-500"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex items-start space-x-4">
-                      {/* Selection Checkbox */}
-                      <div className="pt-1">
-                        <input
-                          type="checkbox"
-                          checked={selectedReplies.includes(reply.id)}
-                          onChange={() => toggleSelectReply(reply.id)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                      </div>
+              {discussion.images && discussion.images.length > 0 && (
+                <div className="w-full h-64 grid grid-cols-2 grid-rows-2 gap-1">
+                  {discussion.images.slice(0, 3).map((image, index) => {
+                    const isFirst = index === 0;
+                    const imageCount = discussion.images.length;
 
-                      {/* Avatar */}
+                    if (!image) return null;
+
+                    return (
                       <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold text-white ${
-                          reply.isExpert
-                            ? "bg-gradient-to-r from-purple-500 to-blue-500"
-                            : "bg-gradient-to-r from-gray-400 to-gray-600"
-                        }`}
+                        key={index}
+                        className={`relative ${
+                          isFirst && imageCount > 1
+                            ? "col-span-1 row-span-2"
+                            : "col-span-1 row-span-1"
+                        } ${imageCount === 1 ? "col-span-2 row-span-2" : ""}`}
                       >
-                        {reply.avatar}
+                        <Image
+                          src={image}
+                          alt={discussion.title || `Post image ${index + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                        {index === 2 && imageCount > 3 && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <span className="text-white text-2xl font-bold">
+                              +{imageCount - 3}
+                            </span>
+                          </div>
+                        )}
                       </div>
+                    );
+                  })}
+                </div>
+              )}
 
-                      {/* Reply Content */}
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <span className="font-semibold text-gray-900">
-                              {reply.author}
-                            </span>
-                            {reply.isExpert && (
-                              <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-1 rounded-full">
-                                Expert
-                              </span>
-                            )}
-                            <span className="text-sm text-gray-500">
-                              {formatTimeAgo(reply.timestamp)}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-3">
-                            <div className="flex items-center text-gray-500">
-                              <HeartIcon className="w-4 h-4 mr-1" />
-                              <span className="text-sm">{reply.likes}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-gray-800 leading-relaxed mb-3">
-                          {reply.content}
-                        </p>
-                        <div className="flex items-center space-x-4">
-                          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                            Reply
-                          </button>
-                          <button className="text-gray-500 hover:text-gray-700 text-sm">
-                            Like
-                          </button>
-                          <button
-                            onClick={() => markAsRead([reply.id])}
-                            className="text-green-600 hover:text-green-700 text-sm font-medium"
-                          >
-                            Mark as Read
-                          </button>
-                        </div>
-                      </div>
+              <div className="p-4">
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-4">
+                  {discussion.title}
+                </h3>
+
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <div className="flex items-center space-x-4 text-sm text-gray-600">
+                    <div className="flex items-center">
+                      <MessageIcon className="w-4 h-4 mr-1.5 text-gray-400" />
+                      <span className="font-medium">
+                        {discussion.commentCount}
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => handleLikeClick(e, discussion._id)}
+                      className="flex items-center group/like"
+                    >
+                      <HeartIcon
+                        className={`w-4 h-4 mr-1.5 transition-colors ${
+                          discussion.hasLiked
+                            ? "text-red-500"
+                            : "text-gray-400 group-hover/like:text-red-400"
+                        }`}
+                        filled={discussion.hasLiked}
+                      />
+                      <span className="font-medium">
+                        {discussion.likes.length}
+                      </span>
+                    </button>
+                    <div className="flex items-center text-gray-500">
+                      <span className="font-medium">{discussion.views}</span>
+                      <span className="ml-1 text-xs">views</span>
                     </div>
                   </div>
-                ))}
+                  <div className="text-blue-600 group-hover:text-blue-700 text-sm font-medium flex items-center">
+                    <span>Be the First</span>
+                    <span className="ml-1 transform group-hover:translate-x-1 transition-transform">
+                      →
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {unreadReplies.length === 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircleIcon className="text-green-600" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              All caught up!
-            </h3>
-            <p className="text-gray-600 mb-6">
-              You've read all your replies. Great job staying on top of your
-              discussions!
-            </p>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-              Browse Forum
-            </button>
+            </Link>
+          ))
+        )}
+        {loadingMore && (
+          <>
+            {Array.from({ length: LIMIT }).map((_, index) => (
+              <div key={`loading-more-${index}`}>{renderSkeleton()}</div>
+            ))}
+          </>
+        )}
+        {hasMore && !loadingMore && (
+          <div ref={observerRef} className="p-4 text-center text-gray-500">
+            <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+            <p className="text-sm mt-1">Loading more...</p>
           </div>
         )}
-      </main>
+      </div>
+      <CreatePostModal
+        isOpen={isCreatePostModalOpen}
+        onClose={() => setCreatePostModalOpen(false)}
+        onSave={handleSavePost}
+        isSaving={isSaving}
+        error={saveError}
+      />
     </div>
   );
 };
 
-export default UnreadRepliesPage;
+export default UnreadPage;

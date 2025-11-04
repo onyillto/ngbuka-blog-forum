@@ -9,8 +9,6 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import {
   MessageIcon,
-  CheckCircleIcon,
-  UserIcon,
   HeartIcon,
   PlusIcon,
   Loader2,
@@ -142,6 +140,7 @@ const TrendingPage = () => {
   }, [currentPage, hasMore, loadingMore, loading, fetchPosts]);
 
   useEffect(() => {
+    const currentObserverRef = observerRef.current;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -151,13 +150,13 @@ const TrendingPage = () => {
       { threshold: 1 }
     );
 
-    if (observerRef.current) {
-      observer.observe(observerRef.current);
+    if (currentObserverRef) {
+      observer.observe(currentObserverRef);
     }
 
     return () => {
-      if (observerRef.current) {
-        observer.unobserve(observerRef.current);
+      if (currentObserverRef) {
+        observer.unobserve(currentObserverRef);
       }
     };
   }, [loadMore]);
