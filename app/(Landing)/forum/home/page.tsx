@@ -2,20 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  MessageIcon,
-  CheckCircleIcon,
-  UserIcon,
-  CarIcon,
-  StatsCard,
-  SparePartChip,
-  SearchBar,
-  // TrendingCars,
-  TrendingDiscussions,
-  Leaderboard,
-  SolvedIssues,
-  ChatBot,
-} from "../../../component/index";
+import { SparePartChip, TrendingDiscussions } from "../../../component/index";
 
 interface Category {
   _id: string;
@@ -23,25 +10,11 @@ interface Category {
   slug: string;
 }
 
-interface DashboardStats {
-  activeDiscussions: number | null;
-  solvedToday: number | null;
-  expertMembers: number | null;
-  carModels: number | null; // Assuming this might be available later
-}
-
 const NgbukaForumDashboard = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [stats, setStats] = useState<DashboardStats>({
-    activeDiscussions: null,
-    solvedToday: null,
-    expertMembers: null,
-    carModels: null,
-  });
-  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -68,44 +41,6 @@ const NgbukaForumDashboard = () => {
     fetchCategories();
   }, []);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      setStatsLoading(true);
-      try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
-
-        // Fetch total posts for "Active Discussions"
-        const postsPromise = fetch(`${apiBaseUrl}/posts?limit=1`).then((res) =>
-          res.json()
-        );
-
-        // Placeholder for other stats - you can replace these with real endpoints
-        const solvedPromise = Promise.resolve({ success: true, count: 89 }); // Placeholder
-        const expertsPromise = fetch(
-          `${apiBaseUrl}/user/top-posters?limit=1`
-        ).then((res) => res.json()); // Assuming this gives total experts
-
-        const [postsResult, solvedResult, expertsResult] = await Promise.all([
-          postsPromise,
-          solvedPromise,
-          expertsPromise,
-        ]);
-
-        setStats({
-          activeDiscussions: postsResult.pagination?.total || 0,
-          solvedToday: solvedResult.count,
-          expertMembers: expertsResult.pagination?.total || 0, // Adjust if API gives total differently
-          carModels: 2567, // Placeholder
-        });
-      } catch (error) {
-        console.error("Failed to fetch dashboard stats:", error);
-      } finally {
-        setStatsLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
-
   const toggleCategory = (categoryId: string) => {
     setSelectedCategories((prev) =>
       prev.includes(categoryId)
@@ -113,18 +48,6 @@ const NgbukaForumDashboard = () => {
         : [...prev, categoryId]
     );
   };
-
-  const renderStatsSkeleton = () => (
-    <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
-          <div className="h-8 bg-gray-200 rounded w-16"></div>
-        </div>
-        <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50">

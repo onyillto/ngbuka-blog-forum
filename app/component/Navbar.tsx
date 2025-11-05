@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Cookies from "js-cookie";
 import Link from "next/link";
+import Image from "next/image";
 
 interface UserInfo {
   _id: string;
@@ -152,10 +153,12 @@ const Navbar: React.FC = () => {
             >
               <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-700 rounded-full flex items-center justify-center">
                 {authState.user?.avatar ? (
-                  <img
+                  <Image
                     src={authState.user.avatar}
                     alt="avatar"
-                    className="w-full h-full rounded-full object-cover"
+                    width={32}
+                    height={32}
+                    className="rounded-full object-cover"
                   />
                 ) : (
                   <User className="text-white h-4 w-4" />
