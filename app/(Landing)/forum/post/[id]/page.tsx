@@ -249,6 +249,7 @@ export default async function PostDetailPage({
               initialStats={post.stats}
             />
           </div>
+
         </div>
       </div>
     </div>
