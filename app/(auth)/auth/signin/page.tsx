@@ -3,6 +3,15 @@ import React, { useState } from "react";
 import { Car, Shield, Users, CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+<<<<<<< Updated upstream
+=======
+import {
+  GoogleOAuthProvider,
+  GoogleLogin,
+  CredentialResponse,
+} from "@react-oauth/google";
+import { FcGoogle } from "react-icons/fc";
+>>>>>>> Stashed changes
 
 export default function AutoEscrowAuth() {
   const router = useRouter();
@@ -20,6 +29,78 @@ export default function AutoEscrowAuth() {
     rememberMe: false,
   });
 
+<<<<<<< Updated upstream
+=======
+  const getFriendlyErrorMessage = (message: string): string => {
+    // Default message for unknown errors
+    let friendlyMessage = "An unexpected error occurred. Please try again.";
+
+    if (!message) return friendlyMessage;
+
+    const lowerCaseMessage = message.toLowerCase();
+
+    if (
+      lowerCaseMessage.includes("invalid credentials") ||
+      lowerCaseMessage.includes("user not found")
+    ) {
+      friendlyMessage =
+        "Incorrect email or password. Please check your details and try again.";
+    } else if (lowerCaseMessage.includes("already exists")) {
+      friendlyMessage =
+        "An account with this email already exists. Please sign in or use a different email.";
+    } else if (lowerCaseMessage.includes("google sign-in failed")) {
+      friendlyMessage =
+        "Could not complete Google Sign-In. Please try again in a moment.";
+    } else if (lowerCaseMessage.includes("password must be")) {
+      friendlyMessage =
+        "Your password is not strong enough. Please follow the requirements below.";
+    }
+    return friendlyMessage;
+  };
+
+  const handleGoogleSignIn = async (credentialResponse: CredentialResponse) => {
+    setGoogleLoading(true);
+    setError(null);
+    const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+
+    try {
+      // The backend expects an ID token, which is in credentialResponse.credential
+      const idToken = credentialResponse.credential;
+      const response = await fetch(`${apiBaseUrl}/auth/google`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token: idToken }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Google Sign-In failed.");
+      }
+
+      if (data.data.token) {
+        Cookies.set("token", data.data.token, { expires: 7, secure: true });
+      }
+      if (data.data.user) {
+        localStorage.setItem("user_info", JSON.stringify(data.data.user));
+      }
+
+      router.push("/forum/home");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(getFriendlyErrorMessage(err.message));
+      } else {
+        setError(getFriendlyErrorMessage("An unexpected error occurred."));
+      }
+      console.error("Google authentication error:", err);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+>>>>>>> Stashed changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -332,6 +413,19 @@ export default function AutoEscrowAuth() {
                       >
                         {loading ? "Creating Account..." : "Create Account"}
                       </button>
+<<<<<<< Updated upstream
+=======
+
+                      <div className="w-full flex items-center justify-center my-2">
+                        <GoogleLogin
+                          onSuccess={handleGoogleSignIn}
+                          onError={() => {
+                            setError("Google Sign-In failed. Please try again.");
+                          }}
+                          useOneTap
+                        />
+                      </div>
+>>>>>>> Stashed changes
                     </form>
                   </div>
                 ) : (
@@ -406,6 +500,7 @@ export default function AutoEscrowAuth() {
                       >
                         {loading ? "Signing In..." : "Sign In"}
                       </button>
+<<<<<<< Updated upstream
                     </form>
                   </div>
                 )}
@@ -427,6 +522,39 @@ export default function AutoEscrowAuth() {
                     Enter your email address and we&apos;ll send you a link to
                     reset your password.
                   </p>
+=======
+
+                      <GoogleLogin
+                        onSuccess={handleGoogleSignIn}
+                        onError={() => {
+                          setError("Google Sign-In failed. Please try again.");
+                        }}
+                        useOneTap
+                        render={({
+                          onClick,
+                          disabled,
+                        }: {
+                          onClick: () => void;
+                          disabled?: boolean;
+                        }) => (
+                          <button
+                            type="button"
+                            onClick={onClick}
+                            disabled={disabled || googleLoading}
+                            className="w-full flex items-center justify-center gap-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:bg-slate-600 disabled:cursor-not-allowed"
+                          >
+                            {googleLoading ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                      <div className="w-full flex items-center justify-center my-2">
+                        <GoogleLogin
+                          onSuccess={handleGoogleSignIn}
+                          onError={() => {
+                            setError("Google Sign-In failed. Please try again.");
+                          }}
+                          useOneTap
+                        />
+                      </div>
+>>>>>>> Stashed changes
                 </div>
 
                 <div className="space-y-4">
