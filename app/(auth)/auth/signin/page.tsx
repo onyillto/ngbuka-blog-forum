@@ -100,6 +100,9 @@ export default function AutoEscrowAuth() {
     }
   };
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -425,6 +428,9 @@ export default function AutoEscrowAuth() {
                           useOneTap
                         />
                       </div>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                     </form>
                   </div>
@@ -501,6 +507,7 @@ export default function AutoEscrowAuth() {
                         {loading ? "Signing In..." : "Sign In"}
                       </button>
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                     </form>
                   </div>
                 )}
@@ -523,6 +530,8 @@ export default function AutoEscrowAuth() {
                     reset your password.
                   </p>
 =======
+=======
+>>>>>>> Stashed changes
 
                       <GoogleLogin
                         onSuccess={handleGoogleSignIn}
@@ -554,6 +563,9 @@ export default function AutoEscrowAuth() {
                           useOneTap
                         />
                       </div>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                 </div>
 
