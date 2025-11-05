@@ -172,7 +172,8 @@ export default function EditProfileModal({
                 Edit Profile
               </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Update your profile information and click save when you're done.
+                Update your profile information and click save when you&apos;re
+                done.
               </p>
             </div>
             <button
