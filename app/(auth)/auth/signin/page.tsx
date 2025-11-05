@@ -1,15 +1,22 @@
 "use client";
 import React, { useState } from "react";
-import { Car, Shield, Users, CheckCircle } from "lucide-react";
+import { Car, Shield, Users, CheckCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+import {
+  GoogleOAuthProvider,
+  
+  useGoogleLogin,
+} from "@react-oauth/google";
+import { FcGoogle } from "react-icons/fc";
 
-export default function AutoEscrowAuth() {
+function AutoEscrowAuth() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("signup");
   const [view, setView] = useState("auth"); // 'auth', 'forgot', 'reset'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -20,6 +27,84 @@ export default function AutoEscrowAuth() {
     rememberMe: false,
   });
 
+  const getFriendlyErrorMessage = (message: string): string => {
+    // Default message for unknown errors
+    let friendlyMessage = "An unexpected error occurred. Please try again.";
+
+    if (!message) return friendlyMessage;
+
+    const lowerCaseMessage = message.toLowerCase();
+
+    if (
+      lowerCaseMessage.includes("invalid credentials") ||
+      lowerCaseMessage.includes("user not found")
+    ) {
+      friendlyMessage =
+        "Incorrect email or password. Please check your details and try again.";
+    } else if (lowerCaseMessage.includes("already exists")) {
+      friendlyMessage =
+        "An account with this email already exists. Please sign in or use a different email.";
+    } else if (lowerCaseMessage.includes("google sign-in failed")) {
+      friendlyMessage =
+        "Could not complete Google Sign-In. Please try again in a moment.";
+    } else if (lowerCaseMessage.includes("password must be")) {
+      friendlyMessage =
+        "Your password is not strong enough. Please follow the requirements below.";
+    }
+    return friendlyMessage;
+  };
+
+  const handleGoogleSignIn = async (accessToken: string) => {
+    setGoogleLoading(true);
+    setError(null);
+    const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+
+    try {
+      // The user requested to call the backend endpoint /google
+      // Based on existing code, the full path is likely /auth/google
+      const response = await fetch(`${apiBaseUrl}/auth/google`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token: accessToken }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Google Sign-In failed.");
+      }
+
+      if (data.data.token) {
+        Cookies.set("token", data.data.token, { expires: 7, secure: true });
+      }
+      if (data.data.user) {
+        localStorage.setItem("user_info", JSON.stringify(data.data.user));
+      }
+
+      router.push("/forum/home");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(getFriendlyErrorMessage(err.message));
+      } else {
+        setError(getFriendlyErrorMessage("An unexpected error occurred."));
+      }
+      console.error("Google authentication error:", err);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: (tokenResponse) => {
+      handleGoogleSignIn(tokenResponse.access_token);
+    },
+    onError: (error) => {
+      console.error("Google Login Error:", error);
+      setError("Google Sign-In failed. Please try again.");
+    },
+  });
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -75,8 +160,12 @@ export default function AutoEscrowAuth() {
 
       // Redirect to a dashboard or home page on success
       router.push("/forum/home");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(getFriendlyErrorMessage(err.message));
+      } else {
+        setError(getFriendlyErrorMessage("An unexpected error occurred."));
+      }
       console.error("Authentication error:", err);
     } finally {
       setLoading(false);
@@ -332,6 +421,30 @@ export default function AutoEscrowAuth() {
                       >
                         {loading ? "Creating Account..." : "Create Account"}
                       </button>
+
+                      <div className="relative flex items-center py-2">
+                        <div className="flex-grow border-t border-slate-600"></div>
+                        <span className="flex-shrink mx-4 text-slate-400 text-sm">
+                          OR
+                        </span>
+                        <div className="flex-grow border-t border-slate-600"></div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => googleLogin()}
+                        disabled={googleLoading}
+                        className="w-full flex items-center justify-center gap-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:bg-slate-600 disabled:cursor-not-allowed"
+                      >
+                        {googleLoading ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <FcGoogle className="w-5 h-5" />
+                        )}
+                        {googleLoading
+                          ? "Signing up..."
+                          : "Sign up with Google"}
+                      </button>
                     </form>
                   </div>
                 ) : (
@@ -405,6 +518,30 @@ export default function AutoEscrowAuth() {
                         className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:bg-slate-600 disabled:cursor-not-allowed"
                       >
                         {loading ? "Signing In..." : "Sign In"}
+                      </button>
+
+                      <div className="relative flex items-center py-2">
+                        <div className="flex-grow border-t border-slate-600"></div>
+                        <span className="flex-shrink mx-4 text-slate-400 text-sm">
+                          OR
+                        </span>
+                        <div className="flex-grow border-t border-slate-600"></div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => googleLogin()}
+                        disabled={googleLoading}
+                        className="w-full flex items-center justify-center gap-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:bg-slate-600 disabled:cursor-not-allowed"
+                      >
+                        {googleLoading ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <FcGoogle className="w-5 h-5" />
+                        )}
+                        {googleLoading
+                          ? "Signing in..."
+                          : "Sign in with Google"}
                       </button>
                     </form>
                   </div>
@@ -525,5 +662,24 @@ export default function AutoEscrowAuth() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AutoEscrowAuthPage() {
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  if (!googleClientId) {
+    // This helps prevent app crashes if the client ID is missing.
+    // You might want to log this error to a monitoring service.
+    console.error(
+      "Google Client ID is not configured. Google Sign-In will be disabled."
+    );
+    return <AutoEscrowAuth />;
+  }
+
+  return (
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <AutoEscrowAuth />
+    </GoogleOAuthProvider>
   );
 }
