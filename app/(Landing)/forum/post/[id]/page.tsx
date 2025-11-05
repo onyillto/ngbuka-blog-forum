@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import PostInteractionWrapper from "./PostInteractionWrapper";
 
-// Keep your interface definitions
 interface Author {
   _id: string;
   firstName: string;
@@ -48,6 +47,10 @@ interface Post {
   };
 }
 
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
 async function getPost(id: string): Promise<Post | null> {
   try {
     const response = await axios.get(
@@ -63,12 +66,9 @@ async function getPost(id: string): Promise<Post | null> {
   }
 }
 
-export default async function PostDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const post = await getPost(params.id);
+export default async function PostDetailPage({ params }: Props) {
+  const { id } = await params;
+  const post = await getPost(id);
 
   if (!post) {
     notFound();
@@ -77,7 +77,6 @@ export default async function PostDetailPage({
   return (
     <div className="min-h-screen bg-gray-50">
       <div>
-        {/* Back Button */}
         <Link
           href="/forum/home"
           className="mb-4 flex items-center text-gray-600 hover:text-gray-900 transition-colors px-4 pt-4"
@@ -88,33 +87,28 @@ export default async function PostDetailPage({
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            {" "}
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
               d="M15 19l-7-7 7-7"
-            />{" "}
+            />
           </svg>
           Back to Forum
         </Link>
 
-        {/* Category Badge */}
         <div className="mb-4 px-4">
           <span className="inline-block bg-blue-100 text-blue-800 rounded-full px-4 py-1 text-sm font-medium">
             {post.category.name}
           </span>
         </div>
 
-        {/* Post Card */}
         <div className="bg-white overflow-hidden">
-          {/* Post Header */}
           <div className="p-6 border-b border-gray-200">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               {post.title}
             </h1>
 
-            {/* Author Info */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center space-x-3">
                 {post.author.avatar && (
@@ -147,7 +141,6 @@ export default async function PostDetailPage({
                 </div>
               </div>
 
-              {/* Stats */}
               <div className="flex items-center space-x-4 text-gray-600">
                 <div className="flex items-center space-x-1">
                   <svg
@@ -191,9 +184,7 @@ export default async function PostDetailPage({
             </div>
           </div>
 
-          {/* Post Content */}
           <div className="p-6">
-            {/* Tags */}
             {post.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-6">
                 {post.tags.map((tag, index) => (
@@ -207,14 +198,12 @@ export default async function PostDetailPage({
               </div>
             )}
 
-            {/* Content Text */}
             <div className="mb-6">
               <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">
                 {post.content}
               </p>
             </div>
 
-            {/* Images */}
             {post.images && post.images.length > 0 && (
               <div className="mb-6">
                 <div
@@ -230,14 +219,13 @@ export default async function PostDetailPage({
                       rel="noopener noreferrer"
                       className="rounded-lg overflow-hidden bg-gray-100 group"
                     >
-                      {" "}
                       <Image
                         src={image}
                         alt={`Post image ${index + 1}`}
                         width={500}
                         height={256}
                         className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                      />{" "}
+                      />
                     </a>
                   ))}
                 </div>

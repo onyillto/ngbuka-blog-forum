@@ -7,13 +7,10 @@ import {
   MessageCircle,
   Zap,
   Car,
-  
   Star,
-  
   Settings,
   Home,
   User,
-  
 } from "lucide-react";
 
 interface Category {
@@ -27,20 +24,9 @@ interface Category {
 const ForumSidebar = () => {
   const [openCategories, setOpenCategories] = useState(true);
   const [activeCategory, setActiveCategory] = useState("home");
-  const [isMobile, setIsMobile] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
-  // Check if we're on mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {

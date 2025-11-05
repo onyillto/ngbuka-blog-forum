@@ -5,14 +5,7 @@ import CreatePostModal, { PostPayload } from "./CreatePostModal";
 import Cookies from "js-cookie";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
-import {
-  MessageIcon,
-  CheckCircleIcon,
-  UserIcon,
-  HeartIcon,
-  PlusIcon,
-  Loader2,
-} from "./Icons";
+import { MessageIcon, HeartIcon, PlusIcon, Loader2 } from "./Icons";
 
 interface Author {
   _id: string;
@@ -148,6 +141,7 @@ export const TrendingDiscussions = ({
   }, [currentPage, hasMore, loadingMore, loading, fetchPosts]);
 
   useEffect(() => {
+    const node = observerRef.current; // Capture the current ref value
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -157,14 +151,10 @@ export const TrendingDiscussions = ({
       { threshold: 1 }
     );
 
-    if (observerRef.current) {
-      observer.observe(observerRef.current);
-    }
+    if (node) observer.observe(node);
 
     return () => {
-      if (observerRef.current) {
-        observer.unobserve(observerRef.current);
-      }
+      if (node) observer.unobserve(node);
     };
   }, [loadMore]);
 

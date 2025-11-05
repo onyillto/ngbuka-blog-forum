@@ -18,6 +18,28 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
+interface Post {
+  id: number;
+  user: {
+    name: string;
+    username: string;
+    avatar: string;
+    verified: boolean;
+  };
+  category: string;
+  title: string;
+  content: string;
+  tags: string[];
+  stats: {
+    likes: number;
+    replies: number;
+    views: number;
+  };
+  date: string;
+  image: string | null;
+  isAI: boolean;
+}
+
 const DiscussionFeedSection = () => {
   const [activeTab, setActiveTab] = useState("trending");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -72,11 +94,11 @@ const DiscussionFeedSection = () => {
     },
   ];
 
-  const handleTabChange = (tabId) => {
+  const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
   };
 
-  const PostCard = ({ post }) => {
+  const PostCard = ({ post }: { post: Post }) => {
     const [liked, setLiked] = useState(false);
 
     return (
