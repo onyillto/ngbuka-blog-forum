@@ -7,14 +7,13 @@ import {
   MessageCircle,
   Zap,
   Car,
-  ShoppingBag,
+  
   Star,
-  Calendar,
-  Users,
+  
   Settings,
   Home,
   User,
-  LogOut,
+  
 } from "lucide-react";
 
 interface Category {
