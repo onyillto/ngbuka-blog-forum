@@ -33,7 +33,7 @@ interface Post {
   category: Category;
   tags: string[];
   views: number;
-  likes: any[];
+  likes: string[];
   commentCount: number;
   isPinned: boolean;
   isLocked: boolean;
@@ -249,7 +249,6 @@ export default async function PostDetailPage({
               initialStats={post.stats}
             />
           </div>
-
         </div>
       </div>
     </div>

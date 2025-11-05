@@ -9,7 +9,7 @@ import CreatePostModal, {
 } from "../../../component/CreatePostModal";
 import {
   MessageIcon,
-  UserIcon,
+  
   FireIcon,
   SearchIcon,
   HeartIcon,
