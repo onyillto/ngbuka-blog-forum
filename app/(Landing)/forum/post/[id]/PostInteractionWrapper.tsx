@@ -186,8 +186,13 @@ export default function PostInteractionWrapper({
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BaseURL}/comment/${postId}/comments`
       );
-      if (response.data.success && response.data.data.comments) {
-        setComments(response.data.data.comments);
+      if (response.data.success && response.data.data) {
+        const commentData = response.data.data;
+        setComments(commentData.comments || []);
+        setStats((prevStats) => ({
+          ...prevStats,
+          commentCount: commentData.total || prevStats.commentCount,
+        }));
       }
     } catch (error) {
       console.error("Error fetching comments:", error);
@@ -252,8 +257,10 @@ export default function PostInteractionWrapper({
     if (confirm("Are you sure you want to delete this comment?")) {
       try {
         await axios.delete(
-          `${process.env.NEXT_PUBLIC_BaseURL}/comment/${commentId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          `${process.env.NEXT_PUBLIC_BaseURL}/comment/${commentId}`, // The URL
+          {
+            headers: { Authorization: `Bearer ${token}` }, // The config object with headers
+          }
         );
         fetchComments(); // Refetch to show updated state
       } catch (error) {
