@@ -5,7 +5,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import Image from "next/image";
 import { Heart, MessageSquare, Send, CornerDownRight } from "lucide-react";
-
+import { Trash2 } from "lucide-react";
 interface CommentAuthor {
   _id: string;
   firstName: string;
@@ -19,6 +19,8 @@ interface Comment {
   author: CommentAuthor;
   createdAt: string;
   replies: Comment[];
+  isDeleted?: boolean;
+  deletedAt?: string;
 }
 
 interface PostInteractionWrapperProps {
@@ -29,6 +31,12 @@ interface PostInteractionWrapperProps {
     commentCount: number;
     views: number;
   };
+}
+
+interface CurrentUser {
+  id: string;
+  role: string;
+  avatar?: string;
 }
 
 const formatTimeAgo = (dateString: string) => {
@@ -52,9 +60,13 @@ const formatTimeAgo = (dateString: string) => {
 const CommentComponent = ({
   comment,
   onReply,
+  onDelete,
+  currentUser,
 }: {
   comment: Comment;
   onReply: (content: string, parentId: string) => void;
+  onDelete: (commentId: string) => void;
+  currentUser: CurrentUser | null;
 }) => {
   const [replyContent, setReplyContent] = useState("");
   const [showReplyForm, setShowReplyForm] = useState(false);
@@ -67,6 +79,22 @@ const CommentComponent = ({
     setShowReplyForm(false);
   };
 
+  const canDelete = currentUser && currentUser.id === comment.author._id;
+
+  if (comment.isDeleted) {
+    return (
+      <div className="flex space-x-4">
+        <div className="w-10 h-10 bg-gray-200 rounded-full" />
+        <div className="flex-1">
+          <div className="bg-gray-100 rounded-lg p-3">
+            <p className="text-sm text-gray-500 italic">
+              Comment deleted by user.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="flex space-x-4">
       <Image
@@ -88,13 +116,23 @@ const CommentComponent = ({
           </div>
           <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
         </div>
-        <button
-          onClick={() => setShowReplyForm(!showReplyForm)}
-          className="text-xs font-semibold text-gray-500 hover:text-gray-800 mt-1 flex items-center"
-        >
-          <CornerDownRight size={14} className="mr-1" />
-          Reply
-        </button>
+        <div className="flex items-center space-x-4 mt-1">
+          <button
+            onClick={() => setShowReplyForm(!showReplyForm)}
+            className="text-xs font-semibold text-gray-500 hover:text-gray-800 flex items-center"
+          >
+            <CornerDownRight size={14} className="mr-1" />
+            Reply
+          </button>
+          {canDelete && (
+            <button
+              onClick={() => onDelete(comment._id)}
+              className="text-xs font-semibold text-red-500 hover:text-red-700 flex items-center"
+            >
+              <Trash2 size={14} className="mr-1" /> Delete
+            </button>
+          )}
+        </div>
 
         {showReplyForm && (
           <form onSubmit={handleReplySubmit} className="mt-2 flex space-x-2">
@@ -121,6 +159,8 @@ const CommentComponent = ({
                 key={reply._id}
                 comment={reply}
                 onReply={onReply}
+                onDelete={onDelete}
+                currentUser={currentUser}
               />
             ))}
           </div>
@@ -138,6 +178,7 @@ export default function PostInteractionWrapper({
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isLoadingComments, setIsLoadingComments] = useState(true);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
   const fetchComments = useCallback(async () => {
     try {
@@ -156,6 +197,16 @@ export default function PostInteractionWrapper({
   }, [postId]);
 
   useEffect(() => {
+    const userInfoStr = localStorage.getItem("user_info");
+    if (userInfoStr) {
+      try {
+        const user = JSON.parse(userInfoStr);
+        setCurrentUser({ id: user._id, role: user.role, avatar: user.avatar });
+      } catch (e) {
+        console.error("Failed to parse user info", e);
+      }
+    }
+
     fetchComments();
   }, [fetchComments]);
 
@@ -191,6 +242,26 @@ export default function PostInteractionWrapper({
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    const token = Cookies.get("token");
+    if (!token) {
+      alert("Please log in to delete comments.");
+      return;
+    }
+
+    if (confirm("Are you sure you want to delete this comment?")) {
+      try {
+        await axios.delete(
+          `${process.env.NEXT_PUBLIC_BaseURL}/comment/${commentId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        fetchComments(); // Refetch to show updated state
+      } catch (error) {
+        console.error("Error deleting comment:", error);
+        alert("Failed to delete comment.");
+      }
+    }
+  };
   const handleLike = async () => {
     const token = Cookies.get("token");
     if (!token) {
@@ -279,6 +350,8 @@ export default function PostInteractionWrapper({
                 key={comment._id}
                 comment={comment}
                 onReply={handlePostComment}
+                onDelete={handleDeleteComment}
+                currentUser={currentUser}
               />
             ))
           ) : (
