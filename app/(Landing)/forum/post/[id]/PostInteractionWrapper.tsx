@@ -18,7 +18,7 @@ interface Comment {
   content: string;
   author: CommentAuthor;
   createdAt: string;
-  children: Comment[];
+  replies: Comment[];
 }
 
 interface PostInteractionWrapperProps {
@@ -114,12 +114,12 @@ const CommentComponent = ({
           </form>
         )}
 
-        {comment.children && comment.children.length > 0 && (
+        {comment.replies && comment.replies.length > 0 && (
           <div className="mt-4 space-y-4 pl-6 border-l-2 border-gray-200">
-            {comment.children.map((child) => (
+            {comment.replies.map((reply) => (
               <CommentComponent
-                key={child._id}
-                comment={child}
+                key={reply._id}
+                comment={reply}
                 onReply={onReply}
               />
             ))}
@@ -145,8 +145,8 @@ export default function PostInteractionWrapper({
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BaseURL}/comment/${postId}/comments`
       );
-      if (response.data.success) {
-        setComments(response.data.data);
+      if (response.data.success && response.data.data.comments) {
+        setComments(response.data.data.comments);
       }
     } catch (error) {
       console.error("Error fetching comments:", error);

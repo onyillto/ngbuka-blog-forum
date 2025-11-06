@@ -198,12 +198,6 @@ export default async function PostDetailPage({ params }: Props) {
               </div>
             )}
 
-            <div className="mb-6">
-              <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">
-                {post.content}
-              </p>
-            </div>
-
             {post.images && post.images.length > 0 && (
               <div className="mb-6">
                 <div
@@ -232,11 +226,22 @@ export default async function PostDetailPage({ params }: Props) {
               </div>
             )}
 
+            <div className="mb-6">
+              <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">
+                {post.content}
+              </p>
+            </div>
+
             <PostInteractionWrapper
               postId={post._id}
               initialStats={post.stats}
             />
           </div>
+
+          {/* Replies/Comments Section */}
+          {/* <div className="p-6">
+            <CommentSection postId={post._id} />
+          </div> */}
         </div>
       </div>
     </div>
