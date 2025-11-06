@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 import Cookies from "js-cookie";
 import Image from "next/image";
@@ -176,6 +177,7 @@ export default function PostInteractionWrapper({
   postId,
   initialStats,
 }: PostInteractionWrapperProps) {
+  const router = useRouter();
   const [stats, setStats] = useState(initialStats);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -227,6 +229,7 @@ export default function PostInteractionWrapper({
     const token = Cookies.get("token");
     if (!token) {
       toast.error("Please log in to comment.");
+      router.push("/auth/signin");
       return;
     }
 
@@ -248,8 +251,16 @@ export default function PostInteractionWrapper({
       fetchComments(); // Refetch comments to show the new one
       toast.success("Comment posted successfully!");
     } catch (error) {
-      console.error("Error posting comment:", error);
-      toast.error("Failed to post comment.");
+      const errorMessage =
+        axios.isAxiosError(error) && error.response?.data?.message
+          ? error.response.data.message
+          : "Failed to post comment.";
+      if (errorMessage.includes("Not authorized")) {
+        toast.error("Your session has expired. Please log in again.");
+        router.push("/auth/signin");
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -263,7 +274,8 @@ export default function PostInteractionWrapper({
 
     const token = Cookies.get("token");
     if (!token || !commentToDelete) {
-      toast.error("Could not delete comment. Please try again.");
+      toast.error("Please log in to delete comments.");
+      router.push("/auth/signin");
       return;
     }
 
@@ -278,8 +290,16 @@ export default function PostInteractionWrapper({
       fetchComments(); // Refetch to show updated state
       toast.success("Comment deleted successfully.");
     } catch (error) {
-      console.error("Error deleting comment:", error);
-      toast.error("Failed to delete comment.");
+      const errorMessage =
+        axios.isAxiosError(error) && error.response?.data?.message
+          ? error.response.data.message
+          : "Failed to delete comment.";
+      if (errorMessage.includes("Not authorized")) {
+        toast.error("Your session has expired. Please log in again.");
+        router.push("/auth/signin");
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
@@ -290,7 +310,8 @@ export default function PostInteractionWrapper({
   const handleLike = async () => {
     const token = Cookies.get("token");
     if (!token) {
-      alert("Please log in to like a post.");
+      toast.error("Please log in to like a post.");
+      router.push("/auth/signin");
       return;
     }
 
@@ -308,7 +329,13 @@ export default function PostInteractionWrapper({
         { headers: { Authorization: `Bearer ${token}` } }
       );
     } catch (error) {
-      console.error("Failed to like post:", error);
+      const errorMessage =
+        axios.isAxiosError(error) && error.response?.data?.message
+          ? error.response.data.message
+          : "Failed to like post.";
+      if (errorMessage.includes("Not authorized")) {
+        toast.error("Your session has expired. Please log in again.");
+      }
       // Revert optimistic update on failure
       setStats((prev) => ({
         ...prev,

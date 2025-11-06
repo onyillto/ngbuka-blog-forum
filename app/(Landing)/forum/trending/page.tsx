@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import CreatePostModal, {
   PostPayload,
 } from "../../../component/CreatePostModal";
 import Cookies from "js-cookie";
+import { toast } from "sonner";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import {
@@ -73,6 +75,7 @@ const TrendingPage = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const observerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const fetchPosts = useCallback(
     async (page: number, append = false) => {
@@ -88,11 +91,18 @@ const TrendingPage = () => {
           throw new Error(result.message || "Failed to fetch posts.");
         }
 
+        const filteredData = result.data.filter(
+          (post: Post) => post.commentCount > 10
+        );
+
         if (append) {
-          setDiscussions((prev) => [...prev, ...result.data]);
+          setDiscussions((prev) => {
+            console.log("Appending data:", filteredData);
+            return [...prev, ...filteredData];
+          });
         } else {
           // Check if the current user has liked each post
-          const postsWithLikeStatus = result.data.map((post: Post) => ({
+          const postsWithLikeStatus = filteredData.map((post: Post) => ({
             ...post,
             hasLiked: currentUserId
               ? post.likes.includes(currentUserId)
@@ -167,8 +177,8 @@ const TrendingPage = () => {
 
     const token = Cookies.get("token");
     if (!token) {
-      // Optionally, redirect to login or show a message
-      console.log("User not logged in. Cannot like post.");
+      toast.error("Please log in to like a post.");
+      router.push("/auth/signin");
       return;
     }
 
@@ -198,7 +208,13 @@ const TrendingPage = () => {
       // The UI is already updated, so we don't need to do anything on success.
       // You could re-fetch for consistency, but it's not necessary for a good UX.
     } catch (error) {
-      console.error("Failed to like post:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to like post.";
+      if (errorMessage.includes("Not authorized")) {
+        toast.error("Your session has expired. Please log in again.");
+        router.push("/auth/signin");
+      }
+
       // Revert the optimistic update on error
       setDiscussions((prevDiscussions) =>
         prevDiscussions.map((disc) => {

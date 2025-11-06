@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Cookies from "js-cookie";
 import Image from "next/image";
@@ -16,7 +17,7 @@ import {
   PlusIcon,
   EditIcon,
   TrashIcon,
-} from "../../../component/index";
+} from "../../../component/Icons";
 import { Eye, Filter, Loader2, AlertTriangle } from "lucide-react";
 
 interface Post {
@@ -71,6 +72,7 @@ const MyPostsPage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   const formatTimeAgo = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -118,9 +120,14 @@ const MyPostsPage = () => {
 
       setPosts(result.data);
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred";
+      if (errorMessage.includes("Not authorized")) {
+        toast.error("Your session has expired. Please log in again.");
+        router.push("/auth/signin");
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -128,7 +135,7 @@ const MyPostsPage = () => {
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreatePost = async (data: PostPayload) => {
     setIsSavingPost(true);
@@ -160,9 +167,7 @@ const MyPostsPage = () => {
     try {
       const response = await fetch(`${apiBaseUrl}/posts`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       });
 
@@ -194,6 +199,7 @@ const MyPostsPage = () => {
     const token = Cookies.get("token");
     if (!token) {
       toast.error("Authentication error. Please log in again.");
+      router.push("/auth/signin");
       return;
     }
 
@@ -216,9 +222,14 @@ const MyPostsPage = () => {
       toast.success("Post deleted successfully!");
       await fetchPosts(); // Refresh the list
     } catch (err: unknown) {
-      toast.error(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred";
+      if (errorMessage.includes("Not authorized")) {
+        toast.error("Your session has expired. Please log in again.");
+        router.push("/auth/signin");
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
@@ -280,17 +291,14 @@ const MyPostsPage = () => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-start">
-              <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+              <div className="mx-auto  flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                 <AlertTriangle
                   className="h-6 w-6 text-red-600"
                   aria-hidden="true"
                 />
               </div>
               <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                <h3
-                  className="text-lg leading-6 font-medium text-gray-900"
-                  id="modal-title"
-                >
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
                   Delete Post
                 </h3>
                 <div className="mt-2">
@@ -308,15 +316,16 @@ const MyPostsPage = () => {
                 disabled={isDeleting}
                 className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:bg-red-400 disabled:cursor-not-allowed"
               >
-                {isDeleting ? (
+                {isDeleting && (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                ) : null}
+                )}
                 {isDeleting ? "Deleting..." : "Delete"}
               </button>
               <button
                 type="button"
                 onClick={() => setIsDeleteModalOpen(false)}
-                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm"
+                disabled={isDeleting}
+                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
@@ -338,13 +347,13 @@ const MyPostsPage = () => {
                 Manage and track all your forum posts and discussions
               </p>
             </div>
-            <button
+            {/* <button
               onClick={() => setIsCreateModalOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center"
             >
               <PlusIcon className="w-4 h-4 mr-2" />
               New Post
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -470,7 +479,7 @@ const MyPostsPage = () => {
 
                 {/* Author Section */}
                 <div className="flex items-center mb-3">
-                  <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold mr-3">
+                  <div className="relative w-10 h-10 rounded-full  flex items-center justify-center text-white font-semibold mr-3">
                     {post.author && post.author.avatar ? (
                       <Image
                         src={post.author.avatar}
