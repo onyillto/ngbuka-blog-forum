@@ -57,7 +57,7 @@ export const SolvedIssues = () => {
           <CheckCircleIcon className="mr-2 text-green-600" />
           Recently Solved
         </h2>
-        {/* <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+        {/* <button className="text-sm text-blue-800 hover:text-blue-900 font-medium">
           View all
         </button> */}
       </div>
@@ -79,7 +79,7 @@ export const SolvedIssues = () => {
                     SOLVED
                   </div>
                 </div>
-                <h3 className="font-semibold text-gray-900 hover:text-blue-600 transition-colors mb-1">
+                <h3 className="font-semibold text-gray-900 hover:text-blue-800 transition-colors mb-1">
                   {issue.title}
                 </h3>
                 <p className="text-sm text-gray-600 mb-3">{issue.car}</p>
@@ -105,11 +105,11 @@ export const SolvedIssues = () => {
                 <span>{issue.timeAgo}</span>
               </div>
               <div className="flex items-center space-x-3">
-                <div className="flex items-center text-blue-600">
+                <div className="flex items-center text-blue-800">
                   <HeartIcon className="w-4 h-4 mr-1" />
                   <span>{issue.helpful} helpful</span>
                 </div>
-                <button className="text-blue-600 hover:text-blue-700 font-medium">
+                <button className="text-blue-800 hover:text-blue-900 font-medium">
                   View Details →
                 </button>
               </div>
