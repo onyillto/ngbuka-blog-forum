@@ -1,14 +1,29 @@
 "use client";
-import React, { useState } from "react";
-import { Car, Eye, EyeOff, Shield, Users, CheckCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  Car,
+  Eye,
+  EyeOff,
+  Shield,
+  Users,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
 
 export default function ResetPassword() {
+  const router = useRouter();
+  const params = useParams();
+  const [token, setToken] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     password: "",
     confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -18,19 +33,69 @@ export default function ResetPassword() {
     }));
   };
 
-  const handleResetPassword = () => {
+  useEffect(() => {
+    if (params.token) {
+      setToken(Array.isArray(params.token) ? params.token[0] : params.token);
+    }
+  }, [params]);
+
+  const handleResetPassword = async () => {
+    setError(null);
+    setSuccess(null);
+
+    if (!token) {
+      setError("Reset token is missing. Please use the link from your email.");
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
+      setError("Passwords do not match.");
       return;
     }
     if (formData.password.length < 8) {
-      alert("Password must be at least 8 characters long!");
+      setError("Password must be at least 8 characters long.");
       return;
     }
-    console.log("Password reset successfully");
-    alert("Password reset successfully! Redirecting to sign in...");
-    // Redirect to sign in page
+
+    setLoading(true);
+
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      const response = await fetch(
+        `${apiBaseUrl}/auth/reset-password/${token}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: formData.password }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to reset password.");
+      }
+
+      setSuccess("Password reset successfully! Redirecting to sign in...");
+      setTimeout(() => {
+        router.push("/auth/signin");
+      }, 2000);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-center p-4">
+        <p className="text-green-400 text-lg">{success}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
@@ -235,18 +300,24 @@ export default function ResetPassword() {
                 </div>
               )}
 
+              {error && (
+                <p className="text-red-400 text-sm text-center">{error}</p>
+              )}
+
               {/* Reset Button */}
               <button
                 onClick={handleResetPassword}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+                disabled={loading}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center disabled:bg-orange-400 disabled:cursor-not-allowed"
               >
-                Reset Password
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading ? "Resetting..." : "Reset Password"}
               </button>
 
               {/* Back to Sign In */}
               <div className="text-center">
                 <button
-                  onClick={() => (window.location.href = "/auth")}
+                  onClick={() => router.push("/auth/signin")}
                   className="text-slate-400 hover:text-white text-sm"
                 >
                   Back to Sign In

@@ -57,9 +57,9 @@ export const SolvedIssues = () => {
           <CheckCircleIcon className="mr-2 text-green-600" />
           Recently Solved
         </h2>
-        <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+        {/* <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
           View all
-        </button>
+        </button> */}
       </div>
 
       <div className="space-y-4">

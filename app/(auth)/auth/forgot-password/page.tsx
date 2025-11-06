@@ -1,18 +1,41 @@
-'use client'
+"use client";
 import React, { useState } from "react";
-import { Car, Shield, Users, CheckCircle, Mail } from "lucide-react";
+import { Car, Shield, Users, CheckCircle, Mail, Loader2 } from "lucide-react";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!email) {
-      alert("Please enter your email address");
+      setError("Please enter your email address.");
       return;
     }
-    console.log("Password reset email sent to:", email);
-    setIsSubmitted(true);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      const response = await fetch(`${apiBaseUrl}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to send reset link.");
+      }
+      setIsSubmitted(true);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -137,11 +160,21 @@ export default function ForgotPassword() {
                     </div>
                   </div>
 
+                  {error && (
+                    <p className="text-red-400 text-sm text-center -mb-2">
+                      {error}
+                    </p>
+                  )}
+
                   <button
                     onClick={handleSubmit}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+                    disabled={loading}
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center disabled:bg-orange-400 disabled:cursor-not-allowed"
                   >
-                    Send Reset Link
+                    {loading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {loading ? "Sending..." : "Send Reset Link"}
                   </button>
 
                   <div className="text-center pt-2">

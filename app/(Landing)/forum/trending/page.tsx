@@ -348,9 +348,9 @@ const TrendingPage = () => {
           Trending Discussions
         </h2>
         <div className="flex items-center space-x-2">
-          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+          {/* <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
             View all
-          </button>
+          </button> */}
           <button
             onClick={() => setCreatePostModalOpen(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center"
