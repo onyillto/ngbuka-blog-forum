@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Car, Shield, Users, CheckCircle } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 
@@ -322,13 +323,19 @@ function AutoEscrowAuth() {
                       />
                       <label className="text-slate-300 text-sm">
                         I agree to the{" "}
-                        <span className="text-orange-500 cursor-pointer">
+                        <Link
+                          href="/termsofservice"
+                          className="text-orange-500 hover:underline"
+                        >
                           Terms of Service
-                        </span>{" "}
+                        </Link>{" "}
                         and{" "}
-                        <span className="text-orange-500 cursor-pointer">
+                        <Link
+                          href="/privacypolicy"
+                          className="text-orange-500 hover:underline"
+                        >
                           Privacy Policy
-                        </span>
+                        </Link>
                       </label>
                     </div>
 
