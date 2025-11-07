@@ -13,8 +13,8 @@ import {
   Clock,
   TrendingUp,
 } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import Cookies from "js-cookie";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -25,6 +25,7 @@ interface UserInfo {
   email: string;
   fullName?: string;
   avatar?: string;
+  role?: "user" | "dealer" | "admin";
 }
 
 interface AuthState {
@@ -86,7 +87,6 @@ const Navbar: React.FC = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  const router = useRouter();
   const pathname = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
@@ -234,11 +234,11 @@ const Navbar: React.FC = () => {
           <Menu className="h-5 w-5 text-gray-700" />
         </button>
 
-        <Link href="/" className="flex items-center">
+        {/* <Link href="/" className="flex items-center">
           <span className="text-lg font-bold text-orange-600">
             Ngbuka Forum
           </span>
-        </Link>
+        </Link> */}
       </div>
 
       {/* --- CENTER: SEARCH (Desktop) --- */}
@@ -327,8 +327,8 @@ const Navbar: React.FC = () => {
                       className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
                     >
                       {/* Icon */}
-                      <div className="flex-shrink-0 mt-1">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                      <div className="shrink-0 mt-1">
+                        <div className="w-10 h-10 rounded-lg bg-linear-to-br from-orange-100 to-orange-200 flex items-center justify-center">
                           <Search className="h-4 w-4 text-orange-600" />
                         </div>
                       </div>
@@ -360,7 +360,7 @@ const Navbar: React.FC = () => {
                       </div>
 
                       {/* Arrow */}
-                      <div className="flex-shrink-0 mt-3">
+                      <div className="shrink-0 mt-3">
                         <div className="w-6 h-6 rounded-full bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center transition-colors">
                           <svg
                             className="w-3 h-3 text-gray-400 group-hover:text-orange-600 transition-colors"
@@ -383,7 +383,7 @@ const Navbar: React.FC = () => {
 
                 {/* Footer - View All */}
                 {searchResults.length >= 5 && (
-                  <div className="sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent border-t border-gray-100 p-3">
+                  <div className="sticky bottom-0 bg-linear-to-t from-white via-white to-transparent border-t border-gray-100 p-3">
                     <Link
                       href={`/search?q=${encodeURIComponent(searchTerm)}`}
                       onClick={handleResultClick}
@@ -419,7 +419,7 @@ const Navbar: React.FC = () => {
               onClick={() => setIsDropdownOpen((p) => !p)}
               className="flex items-center space-x-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-700 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-linear-to-br from-orange-500 to-orange-700 rounded-full flex items-center justify-center">
                 {authState.user?.avatar ? (
                   <Image
                     src={authState.user.avatar}
@@ -457,6 +457,16 @@ const Navbar: React.FC = () => {
                   <User className="h-4 w-4 mr-3 text-gray-500" />
                   Profile
                 </Link>
+                {authState.user?.role === "admin" && (
+                  <Link
+                    href="/dashboard/users"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    onClick={() => setIsDropdownOpen(false)}
+                  >
+                    <ShieldCheck className="h-4 w-4 mr-3 text-gray-500" />
+                    Dashboard
+                  </Link>
+                )}
                 <Link
                   href="/forum/my-posts"
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -576,8 +586,8 @@ const Navbar: React.FC = () => {
                           onClick={handleResultClick}
                           className="flex items-start gap-3 p-3 hover:bg-gray-50 active:bg-gray-100 transition-colors"
                         >
-                          <div className="flex-shrink-0 mt-1">
-                            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                          <div className="shrink-0 mt-1">
+                            <div className="w-9 h-9 rounded-lg bg-linear-to-br from-orange-100 to-orange-200 flex items-center justify-center">
                               <Search className="h-4 w-4 text-orange-600" />
                             </div>
                           </div>

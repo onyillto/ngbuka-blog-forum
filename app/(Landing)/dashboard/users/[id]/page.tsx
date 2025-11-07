@@ -19,10 +19,8 @@ import {
   ThumbsUp,
   FileText,
   BarChart3,
-  Shield,
   CheckCircle,
   Clock,
-  Hash,
   ArrowLeft,
 } from "lucide-react";
 
@@ -241,7 +239,7 @@ const UserProfilePage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Cover Image */}
-      <div className="relative h-64 bg-gradient-to-r from-blue-800 to-blue-700">
+      <div className="relative h-64 bg-linear-to-r from-blue-800 to-blue-700">
         {user.coverImage && (
           <Image
             src={user.coverImage}
@@ -264,7 +262,7 @@ const UserProfilePage = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
               {/* Avatar */}
-              <div className="relative h-32 w-32 rounded-full border-4 border-white shadow-lg flex-shrink-0 -mt-16">
+              <div className="relative h-32 w-32 rounded-full border-4 border-white shadow-lg shrink-0 -mt-16">
                 <Image
                   src={
                     user.avatar ||
@@ -487,7 +485,7 @@ const UserProfilePage = () => {
                       >
                         <div className="flex gap-4">
                           {post.images[0] && (
-                            <div className="relative h-24 w-32 flex-shrink-0 rounded-lg overflow-hidden">
+                            <div className="relative h-24 w-32 shrink-0 rounded-lg overflow-hidden">
                               <Image
                                 src={post.images[0]}
                                 alt={post.title}
@@ -563,7 +561,7 @@ const UserProfilePage = () => {
                     {comments.data.map((comment) => (
                       <Link
                         key={comment._id}
-                        href={`/forum/post/${comment.post.slug}`}
+                        href={`/forum/post/${comment.post._id}#comment-${comment._id}`}
                         className="block bg-white hover:bg-gray-50 rounded-lg p-6 border border-gray-200 transition-colors"
                       >
                         <div className="mb-3">
@@ -668,7 +666,7 @@ const UserProfilePage = () => {
                 </div>
 
                 {/* Engagement Chart */}
-                <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+                <div className="bg-linear-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
                   <h3 className="font-semibold text-gray-900 mb-4">
                     Engagement Breakdown
                   </h3>

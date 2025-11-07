@@ -188,7 +188,7 @@ export default function CommentSection({ postId }: { postId: string }) {
           onSubmit={handleCommentSubmit}
           className="mb-8 flex items-start space-x-4"
         >
-          <div className="relative w-10 h-10 rounded-full bg-gray-200 flex-shrink-0">
+          <div className="relative w-10 h-10 rounded-full bg-gray-200 shrink-0">
             {currentUser.avatar ? (
               <Image
                 src={currentUser.avatar}

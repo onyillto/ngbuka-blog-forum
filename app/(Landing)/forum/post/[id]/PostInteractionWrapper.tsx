@@ -2,11 +2,18 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import Cookies from "js-cookie";
 import Image from "next/image";
-import { Heart, MessageSquare, Send, CornerDownRight } from "lucide-react";
-import { Trash2, AlertTriangle, X, Loader2 } from "lucide-react";
+import {
+  Heart,
+  MessageSquare,
+  Send,
+  CornerDownRight,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import { Trash2, AlertTriangle,  Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface CommentAuthor {
@@ -65,12 +72,15 @@ const CommentComponent = ({
   onReply,
   onDelete,
   currentUser,
+  isReply = false,
 }: {
   comment: Comment;
   onReply: (content: string, parentId: string) => void;
   onDelete: (commentId: string) => void;
   currentUser: CurrentUser | null;
+  isReply?: boolean;
 }) => {
+  const [showReplies, setShowReplies] = useState(false); // New state for toggling replies
   const [replyContent, setReplyContent] = useState("");
   const [showReplyForm, setShowReplyForm] = useState(false);
 
@@ -120,13 +130,15 @@ const CommentComponent = ({
           <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
         </div>
         <div className="flex items-center space-x-4 mt-1">
-          <button
-            onClick={() => setShowReplyForm(!showReplyForm)}
-            className="text-xs font-semibold text-gray-500 hover:text-gray-800 flex items-center"
-          >
-            <CornerDownRight size={14} className="mr-1" />
-            Reply
-          </button>
+          {!isReply && (
+            <button
+              onClick={() => setShowReplyForm(!showReplyForm)}
+              className="text-xs font-semibold text-gray-500 hover:text-gray-800 flex items-center"
+            >
+              <CornerDownRight size={14} className="mr-1" />
+              Reply
+            </button>
+          )}
           {canDelete && (
             <button
               onClick={() => onDelete(comment._id)}
@@ -137,25 +149,44 @@ const CommentComponent = ({
           )}
         </div>
 
+        {/* Toggle for nested replies */}
+        {comment.replies && comment.replies.length > 0 && (
+          <div className="mt-2">
+            <button
+              onClick={() => setShowReplies(!showReplies)}
+              className="text-xs font-semibold text-gray-500 hover:text-gray-800 flex items-center"
+            >
+              {showReplies ? (
+                <ChevronUp size={14} className="mr-1" />
+              ) : (
+                <ChevronDown size={14} className="mr-1" />
+              )}
+              {showReplies ? "Hide" : "View"} {comment.replies.length}{" "}
+              {comment.replies.length === 1 ? "reply" : "replies"}
+            </button>
+          </div>
+        )}
+
         {showReplyForm && (
           <form onSubmit={handleReplySubmit} className="mt-2 flex space-x-2">
             <input
               type="text"
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
-              placeholder={`Replying to ${comment.author.firstName}...`}
+              placeholder={`Reply to ${comment.author.firstName}...`}
               className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
               type="submit"
               className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
             >
-              <Send size={16} />
+              <Send size={16} className="h-4 w-4" />
             </button>
           </form>
         )}
 
-        {comment.replies && comment.replies.length > 0 && (
+        {/* Conditionally render nested replies */}
+        {showReplies && comment.replies && comment.replies.length > 0 && (
           <div className="mt-4 space-y-4 pl-6 border-l-2 border-gray-200">
             {comment.replies.map((reply) => (
               <CommentComponent
@@ -164,6 +195,7 @@ const CommentComponent = ({
                 onReply={onReply}
                 onDelete={onDelete}
                 currentUser={currentUser}
+                isReply={true}
               />
             ))}
           </div>
@@ -252,7 +284,7 @@ export default function PostInteractionWrapper({
       toast.success("Comment posted successfully!");
     } catch (error) {
       const errorMessage =
-        axios.isAxiosError(error) && error.response?.data?.message
+        error instanceof AxiosError && error.response?.data?.message
           ? error.response.data.message
           : "Failed to post comment.";
       if (errorMessage.includes("Not authorized")) {
@@ -291,7 +323,7 @@ export default function PostInteractionWrapper({
       toast.success("Comment deleted successfully.");
     } catch (error) {
       const errorMessage =
-        axios.isAxiosError(error) && error.response?.data?.message
+        error instanceof AxiosError && error.response?.data?.message
           ? error.response.data.message
           : "Failed to delete comment.";
       if (errorMessage.includes("Not authorized")) {
@@ -330,7 +362,7 @@ export default function PostInteractionWrapper({
       );
     } catch (error) {
       const errorMessage =
-        axios.isAxiosError(error) && error.response?.data?.message
+        error instanceof AxiosError && error.response?.data?.message
           ? error.response.data.message
           : "Failed to like post.";
       if (errorMessage.includes("Not authorized")) {
@@ -417,7 +449,7 @@ export default function PostInteractionWrapper({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-start">
-              <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+              <div className="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                 <AlertTriangle
                   className="h-6 w-6 text-red-600"
                   aria-hidden="true"

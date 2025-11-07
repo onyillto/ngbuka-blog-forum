@@ -70,7 +70,7 @@ export default function ForgotPassword() {
           {/* Features List */}
           <div className="space-y-8">
             <div className="flex gap-4">
-              <div className="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center shrink-0">
                 <Shield className="w-7 h-7 text-orange-500" />
               </div>
               <div>
@@ -85,7 +85,7 @@ export default function ForgotPassword() {
             </div>
 
             <div className="flex gap-4">
-              <div className="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center shrink-0">
                 <Users className="w-7 h-7 text-orange-500" />
               </div>
               <div>
@@ -98,7 +98,7 @@ export default function ForgotPassword() {
             </div>
 
             <div className="flex gap-4">
-              <div className="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center shrink-0">
                 <CheckCircle className="w-7 h-7 text-orange-500" />
               </div>
               <div>
