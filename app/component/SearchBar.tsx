@@ -40,12 +40,12 @@ export const SearchBar = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSearch(e)}
             placeholder="Search for car models, issues, or solutions..."
-            className="w-full pl-10 pr-24 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-24 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent"
           />
           <button
             onClick={handleSearch}
             disabled={isLoading}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-900 hover:bg-blue-800 text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
           >
             {isLoading ? "Searching..." : "Search"}
           </button>

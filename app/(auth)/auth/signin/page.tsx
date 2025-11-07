@@ -3,20 +3,10 @@ import React, { useState } from "react";
 import { Car, Shield, Users, CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-<<<<<<< Updated upstream
-=======
-import {
-  GoogleOAuthProvider,
-  GoogleLogin,
-  CredentialResponse,
-} from "@react-oauth/google";
-import { FcGoogle } from "react-icons/fc";
->>>>>>> Stashed changes
 
-export default function AutoEscrowAuth() {
+function AutoEscrowAuth() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("signup");
-  const [view, setView] = useState("auth"); // 'auth', 'forgot', 'reset'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -29,8 +19,6 @@ export default function AutoEscrowAuth() {
     rememberMe: false,
   });
 
-<<<<<<< Updated upstream
-=======
   const getFriendlyErrorMessage = (message: string): string => {
     // Default message for unknown errors
     let friendlyMessage = "An unexpected error occurred. Please try again.";
@@ -58,52 +46,6 @@ export default function AutoEscrowAuth() {
     return friendlyMessage;
   };
 
-  const handleGoogleSignIn = async (credentialResponse: CredentialResponse) => {
-    setGoogleLoading(true);
-    setError(null);
-    const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
-
-    try {
-      // The backend expects an ID token, which is in credentialResponse.credential
-      const idToken = credentialResponse.credential;
-      const response = await fetch(`${apiBaseUrl}/auth/google`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token: idToken }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "Google Sign-In failed.");
-      }
-
-      if (data.data.token) {
-        Cookies.set("token", data.data.token, { expires: 7, secure: true });
-      }
-      if (data.data.user) {
-        localStorage.setItem("user_info", JSON.stringify(data.data.user));
-      }
-
-      router.push("/forum/home");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(getFriendlyErrorMessage(err.message));
-      } else {
-        setError(getFriendlyErrorMessage("An unexpected error occurred."));
-      }
-      console.error("Google authentication error:", err);
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -159,28 +101,16 @@ export default function AutoEscrowAuth() {
 
       // Redirect to a dashboard or home page on success
       router.push("/forum/home");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(getFriendlyErrorMessage(err.message));
+      } else {
+        setError(getFriendlyErrorMessage("An unexpected error occurred."));
+      }
       console.error("Authentication error:", err);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleForgotPassword = () => {
-    console.log("Password reset email sent to:", formData.email);
-    alert("Password reset link sent to your email!");
-  };
-
-  const handleResetPassword = () => {
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
-    console.log("Password reset successfully");
-    alert("Password reset successfully! Redirecting to sign in...");
-    setView("auth");
-    setActiveTab("signin");
   };
 
   return (
@@ -215,7 +145,7 @@ export default function AutoEscrowAuth() {
           {/* Features List */}
           <div className="space-y-8">
             <div className="flex gap-4">
-              <div className="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center shrink-0">
                 <Shield className="w-7 h-7 text-orange-500" />
               </div>
               <div>
@@ -230,7 +160,7 @@ export default function AutoEscrowAuth() {
             </div>
 
             <div className="flex gap-4">
-              <div className="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center shrink-0">
                 <Users className="w-7 h-7 text-orange-500" />
               </div>
               <div>
@@ -243,7 +173,7 @@ export default function AutoEscrowAuth() {
             </div>
 
             <div className="flex gap-4">
-              <div className="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center shrink-0">
                 <CheckCircle className="w-7 h-7 text-orange-500" />
               </div>
               <div>
@@ -275,395 +205,232 @@ export default function AutoEscrowAuth() {
           </div>
 
           <div className="bg-slate-800/90 backdrop-blur-sm rounded-3xl p-8 shadow-2xl">
-            {view === "auth" ? (
-              <>
-                {/* Tab Buttons */}
-                <div className="flex gap-4 mb-8">
-                  <button
-                    onClick={() => setActiveTab("signin")}
-                    className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all ${
-                      activeTab === "signin"
-                        ? "bg-slate-700 text-white"
-                        : "bg-transparent text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("signup")}
-                    className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all ${
-                      activeTab === "signup"
-                        ? "bg-orange-500 text-white"
-                        : "bg-transparent text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Sign Up
-                  </button>
+            <>
+              {/* Tab Buttons */}
+              <div className="flex gap-4 mb-8">
+                <button
+                  onClick={() => setActiveTab("signin")}
+                  className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all ${
+                    activeTab === "signin"
+                      ? "bg-slate-700 text-white"
+                      : "bg-transparent text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => setActiveTab("signup")}
+                  className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all ${
+                    activeTab === "signup"
+                      ? "bg-orange-500 text-white"
+                      : "bg-transparent text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Sign Up
+                </button>
+              </div>
+
+              {/* Forms */}
+              {activeTab === "signup" ? (
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    Join Our Community
+                  </h2>
+                  <p className="text-slate-400 mb-6">
+                    Create your dealer account to start networking
+                  </p>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-white text-sm mb-2">
+                          First Name
+                        </label>
+                        <input
+                          type="text"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          placeholder="John"
+                          className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white text-sm mb-2">
+                          Last Name
+                        </label>
+                        <input
+                          type="text"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          placeholder="Doe"
+                          className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-white text-sm mb-2">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="dealer@example.com"
+                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-white text-sm mb-2">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        placeholder="Create a strong password"
+                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-white text-sm mb-2">
+                        Confirm Password
+                      </label>
+                      <input
+                        type="password"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        placeholder="Confirm your password"
+                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        name="agreeToTerms"
+                        checked={formData.agreeToTerms}
+                        onChange={handleInputChange}
+                        className="w-5 h-5 rounded bg-slate-700 border-slate-600"
+                      />
+                      <label className="text-slate-300 text-sm">
+                        I agree to the{" "}
+                        <span className="text-orange-500 cursor-pointer">
+                          Terms of Service
+                        </span>{" "}
+                        and{" "}
+                        <span className="text-orange-500 cursor-pointer">
+                          Privacy Policy
+                        </span>
+                      </label>
+                    </div>
+
+                    {error && (
+                      <p className="text-red-400 text-sm text-center">
+                        {error}
+                      </p>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:bg-orange-400 disabled:cursor-not-allowed"
+                    >
+                      {loading ? "Creating Account..." : "Create Account"}
+                    </button>
+                  </form>
                 </div>
+              ) : (
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    Welcome Back
+                  </h2>
+                  <p className="text-slate-400 mb-6">
+                    Sign in to access the AutoEscrow dealer community
+                  </p>
 
-                {/* Forms */}
-                {activeTab === "signup" ? (
-                  <div>
-                    <h2 className="text-2xl font-bold text-white mb-2">
-                      Join Our Community
-                    </h2>
-                    <p className="text-slate-400 mb-6">
-                      Create your dealer account to start networking
-                    </p>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-white text-sm mb-2">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="dealer@example.com"
+                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                      />
+                    </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-white text-sm mb-2">
-                            First Name
-                          </label>
-                          <input
-                            type="text"
-                            name="firstName"
-                            value={formData.firstName}
-                            onChange={handleInputChange}
-                            placeholder="John"
-                            className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-white text-sm mb-2">
-                            Last Name
-                          </label>
-                          <input
-                            type="text"
-                            name="lastName"
-                            value={formData.lastName}
-                            onChange={handleInputChange}
-                            placeholder="Doe"
-                            className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                          />
-                        </div>
-                      </div>
+                    <div>
+                      <label className="block text-white text-sm mb-2">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        placeholder="Enter your password"
+                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                      />
+                    </div>
 
-                      <div>
-                        <label className="block text-white text-sm mb-2">
-                          Email
-                        </label>
-                        <input
-                          type="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          placeholder="dealer@example.com"
-                          className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-white text-sm mb-2">
-                          Password
-                        </label>
-                        <input
-                          type="password"
-                          name="password"
-                          value={formData.password}
-                          onChange={handleInputChange}
-                          placeholder="Create a strong password"
-                          className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-white text-sm mb-2">
-                          Confirm Password
-                        </label>
-                        <input
-                          type="password"
-                          name="confirmPassword"
-                          value={formData.confirmPassword}
-                          onChange={handleInputChange}
-                          placeholder="Confirm your password"
-                          className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                        />
-                      </div>
-
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <input
                           type="checkbox"
-                          name="agreeToTerms"
-                          checked={formData.agreeToTerms}
+                          name="rememberMe"
+                          checked={formData.rememberMe}
                           onChange={handleInputChange}
                           className="w-5 h-5 rounded bg-slate-700 border-slate-600"
                         />
                         <label className="text-slate-300 text-sm">
-                          I agree to the{" "}
-                          <span className="text-orange-500 cursor-pointer">
-                            Terms of Service
-                          </span>{" "}
-                          and{" "}
-                          <span className="text-orange-500 cursor-pointer">
-                            Privacy Policy
-                          </span>
+                          Remember me
                         </label>
                       </div>
-
-                      {error && (
-                        <p className="text-red-400 text-sm text-center">
-                          {error}
-                        </p>
-                      )}
-
                       <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:bg-orange-400 disabled:cursor-not-allowed"
+                        type="button"
+                        onClick={() => router.push("/auth/forgot-password")}
+                        className="text-orange-500 text-sm hover:text-orange-400"
                       >
-                        {loading ? "Creating Account..." : "Create Account"}
+                        Forgot password?
                       </button>
-<<<<<<< Updated upstream
-=======
+                    </div>
 
-                      <div className="w-full flex items-center justify-center my-2">
-                        <GoogleLogin
-                          onSuccess={handleGoogleSignIn}
-                          onError={() => {
-                            setError("Google Sign-In failed. Please try again.");
-                          }}
-                          useOneTap
-                        />
-                      </div>
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-                    </form>
-                  </div>
-                ) : (
-                  <div>
-                    <h2 className="text-2xl font-bold text-white mb-2">
-                      Welcome Back
-                    </h2>
-                    <p className="text-slate-400 mb-6">
-                      Sign in to access the AutoEscrow dealer community
-                    </p>
+                    {error && (
+                      <p className="text-red-400 text-sm text-center">
+                        {error}
+                      </p>
+                    )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <div>
-                        <label className="block text-white text-sm mb-2">
-                          Email
-                        </label>
-                        <input
-                          type="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          placeholder="dealer@example.com"
-                          className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-white text-sm mb-2">
-                          Password
-                        </label>
-                        <input
-                          type="password"
-                          name="password"
-                          value={formData.password}
-                          onChange={handleInputChange}
-                          placeholder="Enter your password"
-                          className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            name="rememberMe"
-                            checked={formData.rememberMe}
-                            onChange={handleInputChange}
-                            className="w-5 h-5 rounded bg-slate-700 border-slate-600"
-                          />
-                          <label className="text-slate-300 text-sm">
-                            Remember me
-                          </label>
-                        </div>
-                        <button
-                          onClick={() => setView("forgot")}
-                          className="text-orange-500 text-sm hover:text-orange-400"
-                        >
-                          Forgot password?
-                        </button>
-                      </div>
-
-                      {error && (
-                        <p className="text-red-400 text-sm text-center">
-                          {error}
-                        </p>
-                      )}
-
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:bg-slate-600 disabled:cursor-not-allowed"
-                      >
-                        {loading ? "Signing In..." : "Sign In"}
-                      </button>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                    </form>
-                  </div>
-                )}
-              </>
-            ) : view === "forgot" ? (
-              // Forgot Password View
-              <div>
-                <div className="mb-6">
-                  <button
-                    onClick={() => setView("auth")}
-                    className="text-slate-400 hover:text-white flex items-center gap-2 mb-4"
-                  >
-                    ← Back to Sign In
-                  </button>
-                  <h2 className="text-2xl font-bold text-white mb-2">
-                    Forgot Password?
-                  </h2>
-                  <p className="text-slate-400">
-                    Enter your email address and we&apos;ll send you a link to
-                    reset your password.
-                  </p>
-=======
-=======
->>>>>>> Stashed changes
-
-                      <GoogleLogin
-                        onSuccess={handleGoogleSignIn}
-                        onError={() => {
-                          setError("Google Sign-In failed. Please try again.");
-                        }}
-                        useOneTap
-                        render={({
-                          onClick,
-                          disabled,
-                        }: {
-                          onClick: () => void;
-                          disabled?: boolean;
-                        }) => (
-                          <button
-                            type="button"
-                            onClick={onClick}
-                            disabled={disabled || googleLoading}
-                            className="w-full flex items-center justify-center gap-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:bg-slate-600 disabled:cursor-not-allowed"
-                          >
-                            {googleLoading ? (
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                      <div className="w-full flex items-center justify-center my-2">
-                        <GoogleLogin
-                          onSuccess={handleGoogleSignIn}
-                          onError={() => {
-                            setError("Google Sign-In failed. Please try again.");
-                          }}
-                          useOneTap
-                        />
-                      </div>
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-white text-sm mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="dealer@example.com"
-                      className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                    />
-                  </div>
-
-                  <button
-                    onClick={handleForgotPassword}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
-                  >
-                    Send Reset Link
-                  </button>
-
-                  <div className="text-center">
                     <button
-                      onClick={() => setView("auth")}
-                      className="text-slate-400 hover:text-white text-sm"
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:bg-slate-600 disabled:cursor-not-allowed"
                     >
-                      Remember your password? Sign in
+                      {loading ? "Signing In..." : "Sign In"}
                     </button>
-                  </div>
+                  </form>
                 </div>
-              </div>
-            ) : (
-              // Reset Password View
-              <div>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-white mb-2">
-                    Reset Password
-                  </h2>
-                  <p className="text-slate-400">
-                    Enter your new password below.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-white text-sm mb-2">
-                      New Password
-                    </label>
-                    <input
-                      type="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      placeholder="Create a strong password"
-                      className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-white text-sm mb-2">
-                      Confirm New Password
-                    </label>
-                    <input
-                      type="password"
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      placeholder="Confirm your password"
-                      className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                    />
-                  </div>
-
-                  <div className="bg-slate-700/30 rounded-lg p-4 text-sm text-slate-300">
-                    <p className="font-semibold mb-2">Password must contain:</p>
-                    <ul className="space-y-1 text-slate-400">
-                      <li>• At least 8 characters</li>
-                      <li>• One uppercase letter</li>
-                      <li>• One lowercase letter</li>
-                      <li>• One number</li>
-                    </ul>
-                  </div>
-
-                  <button
-                    onClick={handleResetPassword}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
-                  >
-                    Reset Password
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
+            </>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+export default function AutoEscrowAuthPage() {
+  return <AutoEscrowAuth />;
 }

@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import CreatePostModal, {
   PostPayload,
 } from "../../../component/CreatePostModal";
 import Cookies from "js-cookie";
+import { toast } from "sonner";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import {
@@ -73,6 +75,7 @@ const TrendingPage = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const observerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const fetchPosts = useCallback(
     async (page: number, append = false) => {
@@ -88,11 +91,18 @@ const TrendingPage = () => {
           throw new Error(result.message || "Failed to fetch posts.");
         }
 
+        const filteredData = result.data.filter(
+          (post: Post) => post.commentCount > 10
+        );
+
         if (append) {
-          setDiscussions((prev) => [...prev, ...result.data]);
+          setDiscussions((prev) => {
+            console.log("Appending data:", filteredData);
+            return [...prev, ...filteredData];
+          });
         } else {
           // Check if the current user has liked each post
-          const postsWithLikeStatus = result.data.map((post: Post) => ({
+          const postsWithLikeStatus = filteredData.map((post: Post) => ({
             ...post,
             hasLiked: currentUserId
               ? post.likes.includes(currentUserId)
@@ -167,8 +177,8 @@ const TrendingPage = () => {
 
     const token = Cookies.get("token");
     if (!token) {
-      // Optionally, redirect to login or show a message
-      console.log("User not logged in. Cannot like post.");
+      toast.error("Please log in to like a post.");
+      router.push("/auth/signin");
       return;
     }
 
@@ -198,7 +208,13 @@ const TrendingPage = () => {
       // The UI is already updated, so we don't need to do anything on success.
       // You could re-fetch for consistency, but it's not necessary for a good UX.
     } catch (error) {
-      console.error("Failed to like post:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to like post.";
+      if (errorMessage.includes("Not authorized")) {
+        toast.error("Your session has expired. Please log in again.");
+        router.push("/auth/signin");
+      }
+
       // Revert the optimistic update on error
       setDiscussions((prevDiscussions) =>
         prevDiscussions.map((disc) => {
@@ -348,12 +364,12 @@ const TrendingPage = () => {
           Trending Discussions
         </h2>
         <div className="flex items-center space-x-2">
-          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+          {/* <button className="text-sm text-blue-900 hover:text-blue-800 font-medium">
             View all
-          </button>
+          </button> */}
           <button
             onClick={() => setCreatePostModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center"
+            className="bg-blue-900 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center"
           >
             <PlusIcon className="w-4 h-4 mr-1" />
             New Post
@@ -393,7 +409,7 @@ const TrendingPage = () => {
 
                 {/* Author Section - Now at Top */}
                 <div className="flex items-center mb-3">
-                  <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold mr-3">
+                  <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-blue-800 to-blue-900 flex items-center justify-center text-white font-semibold mr-3">
                     {discussion.author && discussion.author.avatar ? (
                       <Image
                         src={discussion.author.avatar}
@@ -459,7 +475,7 @@ const TrendingPage = () => {
               {/* Title & Stats */}
               <div className="p-4">
                 {/* Title - Now Below Image */}
-                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-4">
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-900 transition-colors line-clamp-2 mb-4">
                   {discussion.title}
                 </h3>
 
@@ -493,7 +509,7 @@ const TrendingPage = () => {
                       <span className="ml-1 text-xs">views</span>
                     </div>
                   </div>
-                  <div className="text-blue-600 group-hover:text-blue-700 text-sm font-medium flex items-center">
+                  <div className="text-blue-900 group-hover:text-blue-800 text-sm font-medium flex items-center">
                     <span>Join Discussion</span>
                     <span className="ml-1 transform group-hover:translate-x-1 transition-transform">
                       →

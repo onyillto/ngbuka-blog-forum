@@ -27,7 +27,7 @@ export const SparePartChip = ({
       onClick={onClick}
       className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
         selected
-          ? "bg-blue-600 text-white shadow-md transform scale-105"
+          ? "bg-blue-900 text-white shadow-md transform scale-105"
           : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
       }`}
     >
@@ -45,7 +45,7 @@ export const StatsCard = ({
   color = "blue",
 }: StatsCardProps) => {
   const colorClasses = {
-    blue: "text-blue-600 bg-blue-100",
+    blue: "text-blue-900 bg-blue-100",
     green: "text-green-600 bg-green-100",
     red: "text-red-600 bg-red-100",
     yellow: "text-yellow-600 bg-yellow-100",

@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import Cookies from "js-cookie";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,15 +11,14 @@ import CreatePostModal, {
 } from "../../../component/CreatePostModal";
 import {
   MessageIcon,
-  UserIcon,
   FireIcon,
   SearchIcon,
   HeartIcon,
   PlusIcon,
   EditIcon,
   TrashIcon,
-} from "../../../component/index";
-import { Eye, Filter } from "lucide-react";
+} from "../../../component/Icons";
+import { Eye, Filter, Loader2, AlertTriangle } from "lucide-react";
 
 interface Post {
   _id: string;
@@ -68,6 +69,10 @@ const MyPostsPage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSavingPost, setIsSavingPost] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   const formatTimeAgo = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -115,9 +120,14 @@ const MyPostsPage = () => {
 
       setPosts(result.data);
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred";
+      if (errorMessage.includes("Not authorized")) {
+        toast.error("Your session has expired. Please log in again.");
+        router.push("/auth/signin");
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -125,7 +135,7 @@ const MyPostsPage = () => {
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreatePost = async (data: PostPayload) => {
     setIsSavingPost(true);
@@ -157,9 +167,7 @@ const MyPostsPage = () => {
     try {
       const response = await fetch(`${apiBaseUrl}/posts`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       });
 
@@ -177,6 +185,55 @@ const MyPostsPage = () => {
       );
     } finally {
       setIsSavingPost(false);
+    }
+  };
+
+  const openDeleteModal = (postId: string) => {
+    setPostToDelete(postId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeletePost = async () => {
+    if (isDeleting || !postToDelete) return;
+
+    const token = Cookies.get("token");
+    if (!token) {
+      toast.error("Authentication error. Please log in again.");
+      router.push("/auth/signin");
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      const response = await fetch(`${apiBaseUrl}/posts/${postToDelete}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to delete post.");
+      }
+
+      toast.success("Post deleted successfully!");
+      await fetchPosts(); // Refresh the list
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred";
+      if (errorMessage.includes("Not authorized")) {
+        toast.error("Your session has expired. Please log in again.");
+        router.push("/auth/signin");
+      } else {
+        toast.error(errorMessage);
+      }
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setPostToDelete(null);
     }
   };
 
@@ -228,6 +285,55 @@ const MyPostsPage = () => {
         isSaving={isSavingPost}
         error={saveError}
       />
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+            <div className="flex items-start">
+              <div className="mx-auto  flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                <AlertTriangle
+                  className="h-6 w-6 text-red-600"
+                  aria-hidden="true"
+                />
+              </div>
+              <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  Delete Post
+                </h3>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">
+                    Are you sure you want to delete this post? This action
+                    cannot be undone.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+              <button
+                type="button"
+                onClick={handleDeletePost}
+                disabled={isDeleting}
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:bg-red-400 disabled:cursor-not-allowed"
+              >
+                {isDeleting && (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                )}
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isDeleting}
+                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
@@ -241,13 +347,13 @@ const MyPostsPage = () => {
                 Manage and track all your forum posts and discussions
               </p>
             </div>
-            <button
+            {/* <button
               onClick={() => setIsCreateModalOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center"
             >
               <PlusIcon className="w-4 h-4 mr-2" />
               New Post
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -362,7 +468,10 @@ const MyPostsPage = () => {
                     <button className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all">
                       <EditIcon className="w-4 h-4" />
                     </button>
-                    <button className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all">
+                    <button
+                      onClick={() => openDeleteModal(post._id)}
+                      className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all"
+                    >
                       <TrashIcon className="w-4 h-4" />
                     </button>
                   </div>
@@ -370,7 +479,7 @@ const MyPostsPage = () => {
 
                 {/* Author Section */}
                 <div className="flex items-center mb-3">
-                  <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold mr-3">
+                  <div className="relative w-10 h-10 rounded-full  flex items-center justify-center text-white font-semibold mr-3">
                     {post.author && post.author.avatar ? (
                       <Image
                         src={post.author.avatar}

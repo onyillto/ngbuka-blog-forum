@@ -12,4 +12,4 @@ export { TrendingCars } from "./TrendingCars";
 export { TrendingDiscussions } from "./TrendingDiscussions";
 export { Leaderboard } from "./Leaderboard";
 export { SolvedIssues } from "./SolvedIssues";
-export { ChatBot } from "./ChatBot";
+// export { ChatBot } from "./ChatBot";

@@ -7,14 +7,10 @@ import {
   MessageCircle,
   Zap,
   Car,
-  ShoppingBag,
   Star,
-  Calendar,
-  Users,
   Settings,
   Home,
   User,
-  LogOut,
 } from "lucide-react";
 
 interface Category {
@@ -28,20 +24,9 @@ interface Category {
 const ForumSidebar = () => {
   const [openCategories, setOpenCategories] = useState(true);
   const [activeCategory, setActiveCategory] = useState("home");
-  const [isMobile, setIsMobile] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
-  // Check if we're on mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -77,18 +62,13 @@ const ForumSidebar = () => {
       href: "/forum/trending",
     },
     {
-      id: "unread",
-      name: "Unread Posts",
+      id: "low-engagement",
+      name: "Low Engagement",
       icon: MessageCircle,
-      href: "/forum/unread",
+      href: "/forum/low-engagement",
     },
     { id: "my-posts", name: "My Posts", icon: Star, href: "/forum/my-posts" },
-    {
-      id: "settings",
-      name: "Forum Settings",
-      icon: Settings,
-      href: "/forum/settings",
-    },
+    
   ];
 
   // Mobile bottom navigation items
@@ -138,10 +118,10 @@ const ForumSidebar = () => {
         ))}
 
         {/* Categories Divider */}
-        <div className="border-t border-gray-100 my-4" />
+        {/* <div className="border-t border-gray-100 my-4" /> */}
 
         {/* Categories Toggle */}
-        <button
+        {/* <button
           onClick={() => setOpenCategories(!openCategories)}
           className={`w-full flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
             openCategories
@@ -155,10 +135,10 @@ const ForumSidebar = () => {
               openCategories ? "rotate-180" : ""
             }`}
           />
-        </button>
+        </button> */}
 
         {/* Categories Section */}
-        {openCategories && (
+        {/* {openCategories && (
           <div className="space-y-1 mt-2 pl-3">
             {categoriesLoading ? (
               <p className="text-xs text-gray-500 p-3">Loading categories...</p>
@@ -187,7 +167,7 @@ const ForumSidebar = () => {
               ))
             )}
           </div>
-        )}
+        )} */}
       </nav>
     </div>
   );

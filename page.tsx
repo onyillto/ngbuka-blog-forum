@@ -4,15 +4,13 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Cookies from "js-cookie";
-import CreatePostModal, {
-  PostPayload,
-} from "../ngbuka-blog-forum/app/component/CreatePostModal";
+import CreatePostModal, { PostPayload } from "./app/component/CreatePostModal";
 import {
   MessageIcon,
   HeartIcon,
   PlusIcon,
   Loader2,
-} from "../ngbuka-blog-forum/app/component/Icons";
+} from "./app/component/Icons";
 import { FileText, ServerCrash } from "lucide-react";
 
 interface Author {

@@ -5,14 +5,7 @@ import CreatePostModal, { PostPayload } from "./CreatePostModal";
 import Cookies from "js-cookie";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
-import {
-  MessageIcon,
-  CheckCircleIcon,
-  UserIcon,
-  HeartIcon,
-  PlusIcon,
-  Loader2,
-} from "./Icons";
+import { MessageIcon, HeartIcon, PlusIcon, Loader2 } from "./Icons";
 
 interface Author {
   _id: string;
@@ -148,6 +141,7 @@ export const TrendingDiscussions = ({
   }, [currentPage, hasMore, loadingMore, loading, fetchPosts]);
 
   useEffect(() => {
+    const node = observerRef.current; // Capture the current ref value
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -157,14 +151,10 @@ export const TrendingDiscussions = ({
       { threshold: 1 }
     );
 
-    if (observerRef.current) {
-      observer.observe(observerRef.current);
-    }
+    if (node) observer.observe(node);
 
     return () => {
-      if (observerRef.current) {
-        observer.unobserve(observerRef.current);
-      }
+      if (node) observer.unobserve(node);
     };
   }, [loadMore]);
 
@@ -357,12 +347,12 @@ export const TrendingDiscussions = ({
             : "Hot Discussions"}
         </h2>
         <div className="flex items-center space-x-2">
-          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+          {/* <button className="text-sm text-blue-800 hover:text-blue-900 font-medium">
             View all
-          </button>
+          </button> */}
           <button
             onClick={() => setCreatePostModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center"
+            className="bg-blue-800 hover:bg-blue-900 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center"
           >
             <PlusIcon className="w-4 h-4 mr-1" />
             New Post
@@ -402,7 +392,7 @@ export const TrendingDiscussions = ({
 
                 {/* Author Section - Now at Top */}
                 <div className="flex items-center mb-3">
-                  <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold mr-3">
+                  <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-blue-900 to-blue-800 flex items-center justify-center text-white font-semibold mr-3">
                     {discussion.author && discussion.author.avatar ? (
                       <Image
                         src={discussion.author.avatar}
@@ -468,7 +458,7 @@ export const TrendingDiscussions = ({
               {/* Title & Stats */}
               <div className="p-4">
                 {/* Title - Now Below Image */}
-                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-4">
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-800 transition-colors line-clamp-2 mb-4">
                   {discussion.title}
                 </h3>
 
@@ -502,7 +492,7 @@ export const TrendingDiscussions = ({
                       <span className="ml-1 text-xs">views</span>
                     </div>
                   </div>
-                  <div className="text-blue-600 group-hover:text-blue-700 text-sm font-medium flex items-center">
+                  <div className="text-blue-800 group-hover:text-blue-900 text-sm font-medium flex items-center">
                     <span>Join Discussion</span>
                     <span className="ml-1 transform group-hover:translate-x-1 transition-transform">
                       →
