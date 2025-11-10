@@ -123,7 +123,8 @@ function AutoEscrowAuth() {
       if (data.data.token) {
         const cookieOptions = {
           expires: formData.rememberMe ? 30 : 7, // 30 days if remembered, else 7 days
-          secure: true,
+          // Only set the secure flag in production
+          secure: process.env.NODE_ENV === "production",
         };
         Cookies.set("token", data.data.token, cookieOptions);
       }
