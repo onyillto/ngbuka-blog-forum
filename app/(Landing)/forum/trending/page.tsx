@@ -329,6 +329,16 @@ const TrendingPage = () => {
     }
   };
 
+  const handleNewPostClick = () => {
+    const token = Cookies.get("token");
+    if (!token) {
+      toast.error("Please Login to create a post");
+      router.push("/auth/signin");
+    } else {
+      setCreatePostModalOpen(true);
+    }
+  };
+
   const renderSkeleton = () => (
     <div className="border border-gray-200 rounded-lg overflow-hidden animate-pulse">
       <div className="p-4">
@@ -356,6 +366,15 @@ const TrendingPage = () => {
     </div>
   );
 
+  const renderInitialLoader = () => (
+    <div className="flex justify-center items-center py-12">
+      <div className="text-center">
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-gray-400 mb-4" />
+        <p className="text-sm text-gray-500">Loading trending discussions...</p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
       <div className="flex items-center justify-between mb-6">
@@ -368,7 +387,7 @@ const TrendingPage = () => {
             View all
           </button> */}
           <button
-            onClick={() => setCreatePostModalOpen(true)}
+            onClick={handleNewPostClick}
             className="bg-blue-900 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center"
           >
             <PlusIcon className="w-4 h-4 mr-1" />
@@ -379,13 +398,16 @@ const TrendingPage = () => {
 
       <div className="space-y-4">
         {loading ? (
-          Array.from({ length: LIMIT }).map((_, index) => (
-            <div key={`skeleton-${index}`}>{renderSkeleton()}</div>
-          ))
+          renderInitialLoader()
         ) : error ? (
           <p className="text-red-500 text-center">{error}</p>
         ) : discussions.length === 0 ? (
-          <p className="text-gray-500 text-center">No trending posts yet.</p>
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg mb-4">No trending posts yet.</p>
+            <p className="text-gray-400 text-sm">
+              Be the first to start a discussion!
+            </p>
+          </div>
         ) : (
           discussions.map((discussion) => (
             <Link

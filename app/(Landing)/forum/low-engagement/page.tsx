@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import CreatePostModal, {
   PostPayload,
 } from "../../../component/CreatePostModal";
 import Cookies from "js-cookie";
+import { toast } from "sonner";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import {
@@ -74,6 +76,7 @@ const UnreadPage = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const observerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const fetchPosts = useCallback(
     async (page: number, append = false) => {
@@ -289,6 +292,16 @@ const UnreadPage = () => {
     }
   };
 
+  const handleNewPostClick = () => {
+    const token = Cookies.get("token");
+    if (!token) {
+      toast.error("Please Login to create a post");
+      router.push("/auth/signin");
+    } else {
+      setCreatePostModalOpen(true);
+    }
+  };
+
   const renderSkeleton = () => (
     <div className="border border-gray-200 rounded-lg overflow-hidden animate-pulse">
       <div className="p-4">
@@ -328,7 +341,7 @@ const UnreadPage = () => {
             View all
           </button> */}
           <button
-            onClick={() => setCreatePostModalOpen(true)}
+            onClick={handleNewPostClick}
             className="bg-blue-800 hover:bg-blue-900 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center"
           >
             <PlusIcon className="w-4 h-4 mr-1" />

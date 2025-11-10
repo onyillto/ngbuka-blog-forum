@@ -5,6 +5,8 @@ import CreatePostModal, { PostPayload } from "./CreatePostModal";
 import Cookies from "js-cookie";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { MessageIcon, HeartIcon, PlusIcon, Loader2 } from "./Icons";
 
 interface Author {
@@ -68,6 +70,7 @@ export const TrendingDiscussions = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const router = useRouter();
 
   const observerRef = useRef<HTMLDivElement>(null);
 
@@ -215,6 +218,16 @@ export const TrendingDiscussions = ({
     }
   };
 
+  const handleNewPostClick = () => {
+    const token = Cookies.get("token");
+    if (!token) {
+      toast.error("Please Login to create a post");
+      router.push("/auth/signin"); // Optional: still redirect after showing the message
+    } else {
+      setCreatePostModalOpen(true);
+    }
+  };
+
   const handleSavePost = async (postData: PostPayload) => {
     setIsSaving(true);
     setSaveError(null);
@@ -351,8 +364,8 @@ export const TrendingDiscussions = ({
             View all
           </button> */}
           <button
-            onClick={() => setCreatePostModalOpen(true)}
-            className="bg-blue-800 hover:bg-blue-900 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center"
+            onClick={handleNewPostClick}
+            className="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-colors"
           >
             <PlusIcon className="w-4 h-4 mr-1" />
             New Post

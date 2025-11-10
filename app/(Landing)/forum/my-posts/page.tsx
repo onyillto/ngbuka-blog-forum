@@ -15,11 +15,10 @@ import {
   SearchIcon,
   HeartIcon,
   PlusIcon,
-  EditIcon,
   TrashIcon,
 } from "../../../component/Icons";
 import { Eye, Filter, Loader2, AlertTriangle } from "lucide-react";
-
+import { LogIn } from "lucide-react";
 interface Post {
   _id: string;
   title: string;
@@ -91,9 +90,10 @@ const MyPostsPage = () => {
     setIsLoading(true);
     setError(null);
 
+    const token = Cookies.get("token");
     const userInfo = localStorage.getItem("user_info");
-    if (!userInfo) {
-      setError("User not found. Please log in.");
+    if (!userInfo || !token) {
+      setError("You must be logged in to view this page.");
       setIsLoading(false);
       return;
     }
@@ -237,6 +237,16 @@ const MyPostsPage = () => {
     }
   };
 
+  const handleNewPostClick = () => {
+    const token = Cookies.get("token");
+    if (!token) {
+      toast.error("Please Login to create a post");
+      router.push("/auth/signin");
+    } else {
+      setIsCreateModalOpen(true);
+    }
+  };
+
   const getUserStats = () => {
     const totalPosts = posts.length;
     const totalReplies = posts.reduce(
@@ -270,8 +280,23 @@ const MyPostsPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center text-red-500">
-        {error}
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md mx-auto">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <AlertTriangle className="h-6 w-6 text-red-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            Authentication Required
+          </h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => router.push("/auth/signin")}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center w-full"
+          >
+            <LogIn className="w-4 h-4 mr-2" />
+            Go to Sign In
+          </button>
+        </div>
       </div>
     );
   }
@@ -465,9 +490,6 @@ const MyPostsPage = () => {
                   </div>
                   {/* Action Buttons */}
                   <div className="flex items-center gap-2">
-                    <button className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all">
-                      <EditIcon className="w-4 h-4" />
-                    </button>
                     <button
                       onClick={() => openDeleteModal(post._id)}
                       className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all"
@@ -612,7 +634,7 @@ const MyPostsPage = () => {
                 : "You don't have any posts yet."}
             </p>
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={handleNewPostClick}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
               Create Your First Post
