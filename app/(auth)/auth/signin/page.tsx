@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Car, Shield, Users, CheckCircle, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -22,6 +22,16 @@ function AutoEscrowAuth() {
     agreeToTerms: false,
     rememberMe: false,
   });
+
+  useEffect(() => {
+    // Check if the user is already logged in
+    const token = Cookies.get("token");
+    const userInfo = localStorage.getItem("user_info");
+
+    if (token && userInfo) {
+      router.push("/forum/home");
+    }
+  }, [router]);
 
   const validateEmail = (email: string) => {
     if (!email) {

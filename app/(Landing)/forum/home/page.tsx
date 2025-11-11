@@ -2,7 +2,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { SparePartChip, TrendingDiscussions } from "../../../component/index";
+import {
+  SparePartChip,
+  TrendingDiscussions,
+  StatsCard,
+} from "../../../component/index";
+import {
+  MessageIcon,
+  CheckCircleIcon,
+  UserIcon,
+  CarIcon,
+} from "../../../component/Icons";
 
 interface Category {
   _id: string;
@@ -10,11 +20,25 @@ interface Category {
   slug: string;
 }
 
+interface ForumStats {
+  activeDiscussions: number;
+  solvedToday: number;
+  expertMembers: number;
+  carModels: number;
+}
+
 const NgbukaForumDashboard = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [stats, setStats] = useState<ForumStats>({
+    activeDiscussions: 0,
+    solvedToday: 0,
+    expertMembers: 0,
+    carModels: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -41,57 +65,83 @@ const NgbukaForumDashboard = () => {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    const fetchStats = async () => {
+      setStatsLoading(true);
+      try {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+        // Assuming an endpoint like this exists. You may need to create it.
+        const response = await fetch(`${apiBaseUrl}/stats/forum-overview`);
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Failed to fetch stats.");
+        }
+
+        setStats(result.data);
+      } catch (error) {
+        console.error("Failed to fetch stats:", error);
+        // You could set a statsError state here if you want to show an error message
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const toggleCategory = (categoryId: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
-    );
+    setSelectedCategories((prevSelected) => {
+      // If the clicked category is already selected, deselect it.
+      if (prevSelected.includes(categoryId)) {
+        return [];
+      }
+      // Otherwise, select only the new category.
+      return [categoryId];
+    });
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Row */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statsLoading ? (
             <>
-              {renderStatsSkeleton()}
-              {renderStatsSkeleton()}
-              {renderStatsSkeleton()}
-              {renderStatsSkeleton()}
+              {/* Basic skeleton loaders */}
+              <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse h-32"></div>
+              <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse h-32"></div>
+              <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse h-32"></div>
+              <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse h-32"></div>
             </>
           ) : (
             <>
               <StatsCard
                 title="Active Discussions"
-                value={stats.activeDiscussions?.toLocaleString() || "0"}
+                value={stats.activeDiscussions?.toLocaleString() ?? "0"}
                 icon={<MessageIcon />}
                 color="blue"
               />
               <StatsCard
                 title="Solved Today"
-                value={stats.solvedToday?.toLocaleString() || "0"}
+                value={stats.solvedToday?.toLocaleString() ?? "0"}
                 icon={<CheckCircleIcon />}
                 color="green"
               />
               <StatsCard
                 title="Expert Members"
-                value={stats.expertMembers?.toLocaleString() || "0"}
+                value={stats.expertMembers?.toLocaleString() ?? "0"}
                 icon={<UserIcon />}
                 color="yellow"
               />
               <StatsCard
                 title="Car Models"
-                value={stats.carModels?.toLocaleString() || "0"}
+                value={stats.carModels?.toLocaleString() ?? "0"}
                 icon={<CarIcon />}
                 color="red"
               />
             </>
           )}
-        </div> */}
-
-        {/* Search Bar */}
+        </div>
 
         {/* Spare Parts Filter */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
@@ -143,7 +193,10 @@ const NgbukaForumDashboard = () => {
         {/* Dashboard Grid */}
         <div className="space-y-8">
           {/* Main Content */}
-          <TrendingDiscussions filterCategories={selectedCategories} />
+          <TrendingDiscussions
+            key={selectedCategories.join("-")}
+            filterCategories={selectedCategories}
+          />
           {/* <SolvedIssues /> */}
         </div>
 

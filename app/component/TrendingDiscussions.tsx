@@ -77,13 +77,16 @@ export const TrendingDiscussions = ({
   const fetchPosts = useCallback(
     async (page: number, append = false) => {
       try {
+        setError(null); // Reset error on new fetch
         if (!append) setLoading(true);
 
         const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
-        let url = `${apiBaseUrl}/posts?page=${page}&limit=${LIMIT}&sort=-views`;
+        let url = `${apiBaseUrl}/posts?page=${page}&limit=${LIMIT}`;
+
         if (filterCategories && filterCategories.length > 0) {
-          const categoryParams = filterCategories.join(",");
-          url = `${apiBaseUrl}/posts?category=${categoryParams}&page=${page}&limit=${LIMIT}&sort=-createdAt`;
+          url += `&category=${filterCategories.join(",")}&sort=-createdAt`;
+        } else {
+          url += `&sort=-views`;
         }
         const response = await fetch(url);
         const result = await response.json();
@@ -381,7 +384,16 @@ export const TrendingDiscussions = ({
         ) : error ? (
           <p className="text-red-500 text-center">{error}</p>
         ) : discussions.length === 0 ? (
-          <p className="text-gray-500 text-center">No discussions found.</p>
+          <div className="text-center py-10">
+            <h3 className="text-lg font-semibold text-gray-800">
+              No Discussions Found
+            </h3>
+            <p className="text-gray-500 mt-2">
+              {filterCategories && filterCategories.length > 0
+                ? "Try adjusting your category filters to find what you're looking for."
+                : "There are no discussions available at the moment."}
+            </p>
+          </div>
         ) : (
           discussions.map((discussion) => (
             <Link
