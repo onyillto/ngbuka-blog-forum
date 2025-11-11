@@ -137,56 +137,84 @@ const MyPostsPage = () => {
     fetchPosts();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleCreatePost = async (data: PostPayload) => {
-    setIsSavingPost(true);
-    setSaveError(null);
+const handleCreatePost = async (data: PostPayload) => {
+  setIsSavingPost(true);
+  setSaveError(null);
 
-    const userInfo = localStorage.getItem("user_info");
-    if (!userInfo) {
-      setSaveError("User not found. Please log in again.");
-      setIsSavingPost(false);
-      return;
-    }
+  const userInfo = localStorage.getItem("user_info");
+  if (!userInfo) {
+    setSaveError("User not found. Please log in again.");
+    setIsSavingPost(false);
+    return;
+  }
 
-    const token = Cookies.get("token");
+  try {
     const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+    const token = Cookies.get("token");
+    let imageUrls: string[] = [];
 
-    const formData = new FormData();
-    formData.append("title", data.title);
-    formData.append("content", data.content);
-    formData.append("categoryId", data.categoryId);
-    const tagArray = data.tags
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter((tag) => tag);
-    tagArray.forEach((tag) => formData.append("tags", tag));
-    data.images.forEach((image) => {
-      formData.append("images", image);
-    });
-
-    try {
-      const response = await fetch(`${apiBaseUrl}/posts`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
+    if (data.images.length > 0) {
+      const imageFormData = new FormData();
+      data.images.forEach((image) => {
+        imageFormData.append("images", image);
       });
 
-      const result = await response.json();
+      const imageUploadResponse = await fetch(
+        `${apiBaseUrl}/posts/upload-images`,
+        {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: imageFormData,
+        }
+      );
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Failed to create post.");
+      const imageResult = await imageUploadResponse.json();
+
+      if (!imageUploadResponse.ok || !imageResult.success) {
+        throw new Error(imageResult.message || "Failed to upload images.");
       }
 
-      setIsCreateModalOpen(false);
-      await fetchPosts();
-    } catch (err: unknown) {
-      setSaveError(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
-    } finally {
-      setIsSavingPost(false);
+      if (imageResult.data && Array.isArray(imageResult.data.urls)) {
+        imageUrls = imageResult.data.urls.filter(Boolean);
+      }
     }
-  };
+
+    const finalPostPayload = {
+      title: data.title,
+      content: data.content,
+      categoryId: data.categoryId,
+      tags: data.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+      images: imageUrls,
+    };
+
+    const postResponse = await fetch(`${apiBaseUrl}/posts`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(finalPostPayload),
+    });
+
+    const result = await postResponse.json();
+
+    if (!postResponse.ok || !result.success) {
+      throw new Error(result.message || "Failed to create post.");
+    }
+
+    setIsCreateModalOpen(false);
+    await fetchPosts();
+  } catch (err: unknown) {
+    setSaveError(
+      err instanceof Error ? err.message : "An unknown error occurred"
+    );
+  } finally {
+    setIsSavingPost(false);
+  }
+};
 
   const openDeleteModal = (postId: string) => {
     setPostToDelete(postId);
