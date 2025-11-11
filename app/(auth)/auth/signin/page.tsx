@@ -28,16 +28,15 @@ function AutoEscrowAuth() {
       setEmailError("Email is required.");
       return false;
     }
-    const allowedDomains = ["@gmail.com", "@yahoo.com"];
-    const isValidDomain = allowedDomains.some((domain) =>
-      email.endsWith(domain)
-    );
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValid = emailRegex.test(email);
+
     setEmailError(
-      isValidDomain
+      isValid
         ? null
-        : "Please use a valid email (@gmail.com, @yahoo.com)."
+        : "Please enter a valid email address (e.g., user@example.com)."
     );
-    return isValidDomain;
+    return isValid;
   };
 
   const getFriendlyErrorMessage = (message: string): string => {
