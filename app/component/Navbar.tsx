@@ -241,6 +241,18 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Prevent body scroll on mobile menu or search open
+  useEffect(() => {
+    if (showMobileMenu || mobileSearchOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showMobileMenu, mobileSearchOpen]);
+
   // Search with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -313,29 +325,43 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      <nav className="h-14 sm:h-16 flex items-center justify-between px-2 sm:px-4 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm relative z-50">
+      <nav className="h-14 sm:h-16 flex items-center justify-between px-3 sm:px-4 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm relative z-50 overflow-hidden">
         {/* Left: Logo & Mobile Menu Button */}
-        <div className="flex items-center gap-1 sm:gap-3 min-w-0 flex-shrink">
+        <div className="flex items-center gap-1 sm:gap-3 flex-1 min-w-0">
           <button
             onClick={() => setShowMobileMenu(true)}
-            className="sm:hidden p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition flex-shrink-0"
+            className="sm:hidden p-1.5 rounded-lg hover:bg-gray-100 transition flex-shrink-0"
             aria-label="Menu"
           >
             <Menu className="h-5 w-5 text-gray-700" />
           </button>
-          <Link href="/" className="flex items-center min-w-0 flex-shrink">
+          <Link href="/" className="flex items-center min-w-0 md:hidden">
             <span className="text-base sm:text-lg font-bold text-orange-600 truncate">
               Ngbuka
             </span>
           </Link>
         </div>
 
-        {/* Center: Desktop Search */}
+        {/* Center: Search (Button on mobile, Input on desktop) */}
         <div
           ref={searchDropdownRef}
-          className="hidden sm:flex flex-1 mx-2 sm:mx-6 max-w-xl lg:max-w-2xl relative"
+          className="flex flex-1 justify-center relative sm:mx-6 max-w-xl lg:max-w-2xl"
         >
-          <div className="relative w-full">
+          {/* Mobile Search Button */}
+          <button
+            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition flex-shrink-0 sm:hidden"
+            aria-label="Search"
+          >
+            {mobileSearchOpen ? (
+              <X className="h-5 w-5 text-gray-700" />
+            ) : (
+              <Search className="h-5 w-5 text-gray-700" />
+            )}
+          </button>
+
+          {/* Desktop Search Input */}
+          <div className="hidden sm:block relative w-full">
             <input
               type="text"
               placeholder="Search..."
@@ -374,24 +400,11 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
-        {/* Right: Auth & Mobile Search Button */}
-        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-          {/* Mobile Search Button */}
-          <button
-            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-            className="sm:hidden p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition flex-shrink-0"
-            aria-label="Search"
-          >
-            {mobileSearchOpen ? (
-              <X className="h-5 w-5 text-gray-700" />
-            ) : (
-              <Search className="h-5 w-5 text-gray-700" />
-            )}
-          </button>
-
+        {/* Right: Auth */}
+        <div className="flex items-center justify-end gap-1 sm:gap-2 flex-1 min-w-0">
           {/* User Menu */}
           {user ? (
-            <div ref={userDropdownRef} className="relative flex-shrink-0">
+            <div ref={userDropdownRef} className="relative">
               {/* Desktop User Button */}
               <button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
@@ -478,8 +491,8 @@ const Navbar: React.FC = () => {
 
       {/* Mobile Search Overlay */}
       {mobileSearchOpen && (
-        <div className="fixed top-14 left-0 right-0 bg-white border-b border-gray-200 shadow-lg sm:hidden z-40 p-3 sm:p-4">
-          <div className="relative">
+        <div className="fixed top-14 left-0 right-0 bg-white border-b border-gray-200 shadow-lg sm:hidden z-40 overflow-hidden">
+          <div className="relative px-3 py-3">
             <input
               type="text"
               placeholder="Search topics, posts..."
@@ -488,11 +501,11 @@ const Navbar: React.FC = () => {
               className="w-full pl-9 pr-9 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500"
               autoFocus
             />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -500,7 +513,7 @@ const Navbar: React.FC = () => {
           </div>
 
           {searchTerm.trim().length > 2 && (
-            <div className="mt-3 bg-white border border-gray-200 rounded-xl shadow-lg max-h-96 overflow-hidden">
+            <div className="bg-white border-t border-gray-200 rounded-t-none rounded-b-xl shadow-lg max-h-96 overflow-hidden">
               <SearchResults
                 results={searchResults}
                 isSearching={isSearching}
@@ -555,14 +568,14 @@ const Navbar: React.FC = () => {
                 <Home className="h-5 w-5 text-gray-500 flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-700">Home</span>
               </Link>
-              <Link
+              {/* <Link
                 href="/forum"
                 onClick={() => setShowMobileMenu(false)}
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
               >
                 <MessageCircle className="h-5 w-5 text-gray-500 flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-700">Forum</span>
-              </Link>
+              </Link> */}
 
               {user ? (
                 <>
