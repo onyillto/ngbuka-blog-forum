@@ -137,84 +137,84 @@ const MyPostsPage = () => {
     fetchPosts();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-const handleCreatePost = async (data: PostPayload) => {
-  setIsSavingPost(true);
-  setSaveError(null);
+  const handleCreatePost = async (data: PostPayload) => {
+    setIsSavingPost(true);
+    setSaveError(null);
 
-  const userInfo = localStorage.getItem("user_info");
-  if (!userInfo) {
-    setSaveError("User not found. Please log in again.");
-    setIsSavingPost(false);
-    return;
-  }
+    const userInfo = localStorage.getItem("user_info");
+    if (!userInfo) {
+      setSaveError("User not found. Please log in again.");
+      setIsSavingPost(false);
+      return;
+    }
 
-  try {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
-    const token = Cookies.get("token");
-    let imageUrls: string[] = [];
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      const token = Cookies.get("token");
+      let imageUrls: string[] = [];
 
-    if (data.images.length > 0) {
-      const imageFormData = new FormData();
-      data.images.forEach((image) => {
-        imageFormData.append("images", image);
+      if (data.images.length > 0) {
+        const imageFormData = new FormData();
+        data.images.forEach((image) => {
+          imageFormData.append("images", image);
+        });
+
+        const imageUploadResponse = await fetch(
+          `${apiBaseUrl}/posts/upload-images`,
+          {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: imageFormData,
+          }
+        );
+
+        const imageResult = await imageUploadResponse.json();
+
+        if (!imageUploadResponse.ok || !imageResult.success) {
+          throw new Error(imageResult.message || "Failed to upload images.");
+        }
+
+        if (imageResult.data && Array.isArray(imageResult.data.urls)) {
+          imageUrls = imageResult.data.urls.filter(Boolean);
+        }
+      }
+
+      const finalPostPayload = {
+        title: data.title,
+        content: data.content,
+        categoryId: data.categoryId,
+        tags: data.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        images: imageUrls,
+      };
+
+      const postResponse = await fetch(`${apiBaseUrl}/posts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(finalPostPayload),
       });
 
-      const imageUploadResponse = await fetch(
-        `${apiBaseUrl}/posts/upload-images`,
-        {
-          method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: imageFormData,
-        }
+      const result = await postResponse.json();
+
+      if (!postResponse.ok || !result.success) {
+        throw new Error(result.message || "Failed to create post.");
+      }
+
+      setIsCreateModalOpen(false);
+      await fetchPosts();
+    } catch (err: unknown) {
+      setSaveError(
+        err instanceof Error ? err.message : "An unknown error occurred"
       );
-
-      const imageResult = await imageUploadResponse.json();
-
-      if (!imageUploadResponse.ok || !imageResult.success) {
-        throw new Error(imageResult.message || "Failed to upload images.");
-      }
-
-      if (imageResult.data && Array.isArray(imageResult.data.urls)) {
-        imageUrls = imageResult.data.urls.filter(Boolean);
-      }
+    } finally {
+      setIsSavingPost(false);
     }
-
-    const finalPostPayload = {
-      title: data.title,
-      content: data.content,
-      categoryId: data.categoryId,
-      tags: data.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-      images: imageUrls,
-    };
-
-    const postResponse = await fetch(`${apiBaseUrl}/posts`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(finalPostPayload),
-    });
-
-    const result = await postResponse.json();
-
-    if (!postResponse.ok || !result.success) {
-      throw new Error(result.message || "Failed to create post.");
-    }
-
-    setIsCreateModalOpen(false);
-    await fetchPosts();
-  } catch (err: unknown) {
-    setSaveError(
-      err instanceof Error ? err.message : "An unknown error occurred"
-    );
-  } finally {
-    setIsSavingPost(false);
-  }
-};
+  };
 
   const openDeleteModal = (postId: string) => {
     setPostToDelete(postId);
@@ -330,7 +330,9 @@ const handleCreatePost = async (data: PostPayload) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      {" "}
+      {/* Add overflow-x-hidden */}
       <CreatePostModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -338,7 +340,6 @@ const handleCreatePost = async (data: PostPayload) => {
         isSaving={isSavingPost}
         error={saveError}
       />
-
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -386,11 +387,14 @@ const handleCreatePost = async (data: PostPayload) => {
           </div>
         </div>
       )}
-
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-6xl mx-auto px-0 sm:px-6 lg:px-8 py-8">
+        {" "}
+        {/* Remove px-4 for mobile */}
         {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-8 px-4 sm:px-0">
+          {" "}
+          {/* Add px-4 for mobile, then remove */}
+          <div className="flex items-center justify-between ">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
                 <MessageIcon className="mr-3 text-green-600" />
@@ -409,9 +413,10 @@ const handleCreatePost = async (data: PostPayload) => {
             </button> */}
           </div>
         </div>
-
         {/* User Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 px-4 sm:px-0">
+          {" "}
+          {/* Add px-4 for mobile, then remove */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -467,9 +472,10 @@ const handleCreatePost = async (data: PostPayload) => {
             </div>
           </div>
         </div>
-
         {/* Search and Filter */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className="bg-white rounded-none sm:rounded-xl shadow-none sm:shadow-lg p-4 sm:p-6 mb-8">
+          {" "}
+          {/* Adjust padding and remove rounded/shadow on mobile */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <h2 className="text-lg font-semibold text-gray-900">
@@ -494,9 +500,10 @@ const handleCreatePost = async (data: PostPayload) => {
             </div>
           </div>
         </div>
-
         {/* Posts List */}
-        <div className="space-y-4">
+        <div className="space-y-4 px-4 sm:px-0">
+          {" "}
+          {/* Add px-4 for mobile, then remove */}
           {filteredPosts.map((post) => (
             <div
               key={post._id}
@@ -646,7 +653,6 @@ const handleCreatePost = async (data: PostPayload) => {
             </div>
           ))}
         </div>
-
         {/* Empty State */}
         {filteredPosts.length === 0 && (
           <div className="bg-white rounded-xl shadow-lg p-12 text-center">

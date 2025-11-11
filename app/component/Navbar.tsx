@@ -304,27 +304,28 @@ const Navbar: React.FC = () => {
 
   if (isLoading) {
     return (
-      <nav className="h-14 sm:h-16 flex items-center justify-between px-4 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-        <div className="w-24 h-6 bg-gray-100 rounded animate-pulse" />
+      <nav className="h-14 sm:h-16 flex items-center justify-between px-3 sm:px-4 bg-white/80 backdrop-blur-sm border-b border-gray-200">
         <div className="w-20 h-6 bg-gray-100 rounded animate-pulse" />
+        <div className="w-16 h-6 bg-gray-100 rounded animate-pulse" />
       </nav>
     );
   }
 
   return (
     <>
-      <nav className="h-14 sm:h-16 flex items-center justify-between px-4 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm relative z-50">
+      <nav className="h-14 sm:h-16 flex items-center justify-between px-2 sm:px-4 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm relative z-50">
         {/* Left: Logo & Mobile Menu Button */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3 min-w-0 flex-shrink">
           <button
             onClick={() => setShowMobileMenu(true)}
-            className="sm:hidden p-2 rounded-lg hover:bg-gray-100 transition"
+            className="sm:hidden p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition flex-shrink-0"
+            aria-label="Menu"
           >
             <Menu className="h-5 w-5 text-gray-700" />
           </button>
-          <Link href="/" className="flex items-center">
-            <span className="text-lg font-bold text-orange-600">
-              Ngbuka Forum
+          <Link href="/" className="flex items-center min-w-0 flex-shrink">
+            <span className="text-base sm:text-lg font-bold text-orange-600 truncate">
+              Ngbuka
             </span>
           </Link>
         </div>
@@ -332,18 +333,18 @@ const Navbar: React.FC = () => {
         {/* Center: Desktop Search */}
         <div
           ref={searchDropdownRef}
-          className="hidden sm:flex flex-1 mx-6 max-w-2xl relative"
+          className="hidden sm:flex flex-1 mx-2 sm:mx-6 max-w-xl lg:max-w-2xl relative"
         >
           <div className="relative w-full">
             <input
               type="text"
-              placeholder="Search topics, posts, categories..."
+              placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onFocus={() =>
                 searchTerm.trim().length > 2 && setShowSearchDropdown(true)
               }
-              className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+              className="w-full pl-9 pr-9 py-2 sm:py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
             {searchTerm && (
@@ -374,11 +375,12 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Right: Auth & Mobile Search Button */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           {/* Mobile Search Button */}
           <button
             onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-            className="sm:hidden p-2 rounded-lg hover:bg-gray-100 transition"
+            className="sm:hidden p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition flex-shrink-0"
+            aria-label="Search"
           >
             {mobileSearchOpen ? (
               <X className="h-5 w-5 text-gray-700" />
@@ -389,18 +391,18 @@ const Navbar: React.FC = () => {
 
           {/* User Menu */}
           {user ? (
-            <div ref={userDropdownRef} className="relative">
+            <div ref={userDropdownRef} className="relative flex-shrink-0">
               {/* Desktop User Button */}
               <button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="hidden sm:flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-lg hover:bg-gray-100 transition"
+                className="hidden sm:flex items-center gap-2 pl-2 pr-2 sm:pr-3 py-1.5 rounded-lg hover:bg-gray-100 transition max-w-[200px]"
               >
-                <UserAvatar user={user} />
-                <span className="text-sm font-medium text-gray-700">
+                <UserAvatar user={user} size={28} />
+                <span className="text-sm font-medium text-gray-700 truncate hidden md:inline">
                   Hi, {getDisplayName()}
                 </span>
                 <ChevronDown
-                  className={`h-4 w-4 text-gray-500 transition-transform ${
+                  className={`h-4 w-4 text-gray-500 transition-transform flex-shrink-0 ${
                     showUserDropdown ? "rotate-180" : ""
                   }`}
                 />
@@ -409,26 +411,29 @@ const Navbar: React.FC = () => {
               {/* Mobile User Button */}
               <button
                 onClick={() => setShowMobileMenu(true)}
-                className="sm:hidden p-2 rounded-lg hover:bg-gray-100 transition"
+                className="sm:hidden p-1.5 rounded-lg hover:bg-gray-100 transition"
+                aria-label="Profile"
               >
-                <UserAvatar user={user} />
+                <UserAvatar user={user} size={28} />
               </button>
 
               {/* Desktop User Dropdown */}
               {showUserDropdown && (
                 <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-lg py-2">
                   <div className="px-4 py-3 border-b border-gray-100">
-                    <p className="text-sm font-semibold text-gray-800">
+                    <p className="text-sm font-semibold text-gray-800 truncate">
                       {getDisplayName()}
                     </p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.email}
+                    </p>
                   </div>
                   <Link
                     href="/forum/profile"
                     onClick={() => setShowUserDropdown(false)}
                     className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    <User className="h-4 w-4" />
+                    <User className="h-4 w-4 flex-shrink-0" />
                     Profile
                   </Link>
                   {user.role === "admin" && (
@@ -437,7 +442,7 @@ const Navbar: React.FC = () => {
                       onClick={() => setShowUserDropdown(false)}
                       className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                      <ShieldCheck className="h-4 w-4" />
+                      <ShieldCheck className="h-4 w-4 flex-shrink-0" />
                       Dashboard
                     </Link>
                   )}
@@ -446,14 +451,14 @@ const Navbar: React.FC = () => {
                     onClick={() => setShowUserDropdown(false)}
                     className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    <MessageCircle className="h-4 w-4" />
+                    <MessageCircle className="h-4 w-4 flex-shrink-0" />
                     My Posts
                   </Link>
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50"
                   >
-                    <LogOut className="h-4 w-4" />
+                    <LogOut className="h-4 w-4 flex-shrink-0" />
                     Logout
                   </button>
                 </div>
@@ -462,10 +467,10 @@ const Navbar: React.FC = () => {
           ) : (
             <Link
               href="/auth/signin"
-              className="flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-sm transition"
+              className="flex items-center gap-1 sm:gap-1.5 bg-orange-600 hover:bg-orange-700 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium shadow-sm transition flex-shrink-0"
             >
-              <LogIn className="h-4 w-4" />
-              <span>Login</span>
+              <LogIn className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Login</span>
             </Link>
           )}
         </div>
@@ -473,14 +478,14 @@ const Navbar: React.FC = () => {
 
       {/* Mobile Search Overlay */}
       {mobileSearchOpen && (
-        <div className="fixed top-14 left-0 right-0 bg-white border-b border-gray-200 shadow-lg sm:hidden z-40 p-4">
+        <div className="fixed top-14 left-0 right-0 bg-white border-b border-gray-200 shadow-lg sm:hidden z-40 p-3 sm:p-4">
           <div className="relative">
             <input
               type="text"
               placeholder="Search topics, posts..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500"
+              className="w-full pl-9 pr-9 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500"
               autoFocus
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -515,7 +520,7 @@ const Navbar: React.FC = () => {
             className="fixed inset-0 bg-black/50 z-40 sm:hidden"
             onClick={() => setShowMobileMenu(false)}
           />
-          <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl z-50 sm:hidden">
+          <div className="fixed right-0 top-0 h-full w-72 sm:w-80 bg-white shadow-2xl z-50 sm:hidden overflow-y-auto">
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-gray-900">Menu</h2>
@@ -529,11 +534,13 @@ const Navbar: React.FC = () => {
               {user && (
                 <div className="mt-4 p-3 bg-gray-50 rounded-lg flex items-center gap-3">
                   <UserAvatar user={user} />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-gray-800 truncate">
                       {getDisplayName()}
                     </p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.email}
+                    </p>
                   </div>
                 </div>
               )}
@@ -545,7 +552,7 @@ const Navbar: React.FC = () => {
                 onClick={() => setShowMobileMenu(false)}
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
               >
-                <Home className="h-5 w-5 text-gray-500" />
+                <Home className="h-5 w-5 text-gray-500 flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-700">Home</span>
               </Link>
               <Link
@@ -553,7 +560,7 @@ const Navbar: React.FC = () => {
                 onClick={() => setShowMobileMenu(false)}
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
               >
-                <MessageCircle className="h-5 w-5 text-gray-500" />
+                <MessageCircle className="h-5 w-5 text-gray-500 flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-700">Forum</span>
               </Link>
 
@@ -564,7 +571,7 @@ const Navbar: React.FC = () => {
                     onClick={() => setShowMobileMenu(false)}
                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
                   >
-                    <User className="h-5 w-5 text-gray-500" />
+                    <User className="h-5 w-5 text-gray-500 flex-shrink-0" />
                     <span className="text-sm font-medium">Profile</span>
                   </Link>
                   {user.role === "admin" && (
@@ -573,7 +580,7 @@ const Navbar: React.FC = () => {
                       onClick={() => setShowMobileMenu(false)}
                       className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
                     >
-                      <ShieldCheck className="h-5 w-5 text-gray-500" />
+                      <ShieldCheck className="h-5 w-5 text-gray-500 flex-shrink-0" />
                       <span className="text-sm font-medium">Dashboard</span>
                     </Link>
                   )}
@@ -582,14 +589,14 @@ const Navbar: React.FC = () => {
                     onClick={() => setShowMobileMenu(false)}
                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
                   >
-                    <MessageCircle className="h-5 w-5 text-gray-500" />
+                    <MessageCircle className="h-5 w-5 text-gray-500 flex-shrink-0" />
                     <span className="text-sm font-medium">My Posts</span>
                   </Link>
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-3 w-full p-3 text-red-600 hover:bg-red-50 rounded-lg"
                   >
-                    <LogOut className="h-5 w-5" />
+                    <LogOut className="h-5 w-5 flex-shrink-0" />
                     <span className="text-sm font-medium">Logout</span>
                   </button>
                 </>
@@ -599,7 +606,7 @@ const Navbar: React.FC = () => {
                   onClick={() => setShowMobileMenu(false)}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
                 >
-                  <LogIn className="h-5 w-5 text-gray-500" />
+                  <LogIn className="h-5 w-5 text-gray-500 flex-shrink-0" />
                   <span className="text-sm font-medium">Login</span>
                 </Link>
               )}

@@ -330,7 +330,7 @@ const UnreadPage = () => {
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
+    <div className="bg-white rounded-none sm:rounded-xl shadow-none sm:shadow-lg p-4 sm:p-6 overflow-x-hidden"> {/* Adjust padding and remove rounded/shadow on mobile, add overflow-x-hidden */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900 flex items-center">
           <Eye className="mr-2 text-orange-600 w-5 h-5" />
@@ -350,7 +350,7 @@ const UnreadPage = () => {
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 px-0 sm:px-0"> {/* Ensure no extra padding here */}
         {loading ? (
           Array.from({ length: LIMIT }).map((_, index) => (
             <div key={`skeleton-${index}`}>{renderSkeleton()}</div>

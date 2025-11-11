@@ -4,6 +4,7 @@ import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
 import PostInteractionWrapper from "./PostInteractionWrapper";
+import PostImageViewer from "./PostImageViewer";
 
 interface Author {
   _id: string;
@@ -49,6 +50,7 @@ interface Post {
 
 type Props = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 async function getPost(id: string): Promise<Post | null> {
@@ -66,7 +68,7 @@ async function getPost(id: string): Promise<Post | null> {
   }
 }
 
-export default async function PostDetailPage({ params }: Props) {
+export default async function PostDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
   const post = await getPost(id);
 
@@ -75,11 +77,11 @@ export default async function PostDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <div>
         <Link
           href="/forum/home"
-          className="mb-4 flex items-center text-gray-600 hover:text-gray-900 transition-colors px-4 pt-4"
+          className="mb-4 flex items-center text-gray-600 hover:text-gray-900 transition-colors pt-4 px-4 sm:px-6 lg:px-8"
         >
           <svg
             className="w-5 h-5 mr-2"
@@ -97,24 +99,23 @@ export default async function PostDetailPage({ params }: Props) {
           Back to Forum
         </Link>
 
-        <div className="mb-4 px-4">
+        <div className="mb-4 px-4 sm:px-6 lg:px-8">
           <span className="inline-block bg-blue-100 text-blue-800 rounded-full px-4 py-1 text-sm font-medium">
             {post.category.name}
           </span>
         </div>
 
-        <div className="bg-white overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
+        <div className="bg-white overflow-hidden mx-0 sm:mx-auto sm:max-w-4xl lg:max-w-6xl rounded-none sm:rounded-xl shadow-none sm:shadow-lg">
+          <div className="p-4 sm:p-6 border-b border-gray-200">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               {post.title}
             </h1>
-
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center space-x-3">
                 {post.author.avatar && (
                   <Image
                     src={post.author.avatar}
-                    alt={post.author.firstName}
+                    alt={post.author.firstName || "Author Avatar"}
                     width={48}
                     height={48}
                     className="rounded-full object-cover border-2 border-gray-200"
@@ -184,7 +185,7 @@ export default async function PostDetailPage({ params }: Props) {
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {post.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-6">
                 {post.tags.map((tag, index) => (
@@ -197,51 +198,21 @@ export default async function PostDetailPage({ params }: Props) {
                 ))}
               </div>
             )}
-
             {post.images && post.images.length > 0 && (
               <div className="mb-6">
-                <div
-                  className={`grid gap-4 ${
-                    post.images.length === 1 ? "grid-cols-1" : "grid-cols-2"
-                  }`}
-                >
-                  {post.images.filter(Boolean).map((image, index) => (
-                    <a
-                      key={index}
-                      href={image}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg overflow-hidden bg-gray-100 group"
-                    >
-                      <Image
-                        src={image}
-                        alt={`Post image ${index + 1}`}
-                        width={500}
-                        height={256}
-                        className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </a>
-                  ))}
-                </div>
+                <PostImageViewer images={post.images} />
               </div>
             )}
-
             <div className="mb-6">
               <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">
                 {post.content}
               </p>
             </div>
-
             <PostInteractionWrapper
               postId={post._id}
               initialStats={post.stats}
             />
           </div>
-
-          {/* Replies/Comments Section */}
-          {/* <div className="p-6">
-            <CommentSection postId={post._id} />
-          </div> */}
         </div>
       </div>
     </div>

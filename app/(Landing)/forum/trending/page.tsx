@@ -376,7 +376,9 @@ const TrendingPage = () => {
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
+    <div className="bg-white rounded-none sm:rounded-xl shadow-none sm:shadow-lg p-4 sm:p-6 overflow-x-hidden">
+      {" "}
+      {/* Adjust padding and remove rounded/shadow on mobile, add overflow-x-hidden */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900 flex items-center">
           <MessageIcon className="mr-2 text-green-600" />
@@ -395,8 +397,9 @@ const TrendingPage = () => {
           </button>
         </div>
       </div>
-
-      <div className="space-y-4">
+      <div className="space-y-4 px-0 sm:px-0">
+        {" "}
+        {/* Ensure no extra padding here */}
         {loading ? (
           renderInitialLoader()
         ) : error ? (
