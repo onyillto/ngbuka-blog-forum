@@ -487,7 +487,7 @@ const UnreadPage = () => {
                     </div>
                   </div>
                   <div className="text-blue-800 group-hover:text-blue-900 text-sm font-medium flex items-center">
-                    <span>Be the First</span>
+                    <span>View Post</span>
                     <span className="ml-1 transform group-hover:translate-x-1 transition-transform">
                       →
                     </span>

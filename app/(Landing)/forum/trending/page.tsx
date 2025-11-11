@@ -535,7 +535,7 @@ const TrendingPage = () => {
                     </div>
                   </div>
                   <div className="text-blue-900 group-hover:text-blue-800 text-sm font-medium flex items-center">
-                    <span>Join Discussion</span>
+                    <span>View Post</span>
                     <span className="ml-1 transform group-hover:translate-x-1 transition-transform">
                       →
                     </span>
