@@ -82,7 +82,7 @@ const ForumSidebar = () => {
       href: "/forum/low-engagement",
     },
     { id: "my-posts", name: "My Posts", icon: Star, href: "/forum/my-posts" },
-    { id: "profile", name: "Profile", icon: User, href: "/profile" },
+    { id: "profile", name: "Profile", icon: User, href: "/forum/profile" },
   ];
 
   // Desktop Sidebar
