@@ -78,10 +78,10 @@ export default async function PostDetailPage({ params, searchParams }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      <div>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <Link
           href="/forum/home"
-          className="mb-4 flex items-center text-gray-600 hover:text-gray-900 transition-colors pt-4 px-4 sm:px-6 lg:px-8"
+          className="mb-4 flex items-center text-gray-600 hover:text-gray-900 transition-colors pt-4"
         >
           <svg
             className="w-5 h-5 mr-2"
@@ -99,13 +99,13 @@ export default async function PostDetailPage({ params, searchParams }: Props) {
           Back to Forum
         </Link>
 
-        <div className="mb-4 px-4 sm:px-6 lg:px-8">
+        <div className="mb-4">
           <span className="inline-block bg-blue-100 text-blue-800 rounded-full px-4 py-1 text-sm font-medium">
             {post.category.name}
           </span>
         </div>
 
-        <div className="bg-white overflow-hidden mx-0 sm:mx-auto sm:max-w-4xl lg:max-w-6xl rounded-none sm:rounded-xl shadow-none sm:shadow-lg">
+        <div className="bg-white overflow-hidden rounded-none sm:rounded-xl shadow-none sm:shadow-lg">
           <div className="p-4 sm:p-6 border-b border-gray-200">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               {post.title}
