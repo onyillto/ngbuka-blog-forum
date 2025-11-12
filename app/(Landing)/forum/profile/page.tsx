@@ -404,7 +404,7 @@ export default function ProfilePage() {
         {/* Profile Header Card */}
         <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm overflow-hidden mb-4 sm:mb-6">
           {/* Cover Photo */}
-          <div className="relative h-32 sm:h-48 md:h-64 bg-gradient-to-r from-blue-900 to-purple-600">
+          <div className="relative h-32 sm:h-48 md:h-64 bg-linear-to-r from-blue-900 to-purple-600">
             {profileData.coverImage ? (
               <Image
                 src={profileData.coverImage}
@@ -440,7 +440,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Name and Location */}
-                <div className="mb-0 sm:mb-2">
+                <div className="mt-16 sm:mt-20 mb-4">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                       {profileData.fullName ||
@@ -448,21 +448,21 @@ export default function ProfilePage() {
                     </h1>
                     {profileData.isVerified && (
                       <CheckCircle
-                        size={18}
-                        className="text-blue-900 flex-shrink-0"
+                        size={20}
+                        className="text-blue-600 shrink-0"
                         fill="currentColor"
                       />
                     )}
                   </div>
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
-                    <span className="bg-gradient-to-r from-blue-900 to-purple-600 text-white text-xs px-2.5 sm:px-3 py-1 rounded-full font-medium">
+                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-sm">
                       {profileData.level}
                     </span>
-                    <span className="bg-gray-100 text-gray-700 text-xs px-2.5 sm:px-3 py-1 rounded-full font-medium capitalize">
+                    <span className="bg-gray-100 text-gray-700 text-xs px-3 py-1.5 rounded-full font-medium capitalize border border-gray-200">
                       {profileData.role}
                     </span>
                     <div className="flex items-center gap-1 text-gray-600 text-xs sm:text-sm">
-                      <MapPin size={14} className="flex-shrink-0" />
+                      <MapPin size={14} className="shrink-0 text-gray-400" />
                       <span className="truncate">
                         {profileData.city}, {profileData.state}
                       </span>
@@ -488,7 +488,7 @@ export default function ProfilePage() {
               {/* Reputation Card */}
               <div className="group bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
                 <div className="flex items-start justify-between mb-2 sm:mb-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-800 to-blue-900 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br from-blue-800 to-blue-900 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
                     <Star
                       size={18}
                       className="text-white sm:w-[22px] sm:h-[22px]"
@@ -511,7 +511,7 @@ export default function ProfilePage() {
               {/* Total Posts Card */}
               <div className="group bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
                 <div className="flex items-start justify-between mb-2 sm:mb-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br from-purple-500 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
                     <FileText
                       size={18}
                       className="text-white sm:w-[22px] sm:h-[22px]"
@@ -532,7 +532,7 @@ export default function ProfilePage() {
                       0}
                   </p>
                   <p className="text-xs sm:text-sm text-purple-600 font-medium flex items-center">
-                    <Eye size={12} className="mr-1 sm:w-[14px] sm:h-[14px]" />
+                    <Eye size={12} className="mr-1 sm:w-3.5 sm:h-3.5" />
                     {profileData.statistics?.posts?.totalViews || 0}
                   </p>
                 </div>
@@ -541,7 +541,7 @@ export default function ProfilePage() {
               {/* Total Likes Card */}
               <div className="group bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
                 <div className="flex items-start justify-between mb-2 sm:mb-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br from-emerald-500 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
                     <Heart
                       size={18}
                       className="text-white sm:w-[22px] sm:h-[22px]"
@@ -570,7 +570,7 @@ export default function ProfilePage() {
               {/* Activity Card */}
               <div className="group bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
                 <div className="flex items-start justify-between mb-2 sm:mb-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br from-orange-500 to-orange-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
                     <Activity
                       size={18}
                       className="text-white sm:w-[22px] sm:h-[22px]"
@@ -696,7 +696,7 @@ export default function ProfilePage() {
                         <div className="flex gap-3 sm:gap-4 p-3 sm:p-4">
                           {/* Post Image */}
                           {post.images && post.images.length > 0 && (
-                            <div className="relative w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                            <div className="relative w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 shrink-0 rounded-lg overflow-hidden bg-gray-100">
                               <Image
                                 src={post.images[0]}
                                 alt={post.title}
@@ -709,7 +709,7 @@ export default function ProfilePage() {
                           {/* Post Content */}
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2 mb-2">
-                              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
+                              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-4 rounded-full">
                                 {post.category?.name || "Uncategorized"}
                               </span>
                               <span className="text-xs text-gray-500">
@@ -768,7 +768,7 @@ export default function ProfilePage() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     <div className="border border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 flex items-center gap-3">
-                      <div className="bg-gray-100 p-2 sm:p-2.5 rounded-lg flex-shrink-0">
+                      <div className="bg-gray-100 p-2 sm:p-2.5 rounded-lg shrink-0">
                         <Mail
                           size={18}
                           className="text-gray-700 sm:w-5 sm:h-5"
@@ -785,7 +785,7 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="border border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 flex items-center gap-3">
-                      <div className="bg-gray-100 p-2 sm:p-2.5 rounded-lg flex-shrink-0">
+                      <div className="bg-gray-100 p-2 sm:p-2.5 rounded-lg shrink-0">
                         <Phone
                           size={18}
                           className="text-gray-700 sm:w-5 sm:h-5"
@@ -802,7 +802,7 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="border border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 flex items-center gap-3">
-                      <div className="bg-gray-100 p-2 sm:p-2.5 rounded-lg flex-shrink-0">
+                      <div className="bg-gray-100 p-2 sm:p-2.5 rounded-lg shrink-0">
                         <Calendar
                           size={18}
                           className="text-gray-700 sm:w-5 sm:h-5"
@@ -838,7 +838,7 @@ export default function ProfilePage() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                     {/* Posts Stats */}
-                    <div className="bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-blue-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="bg-linear-to-br from-blue-50 via-blue-50 to-blue-100 rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-blue-200 shadow-sm hover:shadow-md transition-shadow duration-200">
                       <div className="flex items-center mb-3 sm:mb-4">
                         <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mr-3">
                           <span className="text-white text-xs font-bold">
@@ -984,7 +984,7 @@ export default function ProfilePage() {
                       <>
                         <CheckCircle
                           size={20}
-                          className="text-green-600 flex-shrink-0 mt-0.5 sm:w-6 sm:h-6"
+                          className="text-green-600 shrink-0 mt-0.5 sm:w-6 sm:h-6"
                         />
                         <div>
                           <p className="text-sm sm:text-base font-semibold text-gray-900 mb-1">
@@ -999,7 +999,7 @@ export default function ProfilePage() {
                       <>
                         <AlertCircle
                           size={20}
-                          className="text-gray-600 flex-shrink-0 mt-0.5 sm:w-6 sm:h-6"
+                          className="text-gray-600 shrink-0 mt-0.5 sm:w-6 sm:h-6"
                         />
                         <div>
                           <p className="text-sm sm:text-base font-semibold text-gray-900 mb-1">
