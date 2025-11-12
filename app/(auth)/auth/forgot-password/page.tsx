@@ -222,7 +222,7 @@ export default function ForgotPassword() {
                   </button>
 
                   <button
-                    onClick={() => (window.location.href = "/auth")}
+                    onClick={() => (window.location.href = "/auth/signin")}
                     className="w-full text-slate-400 hover:text-white text-sm"
                   >
                     Back to Sign In
