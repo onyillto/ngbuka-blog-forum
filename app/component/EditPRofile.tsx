@@ -18,7 +18,6 @@ export interface ProfileFormData {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  dealerLicense: string;
   city: string;
   state: string;
   bio: string;
@@ -40,7 +39,6 @@ export default function EditProfileModal({
     firstName: initialData?.firstName || "",
     lastName: initialData?.lastName || "",
     phoneNumber: initialData?.phoneNumber || "",
-    dealerLicense: initialData?.dealerLicense || "",
     city: initialData?.city || "",
     state: initialData?.state || "",
     bio: initialData?.bio || "",
@@ -261,21 +259,6 @@ export default function EditProfileModal({
                     {errors.phoneNumber}
                   </p>
                 )}
-              </div>
-
-              {/* Dealer License */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Dealer License
-                </label>
-                <input
-                  type="text"
-                  name="dealerLicense"
-                  value={formData.dealerLicense}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition"
-                  placeholder="DL-12345"
-                />
               </div>
 
               {/* City and State */}

@@ -15,11 +15,10 @@ import {
   SearchIcon,
   HeartIcon,
   PlusIcon,
-  EditIcon,
   TrashIcon,
 } from "../../../component/Icons";
 import { Eye, Filter, Loader2, AlertTriangle } from "lucide-react";
-
+import { LogIn } from "lucide-react";
 interface Post {
   _id: string;
   title: string;
@@ -91,9 +90,10 @@ const MyPostsPage = () => {
     setIsLoading(true);
     setError(null);
 
+    const token = Cookies.get("token");
     const userInfo = localStorage.getItem("user_info");
-    if (!userInfo) {
-      setError("User not found. Please log in.");
+    if (!userInfo || !token) {
+      setError("You must be logged in to view this page.");
       setIsLoading(false);
       return;
     }
@@ -148,32 +148,60 @@ const MyPostsPage = () => {
       return;
     }
 
-    const token = Cookies.get("token");
-    const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
-
-    const formData = new FormData();
-    formData.append("title", data.title);
-    formData.append("content", data.content);
-    formData.append("categoryId", data.categoryId);
-    const tagArray = data.tags
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter((tag) => tag);
-    tagArray.forEach((tag) => formData.append("tags", tag));
-    data.images.forEach((image) => {
-      formData.append("images", image);
-    });
-
     try {
-      const response = await fetch(`${apiBaseUrl}/posts`, {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      const token = Cookies.get("token");
+      let imageUrls: string[] = [];
+
+      if (data.images.length > 0) {
+        const imageFormData = new FormData();
+        data.images.forEach((image) => {
+          imageFormData.append("images", image);
+        });
+
+        const imageUploadResponse = await fetch(
+          `${apiBaseUrl}/posts/upload-images`,
+          {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: imageFormData,
+          }
+        );
+
+        const imageResult = await imageUploadResponse.json();
+
+        if (!imageUploadResponse.ok || !imageResult.success) {
+          throw new Error(imageResult.message || "Failed to upload images.");
+        }
+
+        if (imageResult.data && Array.isArray(imageResult.data.urls)) {
+          imageUrls = imageResult.data.urls.filter(Boolean);
+        }
+      }
+
+      const finalPostPayload = {
+        title: data.title,
+        content: data.content,
+        categoryId: data.categoryId,
+        tags: data.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        images: imageUrls,
+      };
+
+      const postResponse = await fetch(`${apiBaseUrl}/posts`, {
         method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(finalPostPayload),
       });
 
-      const result = await response.json();
+      const result = await postResponse.json();
 
-      if (!response.ok || !result.success) {
+      if (!postResponse.ok || !result.success) {
         throw new Error(result.message || "Failed to create post.");
       }
 
@@ -237,6 +265,16 @@ const MyPostsPage = () => {
     }
   };
 
+  const handleNewPostClick = () => {
+    const token = Cookies.get("token");
+    if (!token) {
+      toast.error("Please Login to create a post");
+      router.push("/auth/signin");
+    } else {
+      setIsCreateModalOpen(true);
+    }
+  };
+
   const getUserStats = () => {
     const totalPosts = posts.length;
     const totalReplies = posts.reduce(
@@ -270,14 +308,31 @@ const MyPostsPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center text-red-500">
-        {error}
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md mx-auto">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <AlertTriangle className="h-6 w-6 text-red-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            Authentication Required
+          </h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => router.push("/auth/signin")}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center w-full"
+          >
+            <LogIn className="w-4 h-4 mr-2" />
+            Go to Sign In
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      {" "}
+      {/* Add overflow-x-hidden */}
       <CreatePostModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -285,7 +340,6 @@ const MyPostsPage = () => {
         isSaving={isSavingPost}
         error={saveError}
       />
-
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -333,11 +387,14 @@ const MyPostsPage = () => {
           </div>
         </div>
       )}
-
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-6xl mx-auto px-0 sm:px-6 lg:px-8 py-8">
+        {" "}
+        {/* Remove px-4 for mobile */}
         {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-8 px-4 sm:px-0">
+          {" "}
+          {/* Add px-4 for mobile, then remove */}
+          <div className="flex items-center justify-between ">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
                 <MessageIcon className="mr-3 text-green-600" />
@@ -356,9 +413,10 @@ const MyPostsPage = () => {
             </button> */}
           </div>
         </div>
-
         {/* User Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 px-4 sm:px-0">
+          {" "}
+          {/* Add px-4 for mobile, then remove */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -414,9 +472,10 @@ const MyPostsPage = () => {
             </div>
           </div>
         </div>
-
         {/* Search and Filter */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className="bg-white rounded-none sm:rounded-xl shadow-none sm:shadow-lg p-4 sm:p-6 mb-8">
+          {" "}
+          {/* Adjust padding and remove rounded/shadow on mobile */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <h2 className="text-lg font-semibold text-gray-900">
@@ -441,9 +500,10 @@ const MyPostsPage = () => {
             </div>
           </div>
         </div>
-
         {/* Posts List */}
-        <div className="space-y-4">
+        <div className="space-y-4 px-4 sm:px-0">
+          {" "}
+          {/* Add px-4 for mobile, then remove */}
           {filteredPosts.map((post) => (
             <div
               key={post._id}
@@ -465,9 +525,6 @@ const MyPostsPage = () => {
                   </div>
                   {/* Action Buttons */}
                   <div className="flex items-center gap-2">
-                    <button className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all">
-                      <EditIcon className="w-4 h-4" />
-                    </button>
                     <button
                       onClick={() => openDeleteModal(post._id)}
                       className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all"
@@ -596,7 +653,6 @@ const MyPostsPage = () => {
             </div>
           ))}
         </div>
-
         {/* Empty State */}
         {filteredPosts.length === 0 && (
           <div className="bg-white rounded-xl shadow-lg p-12 text-center">
@@ -612,7 +668,7 @@ const MyPostsPage = () => {
                 : "You don't have any posts yet."}
             </p>
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={handleNewPostClick}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
               Create Your First Post

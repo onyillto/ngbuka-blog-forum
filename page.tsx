@@ -303,7 +303,9 @@ const CategoryPage = ({ params }: { params: { slug: string } }) => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8 overflow-x-hidden">
+      {" "}
+      {/* Add overflow-x-hidden */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {loadingCategory ? (
           <div className="bg-white rounded-xl shadow-lg p-8 mb-8 animate-pulse">
@@ -312,7 +314,9 @@ const CategoryPage = ({ params }: { params: { slug: string } }) => {
             <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
           </div>
         ) : category ? (
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-8 text-center">
+          <div className="bg-white rounded-none sm:rounded-xl shadow-none sm:shadow-lg p-4 sm:p-8 mb-8 text-center">
+            {" "}
+            {/* Adjust padding and remove rounded/shadow on mobile */}
             <div className="text-6xl mx-auto mb-4">{category.icon}</div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
               {category.name}
@@ -323,7 +327,9 @@ const CategoryPage = ({ params }: { params: { slug: string } }) => {
           </div>
         ) : null}
 
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 px-4 sm:px-0">
+          {" "}
+          {/* Add px-4 for mobile, then remove */}
           <h2 className="text-2xl font-bold text-gray-800">Discussions</h2>
           <button
             onClick={() => setCreatePostModalOpen(true)}
@@ -333,7 +339,9 @@ const CategoryPage = ({ params }: { params: { slug: string } }) => {
           </button>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 px-4 sm:px-0">
+          {" "}
+          {/* Add px-4 for mobile, then remove */}
           {loadingPosts ? (
             Array.from({ length: 5 }).map((_, index) => (
               <div key={`skeleton-${index}`}>{renderPostSkeleton()}</div>
@@ -370,7 +378,6 @@ const CategoryPage = ({ params }: { params: { slug: string } }) => {
           )}
         </div>
       </main>
-
       <CreatePostModal
         isOpen={isCreatePostModalOpen}
         onClose={() => setCreatePostModalOpen(false)}

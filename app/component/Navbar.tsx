@@ -12,12 +12,15 @@ import {
   Menu,
   Clock,
   TrendingUp,
+  Home,
+  MessageCircle,
+  ShieldCheck,
 } from "lucide-react";
-import { ShieldCheck } from "lucide-react";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import Image from "next/image";
 
+// ============ TYPES ============
 interface UserInfo {
   _id: string;
   firstName?: string;
@@ -25,612 +28,604 @@ interface UserInfo {
   email: string;
   fullName?: string;
   avatar?: string;
-  role?: "user" | "dealer" | "admin";
-}
-
-interface AuthState {
-  isLoggedIn: boolean;
-  user: UserInfo | null;
-  isLoading: boolean;
-}
-
-interface Author {
-  _id: string;
-  fullName: string;
-  avatar?: string;
-}
-
-interface Category {
-  _id: string;
-  name: string;
+  role?: "user" | "dealer" | "admin" | "moderator";
 }
 
 interface Post {
   _id: string;
   title: string;
-  author: Author;
-  categoryDetails: Category;
+  author: { _id: string; fullName: string; avatar?: string };
+  categoryDetails: { _id: string; name: string };
   createdAt: string;
   views: number;
   commentCount: number;
 }
 
+// ============ UTILITIES ============
 const formatTimeAgo = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  let interval = seconds / 31536000;
-  if (interval > 1) return `${Math.floor(interval)} years ago`;
-  interval = seconds / 2592000;
-  if (interval > 1) return `${Math.floor(interval)} months ago`;
-  interval = seconds / 86400;
-  if (interval > 1) return `${Math.floor(interval)} days ago`;
-  interval = seconds / 3600;
-  if (interval > 1) return `${Math.floor(interval)} hours ago`;
-  interval = seconds / 60;
-  if (interval > 1) return `${Math.floor(interval)} minutes ago`;
-  return `${Math.floor(seconds)} seconds ago`;
+  const seconds = Math.floor(
+    (Date.now() - new Date(dateString).getTime()) / 1000
+  );
+  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d ago`;
+  if (seconds < 31536000) return `${Math.floor(seconds / 2592000)}mo ago`;
+  return `${Math.floor(seconds / 31536000)}y ago`;
 };
 
+// ============ SUB-COMPONENTS ============
+
+// Search Results Component
+const SearchResults: React.FC<{
+  results: Post[];
+  isSearching: boolean;
+  error: string | null;
+  searchTerm: string;
+  onResultClick: () => void;
+}> = ({ results, isSearching, error, searchTerm, onResultClick }) => {
+  if (isSearching) {
+    return (
+      <div className="p-8 text-center">
+        <div className="inline-flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-orange-600" />
+          <span className="text-sm text-gray-600">Searching...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center">
+        <div className="w-12 h-12 rounded-full bg-red-100 mx-auto mb-3 flex items-center justify-center">
+          <X className="h-6 w-6 text-red-600" />
+        </div>
+        <p className="text-sm text-red-600 font-medium">{error}</p>
+        <p className="text-xs text-gray-500 mt-1">Please try again</p>
+      </div>
+    );
+  }
+
+  if (results.length === 0) {
+    return (
+      <div className="p-8 text-center">
+        <div className="w-12 h-12 rounded-full bg-gray-100 mx-auto mb-3 flex items-center justify-center">
+          <Search className="h-6 w-6 text-gray-400" />
+        </div>
+        <p className="text-sm text-gray-700 font-medium">No results found</p>
+        <p className="text-xs text-gray-500 mt-1">Try different keywords</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-h-[500px] overflow-y-auto">
+      <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase">
+          Results ({results.length})
+        </p>
+      </div>
+      <div className="divide-y divide-gray-100">
+        {results.map((post) => (
+          <Link
+            href={`/forum/post/${post._id}`}
+            key={post._id}
+            onClick={onResultClick}
+            className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition group"
+          >
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center shrink-0 mt-1">
+              <Search className="h-4 w-4 text-orange-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold text-gray-900 group-hover:text-orange-600 line-clamp-2 mb-1">
+                {post.title}
+              </h4>
+              <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                <span className="font-medium text-gray-700">
+                  {post.author?.fullName || "Anonymous"}
+                </span>
+                <span className="w-1 h-1 rounded-full bg-gray-300" />
+                <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full">
+                  {post.categoryDetails?.name || "Uncategorized"}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-gray-400">
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {formatTimeAgo(post.createdAt)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  {post.views} views
+                </span>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+      {results.length >= 5 && (
+        <div className="border-t border-gray-100 p-3">
+          <Link
+            href={`/search?q=${encodeURIComponent(searchTerm)}`}
+            onClick={onResultClick}
+            className="block text-center text-sm font-medium text-orange-600 hover:bg-orange-50 py-2 rounded-lg transition"
+          >
+            View all results →
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// User Avatar Component
+const UserAvatar: React.FC<{ user: UserInfo | null; size?: number }> = ({
+  user,
+  size = 32,
+}) => (
+  <div
+    className="bg-gradient-to-br from-orange-500 to-orange-700 rounded-full flex items-center justify-center overflow-hidden"
+    style={{ width: size, height: size }}
+  >
+    {user?.avatar ? (
+      <Image
+        src={user.avatar}
+        alt="avatar"
+        width={size}
+        height={size}
+        className="rounded-full object-cover"
+      />
+    ) : (
+      <User
+        className="text-white"
+        style={{ width: size / 2, height: size / 2 }}
+      />
+    )}
+  </div>
+);
+
+// ============ MAIN NAVBAR ============
 const Navbar: React.FC = () => {
-  const [authState, setAuthState] = useState<AuthState>({
-    isLoggedIn: false,
-    user: null,
-    isLoading: true,
-  });
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
-  const [showSearchResultsDropdown, setShowSearchResultsDropdown] =
-    useState(false);
   const [searchResults, setSearchResults] = useState<Post[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  const pathname = usePathname();
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchDropdownRef = useRef<HTMLDivElement>(null);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
-  // --- AUTH CHECK ---
+  const pathname = usePathname();
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+  const searchDropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Auth check
   useEffect(() => {
     const token = Cookies.get("token");
     const userInfoStr = localStorage.getItem("user_info");
 
-    if (!token || !userInfoStr) {
-      setAuthState({ isLoggedIn: false, user: null, isLoading: false });
-      return;
+    if (token && userInfoStr) {
+      try {
+        const userInfo: UserInfo = JSON.parse(userInfoStr);
+        if (userInfo._id && userInfo.email) {
+          setUser(userInfo);
+        }
+      } catch {
+        Cookies.remove("token");
+        localStorage.removeItem("user_info");
+      }
     }
-
-    try {
-      const userInfo: UserInfo = JSON.parse(userInfoStr);
-      if (!userInfo._id || !userInfo.email) throw new Error("Invalid info");
-      setAuthState({ isLoggedIn: true, user: userInfo, isLoading: false });
-    } catch {
-      Cookies.remove("token");
-      localStorage.removeItem("user_info");
-      setAuthState({ isLoggedIn: false, user: null, isLoading: false });
-    }
+    setIsLoading(false);
   }, []);
 
-  // --- CLOSE DROPDOWNS WHEN CLICKING OUTSIDE ---
+  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        dropdownRef.current &&
-        e.target instanceof Node &&
-        !dropdownRef.current.contains(e.target)
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(e.target as Node)
       ) {
-        setIsDropdownOpen(false);
+        setShowUserDropdown(false);
       }
       if (
+        !searchInputRef.current?.contains(e.target as Node) &&
         searchDropdownRef.current &&
-        e.target instanceof Node &&
-        !searchDropdownRef.current.contains(e.target)
+        !searchDropdownRef.current.contains(e.target as Node)
       ) {
-        setShowSearchResultsDropdown(false);
+        setShowSearchDropdown(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // --- DEBOUNCED SEARCH EFFECT ---
+  // Prevent body scroll on mobile menu or search open
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
+    if (showMobileMenu || mobileSearchOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showMobileMenu, mobileSearchOpen]);
+
+  // Search with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
       if (searchTerm.trim().length > 2) {
         fetchSearchResults(searchTerm.trim());
-        setShowSearchResultsDropdown(true);
+        setShowSearchDropdown(true);
       } else {
         setSearchResults([]);
-        setShowSearchResultsDropdown(false);
+        setShowSearchDropdown(false);
         setSearchError(null);
       }
     }, 300);
-
-    return () => clearTimeout(delayDebounceFn);
+    return () => clearTimeout(timer);
   }, [searchTerm]);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setShowMobileMenu(false);
+    setMobileSearchOpen(false);
+    setShowSearchDropdown(false);
+  }, [pathname]);
 
   const fetchSearchResults = async (query: string) => {
     setIsSearching(true);
     setSearchError(null);
     try {
       const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
-      const response = await fetch(
+      const res = await fetch(
         `${apiBaseUrl}/posts/search?q=${encodeURIComponent(query)}&limit=5`
       );
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to fetch search results.");
-      }
+      const data = await res.json();
+      if (!res.ok || !data.success)
+        throw new Error(data.message || "Search failed");
       setSearchResults(data.data);
-    } catch (err: unknown) {
-      setSearchError(
-        err instanceof Error ? err.message : "An unknown error occurred."
-      );
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : "Search failed");
       setSearchResults([]);
     } finally {
       setIsSearching(false);
     }
   };
 
-  // --- LOGOUT ---
   const handleLogout = () => {
     Cookies.remove("token");
     localStorage.removeItem("user_info");
-    setAuthState({ isLoggedIn: false, user: null, isLoading: false });
-    setIsDropdownOpen(false);
+    setUser(null);
+    setShowUserDropdown(false);
+    setShowMobileMenu(false);
     window.location.href = "/";
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      // Navigate to a full search results page if needed
-      // router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
-    }
-  };
-
-  const handleResultClick = () => {
-    setShowSearchResultsDropdown(false);
+  const closeAllMenus = () => {
+    setShowSearchDropdown(false);
     setSearchTerm("");
-    setIsSearchOpen(false);
+    setShowMobileMenu(false);
+    setMobileSearchOpen(false);
   };
 
-  const getDisplayName = (): string => {
-    if (!authState.user) return "Guest";
-    return (
-      authState.user.firstName ||
-      authState.user.fullName ||
-      authState.user.email.split("@")[0] ||
-      "User"
-    );
-  };
+  const getDisplayName = () =>
+    user?.firstName || user?.fullName || user?.email.split("@")[0] || "User";
 
-  // Close mobile search when navigating
-  useEffect(() => {
-    setIsSearchOpen(false);
-    setShowSearchResultsDropdown(false);
-  }, [pathname]);
-
-  // --- LOADING STATE ---
-  if (authState.isLoading) {
+  if (isLoading) {
     return (
-      <nav className="h-14 flex items-center justify-between px-4 bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm">
-        <div className="w-24 h-6 bg-gray-100 rounded animate-pulse"></div>
-        <div className="w-20 h-6 bg-gray-100 rounded animate-pulse"></div>
+      <nav className="h-14 sm:h-16 flex items-center justify-between px-3 sm:px-4 bg-white/80 backdrop-blur-sm border-b border-gray-200">
+        <div className="w-20 h-6 bg-gray-100 rounded animate-pulse" />
+        <div className="w-16 h-6 bg-gray-100 rounded animate-pulse" />
       </nav>
     );
   }
 
   return (
-    <nav className="relative h-14 sm:h-16 flex items-center justify-between px-4 bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100 z-50">
-      {/* --- LEFT: MENU (mobile) + LOGO --- */}
-      <div className="flex items-center space-x-3">
-        <button
-          className="sm:hidden p-2 rounded-lg hover:bg-gray-100 transition"
-          aria-label="Menu"
+    <>
+      <nav className="h-14 sm:h-16 flex items-center justify-between px-3 sm:px-4 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm relative z-50">
+        {/* Left: Logo & Mobile Menu Button */}
+        <div className="flex items-center gap-1 sm:gap-3 flex-1 min-w-0">
+          <button
+            onClick={() => setShowMobileMenu(true)}
+            className="sm:hidden p-1.5 rounded-lg hover:bg-gray-100 transition shrink-0"
+            aria-label="Menu"
+          >
+            <Menu className="h-5 w-5 text-gray-700" />
+          </button>
+          <Link href="/" className="flex items-center min-w-0 md:hidden">
+            <span className="text-base sm:text-lg font-bold text-orange-600 truncate">
+              Ngbuka
+            </span>
+          </Link>
+        </div>
+
+        {/* Center: Search (Button on mobile, Input on desktop) */}
+        <div
+          ref={searchDropdownRef}
+          className="flex flex-1 justify-center relative sm:mx-6 max-w-xl lg:max-w-2xl"
         >
-          <Menu className="h-5 w-5 text-gray-700" />
-        </button>
+          {/* Mobile Search Button */}
+          <button
+            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition shrink-0 sm:hidden"
+            aria-label="Search"
+          >
+            {mobileSearchOpen ? (
+              <X className="h-5 w-5 text-gray-700" />
+            ) : (
+              <Search className="h-5 w-5 text-gray-700" />
+            )}
+          </button>
 
-        {/* <Link href="/" className="flex items-center">
-          <span className="text-lg font-bold text-orange-600">
-            Ngbuka Forum
-          </span>
-        </Link> */}
-      </div>
-
-      {/* --- CENTER: SEARCH (Desktop) --- */}
-      <div
-        className="hidden sm:flex flex-1 mx-3 sm:mx-6 max-w-2xl relative"
-        ref={searchDropdownRef}
-      >
-        <form onSubmit={handleSearchSubmit} className="w-full relative">
-          <div className="relative">
+          {/* Desktop Search Input */}
+          <div className="hidden sm:block relative w-full">
             <input
+              ref={searchInputRef}
               type="text"
-              placeholder="Search topics, posts, categories..."
+              placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onFocus={() => {
-                if (searchTerm.trim().length > 2) {
-                  setShowSearchResultsDropdown(true);
-                }
-              }}
-              className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white hover:bg-gray-50 transition-all"
+              onFocus={() =>
+                searchTerm.trim().length > 2 && setShowSearchDropdown(true)
+              }
+              className="w-full pl-9 pr-9 py-2 sm:py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
             {searchTerm && (
               <button
-                type="button"
                 onClick={() => {
                   setSearchTerm("");
-                  setShowSearchResultsDropdown(false);
+                  setShowSearchDropdown(false);
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X className="h-4 w-4" />
               </button>
             )}
           </div>
-        </form>
 
-        {/* Search Results Dropdown (Desktop) */}
-        {showSearchResultsDropdown && searchTerm.trim().length > 2 && (
-          <div className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-2xl z-50 max-h-[500px] overflow-hidden">
-            {isSearching ? (
-              <div className="p-8 text-center">
-                <div className="inline-flex items-center justify-center space-x-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-orange-600"></div>
-                  <span className="text-sm text-gray-600">Searching...</span>
-                </div>
-              </div>
-            ) : searchError ? (
-              <div className="p-8 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-3">
-                  <X className="h-6 w-6 text-red-600" />
-                </div>
-                <p className="text-sm text-red-600 font-medium">
-                  {searchError}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">Please try again</p>
-              </div>
-            ) : searchResults.length === 0 ? (
-              <div className="p-8 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
-                  <Search className="h-6 w-6 text-gray-400" />
-                </div>
-                <p className="text-sm text-gray-700 font-medium">
-                  No results found
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Try searching with different keywords
-                </p>
-              </div>
-            ) : (
-              <div className="max-h-[500px] overflow-y-auto">
-                {/* Header */}
-                <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Search Results ({searchResults.length})
-                  </p>
-                </div>
-
-                {/* Results */}
-                <div className="divide-y divide-gray-100">
-                  {searchResults.map((post) => (
-                    <Link
-                      href={`/forum/post/${post._id}`}
-                      key={post._id}
-                      onClick={handleResultClick}
-                      className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
-                    >
-                      {/* Icon */}
-                      <div className="shrink-0 mt-1">
-                        <div className="w-10 h-10 rounded-lg bg-linear-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                          <Search className="h-4 w-4 text-orange-600" />
-                        </div>
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1 mb-1">
-                          {post.title}
-                        </h4>
-                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                          <span className="font-medium text-gray-700">
-                            {post.author?.fullName || "Anonymous"}
-                          </span>
-                          <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                          <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full font-medium">
-                            {post.categoryDetails?.name || "Uncategorized"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-gray-400">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {formatTimeAgo(post.createdAt)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <TrendingUp className="h-3 w-3" />
-                            {post.views} views
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Arrow */}
-                      <div className="shrink-0 mt-3">
-                        <div className="w-6 h-6 rounded-full bg-gray-100 group-hover:bg-orange-100 flex items-center justify-center transition-colors">
-                          <svg
-                            className="w-3 h-3 text-gray-400 group-hover:text-orange-600 transition-colors"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-
-                {/* Footer - View All */}
-                {searchResults.length >= 5 && (
-                  <div className="sticky bottom-0 bg-linear-to-t from-white via-white to-transparent border-t border-gray-100 p-3">
-                    <Link
-                      href={`/search?q=${encodeURIComponent(searchTerm)}`}
-                      onClick={handleResultClick}
-                      className="block text-center text-sm font-medium text-orange-600 hover:text-orange-700 py-2 hover:bg-orange-50 rounded-lg transition-colors"
-                    >
-                      View all results for &quot;{searchTerm}&quot; →
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* --- MOBILE SEARCH BUTTON --- */}
-      <button
-        onClick={() => setIsSearchOpen((p) => !p)}
-        className="sm:hidden p-2 rounded-lg hover:bg-gray-100 transition text-gray-700"
-      >
-        {isSearchOpen ? (
-          <X className="h-5 w-5" />
-        ) : (
-          <Search className="h-5 w-5" />
-        )}
-      </button>
-
-      {/* --- RIGHT: AUTH --- */}
-      <div ref={dropdownRef} className="relative flex items-center">
-        {authState.isLoggedIn ? (
-          <>
-            <button
-              onClick={() => setIsDropdownOpen((p) => !p)}
-              className="flex items-center space-x-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition"
-            >
-              <div className="w-8 h-8 bg-linear-to-br from-orange-500 to-orange-700 rounded-full flex items-center justify-center">
-                {authState.user?.avatar ? (
-                  <Image
-                    src={authState.user.avatar}
-                    alt="avatar"
-                    width={32}
-                    height={32}
-                    className="rounded-full object-cover"
-                  />
-                ) : (
-                  <User className="text-white h-4 w-4" />
-                )}
-              </div>
-              <ChevronDown
-                className={`hidden sm:block h-4 w-4 text-gray-500 transition-transform ${
-                  isDropdownOpen ? "rotate-180" : ""
-                }`}
+          {/* Desktop Search Results Dropdown */}
+          {showSearchDropdown && searchTerm.trim().length > 2 && (
+            <div className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-2xl z-50">
+              <SearchResults
+                results={searchResults}
+                isSearching={isSearching}
+                error={searchError}
+                searchTerm={searchTerm}
+                onResultClick={closeAllMenus}
               />
-            </button>
+            </div>
+          )}
+        </div>
 
-            {isDropdownOpen && (
-              <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg py-2">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-semibold text-gray-800">
-                    {getDisplayName()}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">
-                    {authState.user?.email}
-                  </p>
-                </div>
-                <Link
-                  href="/forum/profile"
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  onClick={() => setIsDropdownOpen(false)}
-                >
-                  <User className="h-4 w-4 mr-3 text-gray-500" />
-                  Profile
-                </Link>
-                {authState.user?.role === "admin" && (
-                  <Link
-                    href="/dashboard/users"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    <ShieldCheck className="h-4 w-4 mr-3 text-gray-500" />
-                    Dashboard
-                  </Link>
-                )}
-                <Link
-                  href="/forum/my-posts"
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  onClick={() => setIsDropdownOpen(false)}
-                >
-                  <svg
-                    className="h-4 w-4 mr-3 text-gray-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  My Posts
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                >
-                  <LogOut className="h-4 w-4 mr-3" />
-                  Logout
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <Link
-            href="/auth/signin"
-            className="flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm"
-          >
-            <LogIn className="h-4 w-4" />
-            <span>Login</span>
-          </Link>
-        )}
-      </div>
-
-      {/* --- Mobile Search Dropdown --- */}
-      {isSearchOpen && (
-        <div className="absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg sm:hidden z-50">
-          <div className="p-4">
-            <form onSubmit={handleSearchSubmit}>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search topics, posts..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onFocus={() => {
-                    if (searchTerm.trim().length > 2) {
-                      setShowSearchResultsDropdown(true);
-                    }
-                  }}
-                  className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  autoFocus
+        {/* Right: Auth */}
+        <div className="flex items-center justify-end gap-1 sm:gap-2 flex-1 min-w-0">
+          {/* User Menu */}
+          {user ? (
+            <div ref={userDropdownRef} className="relative">
+              {/* Desktop User Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowUserDropdown(!showUserDropdown);
+                }}
+                className="hidden sm:flex items-center gap-2 pl-2 pr-2 sm:pr-3 py-1.5 rounded-lg hover:bg-gray-100 transition max-w-[200px]"
+              >
+                <UserAvatar user={user} size={28} />
+                <span className="text-sm font-medium text-gray-700 truncate hidden md:inline">
+                  Hi, {getDisplayName()}
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 text-gray-500 transition-transform shrink-0 ${
+                    showUserDropdown ? "rotate-180" : ""
+                  }`}
                 />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                {searchTerm && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchTerm("");
-                      setShowSearchResultsDropdown(false);
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+              </button>
+
+              {/* Mobile User Button */}
+              <button
+                onClick={() => setShowMobileMenu(true)}
+                className="sm:hidden p-1.5 rounded-lg hover:bg-gray-100 transition"
+                aria-label="Profile"
+              >
+                <UserAvatar user={user} size={28} />
+              </button>
+
+              {/* Desktop User Dropdown */}
+              {showUserDropdown && (
+                <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-lg py-2">
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {getDisplayName()}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                  <Link
+                    href="/forum/profile"
+                    onClick={() => setShowUserDropdown(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    <X className="h-4 w-4" />
+                    <User className="h-4 w-4 shrink-0" />
+                    Profile
+                  </Link>
+                  {user.role === "admin" && (
+                    <Link
+                      href="/dashboard/users"
+                      onClick={() => setShowUserDropdown(false)}
+                      className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <ShieldCheck className="h-4 w-4 shrink-0" />
+                      Dashboard
+                    </Link>
+                  )}
+                  <Link
+                    href="/forum/my-posts"
+                    onClick={() => setShowUserDropdown(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <MessageCircle className="h-4 w-4 shrink-0" />
+                    My Posts
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4 shrink-0" />
+                    Logout
                   </button>
-                )}
-              </div>
-            </form>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/auth/signin"
+              className="flex items-center gap-1 sm:gap-1.5 bg-orange-600 hover:bg-orange-700 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium shadow-sm transition shrink-0"
+            >
+              <LogIn className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Login</span>
+            </Link>
+          )}
+        </div>
+      </nav>
 
-            {/* Search Results (Mobile) */}
-            {showSearchResultsDropdown && searchTerm.trim().length > 2 && (
-              <div className="mt-3 bg-white border border-gray-200 rounded-xl shadow-lg max-h-[400px] overflow-hidden">
-                {isSearching ? (
-                  <div className="p-6 text-center">
-                    <div className="inline-flex items-center justify-center space-x-2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-orange-600"></div>
-                      <span className="text-sm text-gray-600">
-                        Searching...
-                      </span>
-                    </div>
-                  </div>
-                ) : searchError ? (
-                  <div className="p-6 text-center">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-2">
-                      <X className="h-6 w-6 text-red-600" />
-                    </div>
-                    <p className="text-sm text-red-600 font-medium">
-                      {searchError}
-                    </p>
-                  </div>
-                ) : searchResults.length === 0 ? (
-                  <div className="p-6 text-center">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-2">
-                      <Search className="h-6 w-6 text-gray-400" />
-                    </div>
-                    <p className="text-sm text-gray-700 font-medium">
-                      No results found
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Try different keywords
-                    </p>
-                  </div>
-                ) : (
-                  <div className="max-h-[400px] overflow-y-auto">
-                    <div className="divide-y divide-gray-100">
-                      {searchResults.map((post) => (
-                        <Link
-                          href={`/forum/post/${post._id}`}
-                          key={post._id}
-                          onClick={handleResultClick}
-                          className="flex items-start gap-3 p-3 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                        >
-                          <div className="shrink-0 mt-1">
-                            <div className="w-9 h-9 rounded-lg bg-linear-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                              <Search className="h-4 w-4 text-orange-600" />
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-1">
-                              {post.title}
-                            </h4>
-                            <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                              <span className="font-medium">
-                                {post.author?.fullName || "Anonymous"}
-                              </span>
-                              <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                              <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full font-medium">
-                                {post.categoryDetails?.name || "Uncategorized"}
-                              </span>
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              {formatTimeAgo(post.createdAt)}
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-
-                    {searchResults.length >= 5 && (
-                      <div className="border-t border-gray-100 p-3">
-                        <Link
-                          href={`/search?q=${encodeURIComponent(searchTerm)}`}
-                          onClick={handleResultClick}
-                          className="block text-center text-sm font-medium text-orange-600 py-2 hover:bg-orange-50 rounded-lg transition-colors"
-                        >
-                          View all results →
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+      {/* Mobile Search Overlay */}
+      {mobileSearchOpen && (
+        <div className="fixed top-14 left-0 right-0 bg-white border-b border-gray-200 shadow-lg sm:hidden z-40 overflow-hidden">
+          <div className="relative px-3 py-3">
+            <input
+              type="text"
+              placeholder="Search topics, posts..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-9 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500"
+              autoFocus
+            />
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400"
+              >
+                <X className="h-4 w-4" />
+              </button>
             )}
           </div>
+
+          {searchTerm.trim().length > 2 && (
+            <div className="bg-white border-t border-gray-200 rounded-t-none rounded-b-xl shadow-lg max-h-96 overflow-hidden">
+              <SearchResults
+                results={searchResults}
+                isSearching={isSearching}
+                error={searchError}
+                searchTerm={searchTerm}
+                onResultClick={closeAllMenus}
+              />
+            </div>
+          )}
         </div>
       )}
-    </nav>
+
+      {/* Mobile Menu Overlay */}
+      {showMobileMenu && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-40 sm:hidden"
+            onClick={() => setShowMobileMenu(false)}
+          />
+          <div className="fixed right-0 top-0 h-full w-72 sm:w-80 bg-white shadow-2xl z-50 sm:hidden overflow-y-auto">
+            <div className="p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-900">Menu</h2>
+                <button
+                  onClick={() => setShowMobileMenu(false)}
+                  className="p-2 rounded-lg hover:bg-gray-100"
+                >
+                  <X className="h-6 w-6 text-gray-600" />
+                </button>
+              </div>
+              {user && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg flex items-center gap-3">
+                  <UserAvatar user={user} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {getDisplayName()}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 space-y-2">
+              <Link
+                href="/"
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
+              >
+                <Home className="h-5 w-5 text-gray-500 shrink-0" />
+                <span className="text-sm font-medium text-gray-700">Home</span>
+              </Link>
+
+              {user ? (
+                <>
+                  <Link
+                    href="/forum/profile"
+                    onClick={() => setShowMobileMenu(false)}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
+                  >
+                    <User className="h-5 w-5 text-gray-500 shrink-0" />
+                    <span className="text-sm font-medium">Profile</span>
+                  </Link>
+                  {user.role === "admin" && (
+                    <Link
+                      href="/dashboard/users"
+                      onClick={() => setShowMobileMenu(false)}
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
+                    >
+                      <ShieldCheck className="h-5 w-5 text-gray-500 shrink-0" />
+                      <span className="text-sm font-medium">Dashboard</span>
+                    </Link>
+                  )}
+                  <Link
+                    href="/forum/my-posts"
+                    onClick={() => setShowMobileMenu(false)}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
+                  >
+                    <MessageCircle className="h-5 w-5 text-gray-500 shrink-0" />
+                    <span className="text-sm font-medium">My Posts</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 w-full p-3 text-red-600 hover:bg-red-50 rounded-lg"
+                  >
+                    <LogOut className="h-5 w-5 shrink-0" />
+                    <span className="text-sm font-medium">Logout</span>
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/auth/signin"
+                  onClick={() => setShowMobileMenu(false)}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
+                >
+                  <LogIn className="h-5 w-5 text-gray-500 shrink-0" />
+                  <span className="text-sm font-medium">Login</span>
+                </Link>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </>
   );
 };
 

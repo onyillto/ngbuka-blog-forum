@@ -5,6 +5,8 @@ import CreatePostModal, { PostPayload } from "./CreatePostModal";
 import Cookies from "js-cookie";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { MessageIcon, HeartIcon, PlusIcon, Loader2 } from "./Icons";
 
 interface Author {
@@ -68,19 +70,23 @@ export const TrendingDiscussions = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const router = useRouter();
 
   const observerRef = useRef<HTMLDivElement>(null);
 
   const fetchPosts = useCallback(
     async (page: number, append = false) => {
       try {
+        setError(null); // Reset error on new fetch
         if (!append) setLoading(true);
 
         const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
-        let url = `${apiBaseUrl}/posts?page=${page}&limit=${LIMIT}&sort=-views`;
+        let url = `${apiBaseUrl}/posts?page=${page}&limit=${LIMIT}`;
+
         if (filterCategories && filterCategories.length > 0) {
-          const categoryParams = filterCategories.join(",");
-          url = `${apiBaseUrl}/posts?category=${categoryParams}&page=${page}&limit=${LIMIT}&sort=-createdAt`;
+          url += `&category=${filterCategories.join(",")}&sort=-createdAt`;
+        } else {
+          url += `&sort=-views`;
         }
         const response = await fetch(url);
         const result = await response.json();
@@ -212,6 +218,16 @@ export const TrendingDiscussions = ({
           return disc;
         })
       );
+    }
+  };
+
+  const handleNewPostClick = () => {
+    const token = Cookies.get("token");
+    if (!token) {
+      toast.error("Please Login to create a post");
+      router.push("/auth/signin"); // Optional: still redirect after showing the message
+    } else {
+      setCreatePostModalOpen(true);
     }
   };
 
@@ -351,8 +367,8 @@ export const TrendingDiscussions = ({
             View all
           </button> */}
           <button
-            onClick={() => setCreatePostModalOpen(true)}
-            className="bg-blue-800 hover:bg-blue-900 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center"
+            onClick={handleNewPostClick}
+            className="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-colors"
           >
             <PlusIcon className="w-4 h-4 mr-1" />
             New Post
@@ -368,7 +384,16 @@ export const TrendingDiscussions = ({
         ) : error ? (
           <p className="text-red-500 text-center">{error}</p>
         ) : discussions.length === 0 ? (
-          <p className="text-gray-500 text-center">No discussions found.</p>
+          <div className="text-center py-10">
+            <h3 className="text-lg font-semibold text-gray-800">
+              No Discussions Found
+            </h3>
+            <p className="text-gray-500 mt-2">
+              {filterCategories && filterCategories.length > 0
+                ? "Try adjusting your category filters to find what you're looking for."
+                : "There are no discussions available at the moment."}
+            </p>
+          </div>
         ) : (
           discussions.map((discussion) => (
             <Link
@@ -493,7 +518,7 @@ export const TrendingDiscussions = ({
                     </div>
                   </div>
                   <div className="text-blue-800 group-hover:text-blue-900 text-sm font-medium flex items-center">
-                    <span>Join Discussion</span>
+                    <span>View Post</span>
                     <span className="ml-1 transform group-hover:translate-x-1 transition-transform">
                       →
                     </span>

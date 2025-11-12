@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from "react";
-import { Car, Shield, Users, CheckCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Car, Shield, Users, CheckCircle, Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 
@@ -8,7 +9,10 @@ function AutoEscrowAuth() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("signup");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -18,6 +22,32 @@ function AutoEscrowAuth() {
     agreeToTerms: false,
     rememberMe: false,
   });
+
+  useEffect(() => {
+    // Check if the user is already logged in
+    const token = Cookies.get("token");
+    const userInfo = localStorage.getItem("user_info");
+
+    if (token && userInfo) {
+      router.push("/forum/home");
+    }
+  }, [router]);
+
+  const validateEmail = (email: string) => {
+    if (!email) {
+      setEmailError("Email is required.");
+      return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValid = emailRegex.test(email);
+
+    setEmailError(
+      isValid
+        ? null
+        : "Please enter a valid email address (e.g., user@example.com)."
+    );
+    return isValid;
+  };
 
   const getFriendlyErrorMessage = (message: string): string => {
     // Default message for unknown errors
@@ -52,12 +82,26 @@ function AutoEscrowAuth() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    if (name === "email") {
+      validateEmail(value);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    if (!validateEmail(formData.email)) {
+      setLoading(false);
+      return;
+    }
+
+    if (activeTab === "signup" && formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match. Please try again.");
+      setLoading(false);
+      return;
+    }
 
     const isSignUp = activeTab === "signup";
     const endpoint = isSignUp ? "/auth/signup" : "/auth/signin";
@@ -92,7 +136,12 @@ function AutoEscrowAuth() {
 
       // Store token in cookie
       if (data.data.token) {
-        Cookies.set("token", data.data.token, { expires: 7, secure: true }); // Expires in 7 days
+        const cookieOptions = {
+          expires: formData.rememberMe ? 30 : 7, // 30 days if remembered, else 7 days
+          // Only set the secure flag in production
+          secure: process.env.NODE_ENV === "production",
+        };
+        Cookies.set("token", data.data.token, cookieOptions);
       }
       // Store user info in localStorage
       if (data.data.user) {
@@ -282,34 +331,67 @@ function AutoEscrowAuth() {
                         placeholder="dealer@example.com"
                         className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
                       />
+                      {emailError && (
+                        <p className="text-red-400 text-sm mt-1">
+                          {emailError}
+                        </p>
+                      )}
                     </div>
 
                     <div>
                       <label className="block text-white text-sm mb-2">
                         Password
                       </label>
-                      <input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        placeholder="Create a strong password"
-                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          name="password"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          placeholder="Create a strong password"
+                          className="w-full px-4 py-3 pr-12 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        >
+                          {showPassword ? (
+                            <EyeOff size={20} />
+                          ) : (
+                            <Eye size={20} />
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     <div>
                       <label className="block text-white text-sm mb-2">
                         Confirm Password
                       </label>
-                      <input
-                        type="password"
-                        name="confirmPassword"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        placeholder="Confirm your password"
-                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          name="confirmPassword"
+                          value={formData.confirmPassword}
+                          onChange={handleInputChange}
+                          placeholder="Confirm your password"
+                          className="w-full px-4 py-3 pr-12 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff size={20} />
+                          ) : (
+                            <Eye size={20} />
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -322,13 +404,19 @@ function AutoEscrowAuth() {
                       />
                       <label className="text-slate-300 text-sm">
                         I agree to the{" "}
-                        <span className="text-orange-500 cursor-pointer">
+                        <Link
+                          href="/termsofservice"
+                          className="text-orange-500 hover:underline"
+                        >
                           Terms of Service
-                        </span>{" "}
+                        </Link>{" "}
                         and{" "}
-                        <span className="text-orange-500 cursor-pointer">
+                        <Link
+                          href="/privacypolicy"
+                          className="text-orange-500 hover:underline"
+                        >
                           Privacy Policy
-                        </span>
+                        </Link>
                       </label>
                     </div>
 
@@ -369,20 +457,38 @@ function AutoEscrowAuth() {
                         placeholder="dealer@example.com"
                         className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
                       />
+                      {emailError && (
+                        <p className="text-red-400 text-sm mt-1">
+                          {emailError}
+                        </p>
+                      )}
                     </div>
 
                     <div>
                       <label className="block text-white text-sm mb-2">
                         Password
                       </label>
-                      <input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        placeholder="Enter your password"
-                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          name="password"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          placeholder="Enter your password"
+                          className="w-full px-4 py-3 pr-12 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        >
+                          {showPassword ? (
+                            <EyeOff size={20} />
+                          ) : (
+                            <Eye size={20} />
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between">

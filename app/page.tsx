@@ -301,13 +301,13 @@ const CarCard = ({ car, isActive }: { car: Car; isActive: boolean }) => {
         </div>
 
         {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+        {/* <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
           <div className="p-6 w-full">
             <button className="w-full bg-white text-gray-900 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors">
               View Details
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
@@ -363,10 +363,7 @@ const HeroSection = () => {
               <MessageIcon className="w-6 h-6 mr-2" />
               Join Discussions
             </Link>
-            <button className="border border-white/30 text-white hover:bg-white/10 px-8 py-4 rounded-xl font-semibold text-lg transition-all backdrop-blur-sm flex items-center justify-center">
-              <PlayIcon className="w-6 h-6 mr-2" />
-              Watch Demo
-            </button>
+
           </div>
         </div>
 
@@ -587,7 +584,7 @@ const CTASection = () => (
 
         <div className="flex flex-col sm:flex-row gap-6 justify-center">
           <Link
-            href="/discussions"
+            href="/auth/signin"
             className="text-white px-10 py-4 rounded-xl text-lg font-semibold transition-all transform hover:scale-105 shadow-lg flex items-center justify-center"
             style={{ backgroundColor: "#FF8E05" }} // Initial background color
             onMouseEnter={(e) =>
@@ -601,12 +598,7 @@ const CTASection = () => (
             Start Discussing Now
             <ArrowRightIcon className="w-5 h-5 ml-3" />
           </Link>
-          <Link
-            href="/chat"
-            className="border border-orange-500 text-orange-400 hover:bg-orange-500/10 hover:text-white px-10 py-4 rounded-xl text-lg font-semibold transition-all flex items-center justify-center"
-          >
-            Get AI Assistance
-          </Link>
+          
         </div>
 
         <div className="mt-12 text-sm text-gray-400">

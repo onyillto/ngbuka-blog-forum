@@ -329,6 +329,16 @@ const TrendingPage = () => {
     }
   };
 
+  const handleNewPostClick = () => {
+    const token = Cookies.get("token");
+    if (!token) {
+      toast.error("Please Login to create a post");
+      router.push("/auth/signin");
+    } else {
+      setCreatePostModalOpen(true);
+    }
+  };
+
   const renderSkeleton = () => (
     <div className="border border-gray-200 rounded-lg overflow-hidden animate-pulse">
       <div className="p-4">
@@ -356,8 +366,19 @@ const TrendingPage = () => {
     </div>
   );
 
+  const renderInitialLoader = () => (
+    <div className="flex justify-center items-center py-12">
+      <div className="text-center">
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-gray-400 mb-4" />
+        <p className="text-sm text-gray-500">Loading trending discussions...</p>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
+    <div className="bg-white rounded-none sm:rounded-xl shadow-none sm:shadow-lg p-4 sm:p-6 overflow-x-hidden">
+      {" "}
+      {/* Adjust padding and remove rounded/shadow on mobile, add overflow-x-hidden */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900 flex items-center">
           <MessageIcon className="mr-2 text-green-600" />
@@ -368,7 +389,7 @@ const TrendingPage = () => {
             View all
           </button> */}
           <button
-            onClick={() => setCreatePostModalOpen(true)}
+            onClick={handleNewPostClick}
             className="bg-blue-900 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center"
           >
             <PlusIcon className="w-4 h-4 mr-1" />
@@ -376,16 +397,20 @@ const TrendingPage = () => {
           </button>
         </div>
       </div>
-
-      <div className="space-y-4">
+      <div className="space-y-4 px-0 sm:px-0">
+        {" "}
+        {/* Ensure no extra padding here */}
         {loading ? (
-          Array.from({ length: LIMIT }).map((_, index) => (
-            <div key={`skeleton-${index}`}>{renderSkeleton()}</div>
-          ))
+          renderInitialLoader()
         ) : error ? (
           <p className="text-red-500 text-center">{error}</p>
         ) : discussions.length === 0 ? (
-          <p className="text-gray-500 text-center">No trending posts yet.</p>
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg mb-4">No trending posts yet.</p>
+            <p className="text-gray-400 text-sm">
+              Be the first to start a discussion!
+            </p>
+          </div>
         ) : (
           discussions.map((discussion) => (
             <Link
@@ -510,7 +535,7 @@ const TrendingPage = () => {
                     </div>
                   </div>
                   <div className="text-blue-900 group-hover:text-blue-800 text-sm font-medium flex items-center">
-                    <span>Join Discussion</span>
+                    <span>View Post</span>
                     <span className="ml-1 transform group-hover:translate-x-1 transition-transform">
                       →
                     </span>
