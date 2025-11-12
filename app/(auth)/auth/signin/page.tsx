@@ -97,6 +97,12 @@ function AutoEscrowAuth() {
       return;
     }
 
+    if (activeTab === "signup" && formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match. Please try again.");
+      setLoading(false);
+      return;
+    }
+
     const isSignUp = activeTab === "signup";
     const endpoint = isSignUp ? "/auth/signup" : "/auth/signin";
     const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
