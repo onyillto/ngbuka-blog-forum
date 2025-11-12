@@ -838,34 +838,41 @@ export default function ProfilePage() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                     {/* Posts Stats */}
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg sm:rounded-xl p-4 sm:p-6 border border-blue-200">
-                      <h4 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">
-                        Post Performance
-                      </h4>
-                      <div className="space-y-2 sm:space-y-3">
-                        <div className="flex justify-between text-xs sm:text-sm">
+                    <div className="bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-blue-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                      <div className="flex items-center mb-3 sm:mb-4">
+                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-white text-xs font-bold">
+                            📝
+                          </span>
+                        </div>
+                        <h4 className="text-sm sm:text-base font-semibold text-gray-900">
+                          Post Performance
+                        </h4>
+                      </div>
+                      <div className="space-y-3 sm:space-y-4">
+                        <div className="flex justify-between text-xs sm:text-sm py-1">
                           <span className="text-gray-600">Total Posts</span>
-                          <span className="font-semibold">
+                          <span className="font-semibold text-blue-700">
                             {profileData.statistics?.posts?.total ||
                               profileData.postCount ||
                               0}
                           </span>
                         </div>
-                        <div className="flex justify-between text-xs sm:text-sm">
+                        <div className="flex justify-between text-xs sm:text-sm py-1">
                           <span className="text-gray-600">Total Views</span>
-                          <span className="font-semibold">
+                          <span className="font-semibold text-blue-700">
                             {profileData.statistics?.posts?.totalViews || 0}
                           </span>
                         </div>
-                        <div className="flex justify-between text-xs sm:text-sm">
+                        <div className="flex justify-between text-xs sm:text-sm py-1">
                           <span className="text-gray-600">Total Likes</span>
-                          <span className="font-semibold">
+                          <span className="font-semibold text-blue-700">
                             {profileData.statistics?.posts?.totalLikes || 0}
                           </span>
                         </div>
-                        <div className="flex justify-between text-xs sm:text-sm">
+                        <div className="flex justify-between text-xs sm:text-sm py-1">
                           <span className="text-gray-600">Avg Views</span>
-                          <span className="font-semibold">
+                          <span className="font-semibold text-blue-700">
                             {profileData.statistics?.posts?.avgViewsPerPost ||
                               0}
                           </span>
@@ -874,64 +881,76 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Comments Stats */}
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg sm:rounded-xl p-4 sm:p-6 border border-purple-200">
-                      <h4 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">
-                        Comment Activity
-                      </h4>
-                      <div className="space-y-2 sm:space-y-3">
-                        <div className="flex justify-between text-xs sm:text-sm">
-                          <span className="text-gray-600">Comments Made</span>
-                          <span className="font-semibold">
-                            {profileData.statistics?.comments?.total ||
-                              profileData.commentCount ||
-                              0}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-xs sm:text-sm">
-                          <span className="text-gray-600">
-                            Comments Received
-                          </span>
-                          <span className="font-semibold">
-                            {profileData.statistics?.comments?.received || 0}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-xs sm:text-sm">
-                          <span className="text-gray-600">
-                            Likes on Comments
-                          </span>
-                          <span className="font-semibold">
-                            {profileData.statistics?.comments?.totalLikes || 0}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    {/* <div className="bg-gradient-to-br from-purple-50 via-purple-50 to-purple-100 rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-purple-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="flex items-center mb-3 sm:mb-4">
+          <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center mr-3">
+            <span className="text-white text-xs font-bold">💬</span>
+          </div>
+          <h4 className="text-sm sm:text-base font-semibold text-gray-900">
+            Comment Activity
+          </h4>
+        </div>
+        <div className="space-y-3 sm:space-y-4">
+          <div className="flex justify-between text-xs sm:text-sm py-1">
+            <span className="text-gray-600">Comments Made</span>
+            <span className="font-semibold text-purple-700">
+              {profileData.statistics?.comments?.total ||
+                profileData.commentCount ||
+                0}
+            </span>
+          </div>
+          <div className="flex justify-between text-xs sm:text-sm py-1">
+            <span className="text-gray-600">
+              Comments Received
+            </span>
+            <span className="font-semibold text-purple-700">
+              {profileData.statistics?.comments?.received || 0}
+            </span>
+          </div>
+          <div className="flex justify-between text-xs sm:text-sm py-1">
+            <span className="text-gray-600">
+              Likes on Comments
+            </span>
+            <span className="font-semibold text-purple-700">
+              {profileData.statistics?.comments?.totalLikes || 0}
+            </span>
+          </div>
+        </div>
+      </div> */}
 
                     {/* Engagement Stats */}
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg sm:rounded-xl p-4 sm:p-6 border border-green-200">
-                      <h4 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">
-                        Engagement
-                      </h4>
-                      <div className="space-y-2 sm:space-y-3">
-                        <div className="flex justify-between text-xs sm:text-sm">
+                    <div className="bg-gradient-to-br from-green-50 via-green-50 to-green-100 rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-green-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                      <div className="flex items-center mb-3 sm:mb-4">
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-white text-xs font-bold">
+                            ❤️
+                          </span>
+                        </div>
+                        <h4 className="text-sm sm:text-base font-semibold text-gray-900">
+                          Engagement
+                        </h4>
+                      </div>
+                      <div className="space-y-3 sm:space-y-4">
+                        <div className="flex justify-between text-xs sm:text-sm py-1">
                           <span className="text-gray-600">
                             Total Interactions
                           </span>
-                          <span className="font-semibold">
+                          <span className="font-semibold text-green-700">
                             {profileData.statistics?.engagement
                               ?.totalInteractions || 0}
                           </span>
                         </div>
-                        <div className="flex justify-between text-xs sm:text-sm">
+                        <div className="flex justify-between text-xs sm:text-sm py-1">
                           <span className="text-gray-600">Engagement Rate</span>
-                          <span className="font-semibold">
+                          <span className="font-semibold text-green-700">
                             {profileData.statistics?.engagement
                               ?.engagementRate || 0}
                             %
                           </span>
                         </div>
-                        <div className="flex justify-between text-xs sm:text-sm">
+                        <div className="flex justify-between text-xs sm:text-sm py-1">
                           <span className="text-gray-600">30-Day Activity</span>
-                          <span className="font-semibold">
+                          <span className="font-semibold text-green-700">
                             {profileData.recentActivity
                               ?.totalActivityLast30Days || 0}
                           </span>

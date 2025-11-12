@@ -104,44 +104,7 @@ const NgbukaForumDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-7xl mx-auto px-4 sm:px-0 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statsLoading ? (
-            <>
-              {/* Basic skeleton loaders */}
-              <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse h-32"></div>
-              <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse h-32"></div>
-              <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse h-32"></div>
-              <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse h-32"></div>
-            </>
-          ) : (
-            <>
-              <StatsCard
-                title="Active Discussions"
-                value={stats.activeDiscussions?.toLocaleString() ?? "0"}
-                icon={<MessageIcon />}
-                color="blue"
-              />
-              <StatsCard
-                title="Solved Today"
-                value={stats.solvedToday?.toLocaleString() ?? "0"}
-                icon={<CheckCircleIcon />}
-                color="green"
-              />
-              <StatsCard
-                title="Expert Members"
-                value={stats.expertMembers?.toLocaleString() ?? "0"}
-                icon={<UserIcon />}
-                color="yellow"
-              />
-              <StatsCard
-                title="Car Models"
-                value={stats.carModels?.toLocaleString() ?? "0"}
-                icon={<CarIcon />}
-                color="red"
-              />
-            </>
-          )}
-        </div>
+        
 
         {/* Spare Parts Filter */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
