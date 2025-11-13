@@ -4,6 +4,7 @@ import { Car, Shield, Users, CheckCircle, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+import { toast } from "sonner";
 
 function AutoEscrowAuth() {
   const router = useRouter();
@@ -51,7 +52,7 @@ function AutoEscrowAuth() {
 
   const getFriendlyErrorMessage = (message: string): string => {
     // Default message for unknown errors
-    let friendlyMessage = "An unexpected error occurred. Please try again.";
+    let friendlyMessage = ""; // Return empty for unknown errors
 
     if (!message) return friendlyMessage;
 
@@ -97,7 +98,10 @@ function AutoEscrowAuth() {
       return;
     }
 
-    if (activeTab === "signup" && formData.password !== formData.confirmPassword) {
+    if (
+      activeTab === "signup" &&
+      formData.password !== formData.confirmPassword
+    ) {
       setError("Passwords do not match. Please try again.");
       setLoading(false);
       return;
@@ -152,7 +156,13 @@ function AutoEscrowAuth() {
       router.push("/forum/home");
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(getFriendlyErrorMessage(err.message));
+        const errorMessage = err.message;
+        if (errorMessage.includes("Your account has been banned")) {
+          toast.error(
+            "Your account has been banned. Please contact support for assistance."
+          );
+        }
+        setError(getFriendlyErrorMessage(errorMessage));
       } else {
         setError(getFriendlyErrorMessage("An unexpected error occurred."));
       }

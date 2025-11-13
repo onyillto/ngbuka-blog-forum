@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
@@ -9,13 +10,11 @@ import {
   Loader2,
   Users,
   Search,
-  
   MoreVertical,
   AlertCircle,
   CheckCircle,
   Eye,
   UserX,
-  
   X,
   ShieldCheck,
   ShieldX,
@@ -24,7 +23,6 @@ import {
   FileText,
   TrendingUp,
   UserCheck,
- 
   RefreshCcw,
   Download,
 } from "lucide-react";
@@ -397,10 +395,12 @@ const UsersPage = () => {
                 <RefreshCcw className="h-4 w-4" />
                 Refresh
               </button>
-              <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium hover:bg-white transition-colors shadow-sm">
-                <Download className="h-4 w-4" />
-                Export
-              </button>
+              <Link
+                href="/forum/home"
+                className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium hover:bg-white transition-colors shadow-sm"
+              >
+                Forum Home
+              </Link>
             </div>
           </div>
 
