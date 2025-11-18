@@ -93,6 +93,36 @@ function AutoEscrowAuth() {
     setLoading(true);
     setError(null);
 
+    if (activeTab === "signup") {
+      if (!formData.firstName.trim()) {
+        toast.error("First name is required.");
+        setLoading(false);
+        return;
+      }
+      if (!formData.lastName.trim()) {
+        toast.error("Last name is required.");
+        setLoading(false);
+        return;
+      }
+      if (!formData.password) {
+        toast.error("Password is required.");
+        setLoading(false);
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        toast.error("Passwords do not match.");
+        setLoading(false);
+        return;
+      }
+      if (!formData.agreeToTerms) {
+        toast.error(
+          "You must agree to the Terms of Service and Privacy Policy."
+        );
+        setLoading(false);
+        return;
+      }
+    }
+
     if (!validateEmail(formData.email)) {
       setLoading(false);
       return;
@@ -102,7 +132,7 @@ function AutoEscrowAuth() {
       activeTab === "signup" &&
       formData.password !== formData.confirmPassword
     ) {
-      setError("Passwords do not match. Please try again.");
+      toast.error("Passwords do not match. Please try again.");
       setLoading(false);
       return;
     }
@@ -439,7 +469,7 @@ function AutoEscrowAuth() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:bg-orange-400 disabled:cursor-not-allowed"
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:bg-orange-500/50 disabled:cursor-not-allowed"
                     >
                       {loading ? "Creating Account..." : "Create Account"}
                     </button>
@@ -532,7 +562,7 @@ function AutoEscrowAuth() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:bg-slate-600 disabled:cursor-not-allowed"
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:bg-orange-500/50 disabled:cursor-not-allowed"
                     >
                       {loading ? "Signing In..." : "Sign In"}
                     </button>
