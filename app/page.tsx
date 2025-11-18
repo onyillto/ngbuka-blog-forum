@@ -320,21 +320,21 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-800 flex items-center justify-center transform group-hover:scale-110 transition-transform shadow-lg">
-              <CarIcon className="w-7 h-7 text-white" />
+            <div className="w-12 h-12  flex items-center justify-center transform group-hover:scale-110 transition-transform shadow-lg">
+              {/* <CarIcon className="w-7 h-7 text-white" /> */}
             </div>
             <div className="flex flex-col">
-              <span className="text-2xl font-bold" style={{ color: "#1A1A7A" }}>
+              {/* <span className="text-2xl font-bold" style={{ color: "#1A1A7A" }}>
                 Ngbuka
               </span>
               <span className="text-xs text-orange-500 font-semibold -mt-1">
                 FORUM
-              </span>
+              </span> */}
             </div>
           </Link>
 
           {/* Navigation Links - Hidden on mobile */}
-          <div className="hidden md:flex items-center space-x-8">
+          {/* <div className="hidden md:flex items-center space-x-8">
             <Link
               href="#features"
               className="text-gray-700 hover:text-orange-500 font-medium transition-colors"
@@ -353,7 +353,7 @@ const Navbar = () => {
             >
               About
             </Link>
-          </div>
+          </div> */}
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-4">
