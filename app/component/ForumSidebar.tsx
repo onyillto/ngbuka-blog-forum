@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -9,7 +10,6 @@ import {
   Zap,
   Car,
   Star,
-  Settings,
   Home,
   User,
 } from "lucide-react";
@@ -88,9 +88,16 @@ const ForumSidebar = () => {
 
   const DesktopSidebar = () => (
     <div className="hidden md:flex w-72 bg-white shadow-lg border-r border-gray-200 h-screen flex-col fixed top-0 left-0 z-40">
-      <div className="flex items-center space-x-2 px-6 py-4 border-b">
-        <Car className="h-6 w-6 text-orange-600" />
-        <span className="text-xl font-bold text-gray-900">Ngbuka Forum</span>
+      <div className="flex items-center px-6 py-4 border-b">
+        <Link href="/">
+          <Image
+            src="/logo.png" // Assuming the same logo as the navbar
+            alt="Ngbuka Logo"
+            width={40}
+            height={32}
+          />
+          {/* <span className="text-lg font-bold text-gray-900">Ngbuka Forum</span> */}
+        </Link>
       </div>
 
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">

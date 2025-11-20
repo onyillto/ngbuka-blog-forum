@@ -365,9 +365,13 @@ const Navbar: React.FC = () => {
             <Menu className="h-5 w-5 text-gray-700" />
           </button>
           <Link href="/" className="flex items-center min-w-0 md:hidden">
-            <span className="text-base sm:text-lg font-bold text-orange-600 truncate">
-              Ngbuka
-            </span>
+            <Image
+              src="/logo.png" // Replace with the actual path to your logo image
+              alt="Ngbuka Logo"
+              width={100} // Adjust width as needed
+              height={32} // Adjust height as needed
+              className="h-6 sm:h-8 w-auto" // Optional: Add responsive height and auto width
+            />
           </Link>
         </div>
 

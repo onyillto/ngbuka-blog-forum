@@ -408,10 +408,10 @@ const HeroSection = () => {
 
       <div className="relative z-10 container mx-auto px-6 py-20">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 mt-5">
           <div className="flex items-center justify-center mb-6">
             <CarIcon className="w-12 h-12 text-orange-400 mr-4" />
-            <h1 className="text-5xl md:text-7xl font-bold text-white">
+            <h1 className="text-2xl md:text-3xl font-bold text-white">
               Ngbuka <span className="text-orange-400">Forum</span>
             </h1>
           </div>
