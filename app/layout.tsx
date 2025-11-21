@@ -40,6 +40,11 @@ export const metadata: Metadata = {
     description: "Car enthusiast community forum",
     images: ["https://ngbuka.com/images/forum-og-image.jpg"],
   },
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
