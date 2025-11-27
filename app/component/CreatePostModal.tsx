@@ -42,6 +42,7 @@ export default function CreatePostModal({
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [imageError, setImageError] = useState<string | null>(null);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,14 +71,23 @@ export default function CreatePostModal({
   if (!isOpen) return null;
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setImageError(null);
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
+      if (images.length + files.length > 5) {
+        setImageError("You can upload a maximum of 5 images.");
+        if (imageInputRef.current) {
+          imageInputRef.current.value = "";
+        }
+        return;
+      }
       const newImages = [...images, ...files];
       setImages(newImages);
 
       const newPreviews = files.map((file) => URL.createObjectURL(file));
       setImagePreviews((prev) => [...prev, ...newPreviews]);
     }
+    if (imageInputRef.current) imageInputRef.current.value = "";
   };
 
   const removeImage = (index: number) => {
@@ -86,6 +96,7 @@ export default function CreatePostModal({
     URL.revokeObjectURL(imagePreviews[index]);
     setImages(newImages);
     setImagePreviews(newPreviews);
+    setImageError(null);
   };
 
   const validateForm = () => {
@@ -235,14 +246,16 @@ export default function CreatePostModal({
                       </button>
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => imageInputRef.current?.click()}
-                    className="w-full h-24 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:border-gray-400 hover:text-gray-600 transition"
-                  >
-                    <Upload size={24} />
-                    <span className="text-xs mt-1">Upload</span>
-                  </button>
+                  {images.length < 5 && (
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      className="w-full h-24 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:border-gray-400 hover:text-gray-600 transition"
+                    >
+                      <Upload size={24} />
+                      <span className="text-xs mt-1">Upload</span>
+                    </button>
+                  )}
                 </div>
                 <input
                   ref={imageInputRef}
@@ -252,6 +265,9 @@ export default function CreatePostModal({
                   onChange={handleFileChange}
                   className="hidden"
                 />
+                {imageError && (
+                  <p className="text-sm text-red-600 mt-2">{imageError}</p>
+                )}
               </div>
             </div>
 

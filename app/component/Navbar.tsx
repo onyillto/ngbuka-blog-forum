@@ -364,21 +364,18 @@ const Navbar: React.FC = () => {
           >
             <Menu className="h-5 w-5 text-gray-700" />
           </button>
-          <Link href="/" className="flex items-center min-w-0">
-            <span className="text-base sm:text-lg font-bold text-orange-600 truncate hidden md:inline">
-              Ngbuka
-            </span>
-            <span className="text-base sm:text-lg font-bold text-orange-600 truncate md:hidden">
+          <Link href="/" className="flex items-center min-w-0 md:hidden">
+            <span className="text-base sm:text-lg font-bold text-orange-600 truncate">
               Ngbuka
             </span>
           </Link>
-          <Link
+          {/* <Link
             href="/"
             className="hidden md:flex items-center gap-2 ml-4 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition"
           >
             <Home className="h-4 w-4 text-gray-600" />
             <span className="text-sm font-medium text-gray-700">Home</span>
-          </Link>
+          </Link> */}
         </div>
 
         {/* Center: Search (Button on mobile, Input on desktop) */}
