@@ -1,7 +1,10 @@
+// app/layout.tsx
 import React from "react";
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import "./globals.css";
+// *** IMPORT THE CHATBOT COMPONENT ***
+import { CarChatbot } from "./component/ChatBot"; // Make sure to use the correct path!
 
 export const metadata: Metadata = {
   title: {
@@ -57,6 +60,8 @@ export default function RootLayout({
       <body className="antialiased" suppressHydrationWarning>
         <Toaster position="top-right" richColors />
         {children}
+        {/* *** RENDER THE CHATBOT HERE (Car icon) *** */}
+        <CarChatbot />
       </body>
     </html>
   );
