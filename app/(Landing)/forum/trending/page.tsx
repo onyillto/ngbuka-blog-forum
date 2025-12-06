@@ -14,6 +14,7 @@ import {
   HeartIcon,
   PlusIcon,
   Loader2,
+  ShareIcon,
 } from "../../../component/Icons";
 
 interface Author {
@@ -231,6 +232,24 @@ const TrendingPage = () => {
           return disc;
         })
       );
+    }
+  };
+
+  const handleSharePost = (e: React.MouseEvent, discussion: Post) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const postUrl = `${window.location.origin}/forum/post/${discussion._id}`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: discussion.title,
+        text: `Check out this post on Ngbuka Forum: "${discussion.title}"`,
+        url: postUrl,
+      });
+    } else {
+      navigator.clipboard.writeText(postUrl);
+      toast.success("Link copied to clipboard!");
     }
   };
 
@@ -528,6 +547,15 @@ const TrendingPage = () => {
                       <span className="font-medium">
                         {discussion.likes.length}
                       </span>
+                    </button>
+                    <button
+                      onClick={(e) => handleSharePost(e, discussion)}
+                      className="flex items-center group/share"
+                    >
+                      <ShareIcon
+                        className={`w-4 h-4 mr-1.5 text-gray-400 group-hover/share:text-blue-600 transition-colors`}
+                      />
+                      {/* <span className="font-medium">0</span> */}
                     </button>
                     <div className="flex items-center text-gray-500">
                       <span className="font-medium">{discussion.views}</span>

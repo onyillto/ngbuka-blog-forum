@@ -254,6 +254,24 @@ export const FireIcon = ({ className }: IconProps) => (
   </svg>
 );
 
+export const ShareIcon = ({ className }: IconProps) => (
+  <svg
+    className={`w-5 h-5 ${className || ""}`}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"
+    />
+    <polyline points="16 6 12 2 8 6" />
+    <line x1="12" y1="2" x2="12" y2="15" />
+  </svg>
+);
+
 export const Loader2 = ({ className }: IconProps) => (
   <svg
     className={`w-4 h-4 ${className || ""}`}

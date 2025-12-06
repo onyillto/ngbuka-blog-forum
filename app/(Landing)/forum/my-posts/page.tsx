@@ -16,6 +16,7 @@ import {
   HeartIcon,
   PlusIcon,
   TrashIcon,
+  ShareIcon,
 } from "../../../component/Icons";
 import { Eye, Filter, Loader2, AlertTriangle } from "lucide-react";
 import { LogIn } from "lucide-react";
@@ -275,6 +276,24 @@ const MyPostsPage = () => {
     }
   };
 
+  const handleSharePost = (post: Post) => {
+    const postUrl = `${window.location.origin}/forum/post/${post._id}`;
+
+    if (navigator.share) {
+      navigator
+        .share({
+          title: post.title,
+          text: `Check out this post on Ngbuka Forum: "${post.title}"`,
+          url: postUrl,
+        })
+        .catch((error) => console.error("Error sharing:", error));
+    } else {
+      navigator.clipboard.writeText(postUrl);
+      toast.success("Post link copied to clipboard!");
+    }
+  };
+
+
   const getUserStats = () => {
     const totalPosts = posts.length;
     const totalReplies = posts.reduce(
@@ -521,6 +540,12 @@ const MyPostsPage = () => {
                   </div>
                   {/* Action Buttons */}
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleSharePost(post)}
+                      className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
+                    >
+                      <ShareIcon className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => openDeleteModal(post._id)}
                       className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all"
