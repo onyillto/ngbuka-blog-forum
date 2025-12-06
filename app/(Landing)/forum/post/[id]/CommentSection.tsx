@@ -168,7 +168,7 @@ export default function CommentSection({ postId }: { postId: string }) {
                   • {formatTimeAgo(comment.createdAt)}
                 </span>
               </div>
-              <p className="text-gray-700 mt-1">{comment.content}</p>
+              <p className="text-gray-300 mt-1">{comment.content}</p>
             </div>
           </div>
         ))}
@@ -205,13 +205,13 @@ export default function CommentSection({ postId }: { postId: string }) {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Write a reply..."
-              className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-transparent transition"
               rows={3}
             />
             <button
               type="submit"
               disabled={isSubmitting || !newComment.trim()}
-              className="absolute right-3 bottom-3 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition"
+              className="absolute right-3 bottom-3 p-2 bg-blue-200 text-white rounded-full hover:bg-blue-300 disabled:bg-blue-300 disabled:cursor-not-allowed transition"
             >
               {isSubmitting ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

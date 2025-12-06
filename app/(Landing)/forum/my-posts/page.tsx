@@ -387,13 +387,12 @@ const MyPostsPage = () => {
           </div>
         </div>
       )}
-      <main className="max-w-6xl mx-auto px-0 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {" "}
         {/* Remove px-4 for mobile */}
         {/* Page Header */}
-        <div className="mb-8 px-4 sm:px-0">
+        <div className="mb-8">
           {" "}
-          {/* Add px-4 for mobile, then remove */}
           <div className="flex items-center justify-between ">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
@@ -414,9 +413,8 @@ const MyPostsPage = () => {
           </div>
         </div>
         {/* User Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 px-4 sm:px-0">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {" "}
-          {/* Add px-4 for mobile, then remove */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -474,10 +472,9 @@ const MyPostsPage = () => {
         </div>
         {/* Search and Filter */}
         <div className="bg-white rounded-none sm:rounded-xl shadow-none sm:shadow-lg p-4 sm:p-6 mb-8">
-          {" "}
           {/* Adjust padding and remove rounded/shadow on mobile */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center space-x-4 w-full sm:w-auto">
               <h2 className="text-lg font-semibold text-gray-900">
                 All Posts ({filteredPosts.length})
               </h2>
@@ -491,7 +488,7 @@ const MyPostsPage = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search my posts..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
                 />
               </div>
               <button className="p-2 text-gray-500 hover:text-gray-700">
@@ -501,9 +498,8 @@ const MyPostsPage = () => {
           </div>
         </div>
         {/* Posts List */}
-        <div className="space-y-4 px-4 sm:px-0">
+        <div className="space-y-4">
           {" "}
-          {/* Add px-4 for mobile, then remove */}
           {filteredPosts.map((post) => (
             <div
               key={post._id}

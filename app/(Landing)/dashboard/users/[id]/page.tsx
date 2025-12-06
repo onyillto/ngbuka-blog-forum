@@ -22,6 +22,8 @@ import {
   CheckCircle,
   Clock,
   ArrowLeft,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 
 interface User {
@@ -136,20 +138,23 @@ const UserProfilePage = () => {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("overview");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      setIsLoading(true);
-      const token = Cookies.get("token");
+  const fetchProfile = async () => {
+    setIsLoading(true);
+    const token = Cookies.get("token");
 
-      if (!token) {
-        toast.error("Please log in to view profile");
-        router.push("/auth/signin");
-        return;
-      }
+    if (!token) {
+      toast.error("Please log in to view profile");
+      router.push("/auth/signin");
+      return;
+    }
 
-      try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      if (userId) {
         const response = await fetch(`${apiBaseUrl}/user/${userId}/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -163,18 +168,69 @@ const UserProfilePage = () => {
         }
 
         setProfileData(result.data);
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "An error occurred");
-        console.error("Profile fetch error:", err);
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "An error occurred");
+      console.error("Profile fetch error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (userId) {
       fetchProfile();
     }
-  }, [userId, router]);
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const openDeleteModal = (postId: string) => {
+    setPostToDelete(postId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeletePost = async () => {
+    if (isDeleting || !postToDelete) return;
+
+    const token = Cookies.get("token");
+    if (!token) {
+      toast.error("Authentication error. Please log in again.");
+      router.push("/auth/signin");
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      const response = await fetch(`${apiBaseUrl}/posts/${postToDelete}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to delete post.");
+      }
+
+      toast.success("Post deleted successfully!");
+      await fetchProfile(); // Refresh the profile data
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred";
+      if (errorMessage.includes("Not authorized")) {
+        toast.error("Your session has expired. Please log in again.");
+        router.push("/auth/signin");
+      } else {
+        toast.error(errorMessage);
+      }
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setPostToDelete(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -238,6 +294,53 @@ const UserProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+            <div className="flex items-start">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                <AlertTriangle
+                  className="h-6 w-6 text-red-600"
+                  aria-hidden="true"
+                />
+              </div>
+              <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  Delete Post
+                </h3>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">
+                    Are you sure you want to delete this post? This action
+                    cannot be undone.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+              <button
+                type="button"
+                onClick={handleDeletePost}
+                disabled={isDeleting}
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:bg-red-400 disabled:cursor-not-allowed"
+              >
+                {isDeleting && (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                )}
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isDeleting}
+                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Cover Image */}
       <div className="relative h-64 bg-linear-to-r from-blue-800 to-blue-700">
         {user.coverImage && (
@@ -478,64 +581,77 @@ const UserProfilePage = () => {
                 ) : (
                   <div className="space-y-4">
                     {posts.data.map((post) => (
-                      <Link
+                      <div
                         key={post._id}
-                        href={`/forum/post/${post._id}`}
-                        className="block bg-white hover:bg-gray-50 rounded-lg p-6 border border-gray-200 transition-colors"
+                        className="relative group bg-white hover:bg-gray-50 rounded-lg p-6 border border-gray-200 transition-colors"
                       >
-                        <div className="flex gap-4">
-                          {post.images[0] && (
-                            <div className="relative h-24 w-32 shrink-0 rounded-lg overflow-hidden">
-                              <Image
-                                src={post.images[0]}
-                                alt={post.title}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                              {post.title}
-                            </h3>
-                            <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                              {post.content}
-                            </p>
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <span className="px-2 py-1 bg-blue-50 text-blue-900 rounded text-xs font-medium">
-                                {post.category.name}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Eye className="h-4 w-4" />
-                                {post.views}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <ThumbsUp className="h-4 w-4" />
-                                {post.likes.length}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <MessageSquare className="h-4 w-4" />
-                                {post.commentCount}
-                              </span>
-                              <span>
-                                {new Date(post.createdAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                            {post.tags.length > 0 && (
-                              <div className="flex gap-2 mt-2">
-                                {post.tags.map((tag, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded"
-                                  >
-                                    #{tag}
-                                  </span>
-                                ))}
+                        <Link href={`/forum/post/${post._id}`}>
+                          <div className="flex gap-4">
+                            {post.images[0] && (
+                              <div className="relative h-24 w-32 shrink-0 rounded-lg overflow-hidden">
+                                <Image
+                                  src={post.images[0]}
+                                  alt={post.title}
+                                  fill
+                                  className="object-cover"
+                                />
                               </div>
                             )}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                {post.title}
+                              </h3>
+                              <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                                {post.content}
+                              </p>
+                              <div className="flex items-center gap-4 text-sm text-gray-500">
+                                <span className="px-2 py-1 bg-blue-50 text-blue-900 rounded text-xs font-medium">
+                                  {post.category.name}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Eye className="h-4 w-4" />
+                                  {post.views}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <ThumbsUp className="h-4 w-4" />
+                                  {post.likes.length}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <MessageSquare className="h-4 w-4" />
+                                  {post.commentCount}
+                                </span>
+                                <span>
+                                  {new Date(
+                                    post.createdAt
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                              {post.tags.length > 0 && (
+                                <div className="flex gap-2 mt-2">
+                                  {post.tags.map((tag, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded"
+                                    >
+                                      #{tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </Link>
+                        </Link>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDeleteModal(post._id);
+                          }}
+                          className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                          aria-label="Delete post"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 )}

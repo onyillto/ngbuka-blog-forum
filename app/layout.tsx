@@ -1,7 +1,10 @@
+// app/layout.tsx
 import React from "react";
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import "./globals.css";
+// *** IMPORT THE CHATBOT COMPONENT ***
+import { CarChatbot } from "./component/ChatBot"; // Make sure to use the correct path!
 
 export const metadata: Metadata = {
   title: {
@@ -40,6 +43,11 @@ export const metadata: Metadata = {
     description: "Car enthusiast community forum",
     images: ["https://ngbuka.com/images/forum-og-image.jpg"],
   },
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -52,6 +60,8 @@ export default function RootLayout({
       <body className="antialiased" suppressHydrationWarning>
         <Toaster position="top-right" richColors />
         {children}
+        {/* *** RENDER THE CHATBOT HERE (Car icon) *** */}
+        <CarChatbot />
       </body>
     </html>
   );

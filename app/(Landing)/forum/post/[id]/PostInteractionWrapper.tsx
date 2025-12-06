@@ -13,7 +13,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { Trash2, AlertTriangle,  Loader2 } from "lucide-react";
+import { Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface CommentAuthor {
@@ -80,7 +80,7 @@ const CommentComponent = ({
   currentUser: CurrentUser | null;
   isReply?: boolean;
 }) => {
-  const [showReplies, setShowReplies] = useState(false); // New state for toggling replies
+  const [showReplies, setShowReplies] = useState(false);
   const [replyContent, setReplyContent] = useState("");
   const [showReplyForm, setShowReplyForm] = useState(false);
 
@@ -96,11 +96,11 @@ const CommentComponent = ({
 
   if (comment.isDeleted) {
     return (
-      <div className="flex space-x-4">
-        <div className="w-10 h-10 bg-gray-200 rounded-full" />
-        <div className="flex-1">
+      <div className="flex space-x-3 sm:space-x-4 w-full min-w-0">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-full flex-shrink-0" />
+        <div className="flex-1 min-w-0">
           <div className="bg-gray-100 rounded-lg p-3">
-            <p className="text-sm text-gray-500 italic">
+            <p className="text-sm text-gray-500 italic break-words">
               Comment deleted by user.
             </p>
           </div>
@@ -108,43 +108,46 @@ const CommentComponent = ({
       </div>
     );
   }
+
   return (
-    <div className="flex space-x-4">
+    <div className="flex space-x-3 sm:space-x-4 w-full min-w-0">
       <Image
         src={comment.author.avatar}
         alt={comment.author.firstName}
         width={40}
         height={40}
-        className="rounded-full h-10 w-10 object-cover"
+        className="rounded-full h-8 w-8 sm:h-10 sm:w-10 object-cover flex-shrink-0"
       />
-      <div className="flex-1">
-        <div className="bg-gray-100 rounded-lg p-3">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-sm text-gray-800">
+      <div className="flex-1 min-w-0 w-full">
+        <div className="bg-gray-100 rounded-lg p-3 w-full overflow-hidden">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <span className="font-semibold text-sm text-gray-800 break-words min-w-0">
               {comment.author.firstName} {comment.author.lastName}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
               {formatTimeAgo(comment.createdAt)}
             </span>
           </div>
-          <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
+          <p className="text-sm text-gray-700 mt-1 break-words overflow-wrap-anywhere">
+            {comment.content}
+          </p>
         </div>
-        <div className="flex items-center space-x-4 mt-1">
+        <div className="flex items-center flex-wrap gap-2 sm:gap-4 mt-1">
           {!isReply && (
             <button
               onClick={() => setShowReplyForm(!showReplyForm)}
-              className="text-xs font-semibold text-gray-500 hover:text-gray-800 flex items-center"
+              className="text-xs font-semibold text-gray-500 hover:text-gray-800 flex items-center whitespace-nowrap"
             >
-              <CornerDownRight size={14} className="mr-1" />
+              <CornerDownRight size={14} className="mr-1 flex-shrink-0" />
               Reply
             </button>
           )}
           {canDelete && (
             <button
               onClick={() => onDelete(comment._id)}
-              className="text-xs font-semibold text-red-500 hover:text-red-700 flex items-center"
+              className="text-xs font-semibold text-red-500 hover:text-red-700 flex items-center whitespace-nowrap"
             >
-              <Trash2 size={14} className="mr-1" /> Delete
+              <Trash2 size={14} className="mr-1 flex-shrink-0" /> Delete
             </button>
           )}
         </div>
@@ -157,9 +160,9 @@ const CommentComponent = ({
               className="text-xs font-semibold text-gray-500 hover:text-gray-800 flex items-center"
             >
               {showReplies ? (
-                <ChevronUp size={14} className="mr-1" />
+                <ChevronUp size={14} className="mr-1 flex-shrink-0" />
               ) : (
-                <ChevronDown size={14} className="mr-1" />
+                <ChevronDown size={14} className="mr-1 flex-shrink-0" />
               )}
               {showReplies ? "Hide" : "View"} {comment.replies.length}{" "}
               {comment.replies.length === 1 ? "reply" : "replies"}
@@ -168,17 +171,20 @@ const CommentComponent = ({
         )}
 
         {showReplyForm && (
-          <form onSubmit={handleReplySubmit} className="mt-2 flex space-x-2">
+          <form
+            onSubmit={handleReplySubmit}
+            className="mt-2 flex space-x-2 w-full"
+          >
             <input
               type="text"
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
-              placeholder={`Reply to ${comment.author.firstName}...`}
-              className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Reply..."
+              className="flex-1 min-w-0 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
               type="submit"
-              className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
+              className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition flex-shrink-0"
             >
               <Send size={16} className="h-4 w-4" />
             </button>
@@ -187,7 +193,7 @@ const CommentComponent = ({
 
         {/* Conditionally render nested replies */}
         {showReplies && comment.replies && comment.replies.length > 0 && (
-          <div className="mt-4 space-y-4 pl-6 border-l-2 border-gray-200">
+          <div className="mt-4 space-y-4 pl-3 sm:pl-6 border-l-2 border-gray-200 w-full overflow-hidden">
             {comment.replies.map((reply) => (
               <CommentComponent
                 key={reply._id}
@@ -280,7 +286,7 @@ export default function PostInteractionWrapper({
       );
 
       setNewComment("");
-      fetchComments(); // Refetch comments to show the new one
+      fetchComments();
       toast.success("Comment posted successfully!");
     } catch (error) {
       const errorMessage =
@@ -314,12 +320,12 @@ export default function PostInteractionWrapper({
     setIsDeleting(true);
     try {
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_BaseURL}/comment/${commentToDelete}`, // The URL
+        `${process.env.NEXT_PUBLIC_BaseURL}/comment/${commentToDelete}`,
         {
-          headers: { Authorization: `Bearer ${token}` }, // The config object with headers
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-      fetchComments(); // Refetch to show updated state
+      fetchComments();
       toast.success("Comment deleted successfully.");
     } catch (error) {
       const errorMessage =
@@ -379,24 +385,31 @@ export default function PostInteractionWrapper({
 
   return (
     <>
-      <div className="flex items-center space-x-6 py-4 border-t border-b border-gray-200">
+      <div className="flex items-center flex-wrap gap-4 sm:gap-6 py-4 border-t border-b border-gray-200 w-full">
         <button
           onClick={handleLike}
           className={`flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors ${
             stats.hasLiked ? "text-red-500" : ""
           }`}
         >
-          <Heart fill={stats.hasLiked ? "currentColor" : "none"} />
-          <span className="font-semibold">{stats.likeCount} Likes</span>
+          <Heart
+            fill={stats.hasLiked ? "currentColor" : "none"}
+            className="flex-shrink-0"
+          />
+          <span className="font-semibold whitespace-nowrap">
+            {stats.likeCount} Likes
+          </span>
         </button>
         <div className="flex items-center space-x-2 text-gray-600">
-          <MessageSquare />
-          <span className="font-semibold">{stats.commentCount} Comments</span>
+          <MessageSquare className="flex-shrink-0" />
+          <span className="font-semibold whitespace-nowrap">
+            {stats.commentCount} Comments
+          </span>
         </div>
       </div>
 
       {/* Comments Section */}
-      <div className="mt-8">
+      <div className="mt-8 w-full overflow-hidden">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
           Comments ({stats.commentCount})
         </h2>
@@ -407,25 +420,25 @@ export default function PostInteractionWrapper({
             e.preventDefault();
             handlePostComment(newComment);
           }}
-          className="flex space-x-4 mb-8"
+          className="flex space-x-2 sm:space-x-4 mb-8 w-full"
         >
           <input
             type="text"
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Add a comment..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 min-w-0 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
           />
           <button
             type="submit"
-            className="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900 transition"
+            className="bg-gray-800 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-gray-900 transition whitespace-nowrap flex-shrink-0 text-sm sm:text-base"
           >
             Post
           </button>
         </form>
 
         {/* Comments List */}
-        <div className="space-y-6">
+        <div className="space-y-6 w-full overflow-hidden">
           {isLoadingComments ? (
             <p>Loading comments...</p>
           ) : comments.length > 0 ? (
@@ -446,52 +459,53 @@ export default function PostInteractionWrapper({
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
-            <div className="flex items-start">
-              <div className="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+            <div className="flex items-start gap-4">
+              <div className="shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-red-100">
                 <AlertTriangle
-                  className="h-6 w-6 text-red-600"
+                  className="h-6 w-6 text-red-600 flex-shrink-0"
                   aria-hidden="true"
                 />
               </div>
-              <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <div className="flex-1 min-w-0">
                 <h3
-                  className="text-lg leading-6 font-medium text-gray-900"
+                  className="text-lg leading-6 font-medium text-gray-900 break-words"
                   id="modal-title"
                 >
                   Delete Comment
                 </h3>
                 <div className="mt-2">
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 break-words">
                     Are you sure you want to delete this comment? This action
                     cannot be undone.
                   </p>
                 </div>
               </div>
             </div>
-            <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+            <div className="mt-5 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isDeleting}
+                className="w-full sm:w-auto inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none disabled:bg-gray-200"
+              >
+                Cancel
+              </button>
               <button
                 type="button"
                 onClick={handleDeleteComment}
                 disabled={isDeleting}
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:bg-red-400 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none disabled:bg-red-400 disabled:cursor-not-allowed"
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin flex-shrink-0" />
                     Deleting...
                   </>
                 ) : (
                   "Delete"
                 )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsDeleteModalOpen(false)}
-                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm disabled:bg-gray-200"
-              >
-                Cancel
               </button>
             </div>
           </div>

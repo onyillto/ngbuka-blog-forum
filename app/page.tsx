@@ -162,7 +162,7 @@ const carsData = [
     color: "from-orange-500 to-orange-700",
     image: "🏎️",
     price: "$43,735",
-    imageUrl: "/car.jpg",
+    imageUrl: "/car7.jpeg",
   },
   {
     id: 4,
@@ -176,7 +176,7 @@ const carsData = [
     color: "from-indigo-600 to-indigo-800",
     image: "⚡",
     price: "$38,990",
-    imageUrl: "/car.jpg",
+    imageUrl: "/car5.jpg",
   },
   {
     id: 5,
@@ -190,7 +190,7 @@ const carsData = [
     color: "from-orange-600 to-orange-800",
     image: "🛻",
     price: "$59,974",
-    imageUrl: "/car.jpg",
+    imageUrl: "/car1.jpeg",
   },
   {
     id: 6,
@@ -204,7 +204,7 @@ const carsData = [
     color: "from-orange-500 to-orange-700",
     image: "🏁",
     price: "$230,400",
-    imageUrl: "/car.jpg",
+    imageUrl: "/car3.jpg",
   },
 ];
 
@@ -312,7 +312,73 @@ const CarCard = ({ car, isActive }: { car: Car; isActive: boolean }) => {
     </div>
   );
 };
+// Navbar Component - Add this before the HeroSection
+const Navbar = () => {
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200">
+      <div className="container mx-auto px-6">
+        <div className="flex items-center justify-between h-20">
+          {/* Logo */}
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="w-12 h-12  flex items-center justify-center transform group-hover:scale-110 transition-transform shadow-lg">
+              {/* <CarIcon className="w-7 h-7 text-white" /> */}
+            </div>
+            <div className="flex flex-col">
+              {/* <span className="text-2xl font-bold" style={{ color: "#1A1A7A" }}>
+                Ngbuka
+              </span>
+              <span className="text-xs text-orange-500 font-semibold -mt-1">
+                FORUM
+              </span> */}
+            </div>
+          </Link>
 
+          {/* Navigation Links - Hidden on mobile */}
+          {/* <div className="hidden md:flex items-center space-x-8">
+            <Link
+              href="#features"
+              className="text-gray-700 hover:text-orange-500 font-medium transition-colors"
+            >
+              Features
+            </Link>
+            <Link
+              href="#community"
+              className="text-gray-700 hover:text-orange-500 font-medium transition-colors"
+            >
+              Community
+            </Link>
+            <Link
+              href="#about"
+              className="text-gray-700 hover:text-orange-500 font-medium transition-colors"
+            >
+              About
+            </Link>
+          </div> */}
+
+          {/* Action Buttons */}
+          <div className="flex items-center space-x-4">
+            {/* Sign In Button */}
+            <Link
+              href="/auth/signin"
+              className="hidden sm:flex items-center px-6 py-2.5 rounded-lg font-semibold text-gray-700 hover:text-indigo-700 hover:bg-gray-100 transition-all duration-200"
+            >
+              Sign In
+            </Link>
+
+            {/* Visit Forum Button - Styled like your button */}
+            <Link
+              href="/forum/home"
+              className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 transform hover:scale-105 hover:-translate-y-0.5 active:scale-100 active:translate-y-0 shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-orange-400 hover:border-orange-500"
+            >
+              <MessageIcon className="w-5 h-5 mr-2" />
+              Visit Forum
+            </Link>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
 // Hero Section with Sliding Cars
 const HeroSection = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -342,10 +408,10 @@ const HeroSection = () => {
 
       <div className="relative z-10 container mx-auto px-6 py-20">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 mt-5">
           <div className="flex items-center justify-center mb-6">
             <CarIcon className="w-12 h-12 text-orange-400 mr-4" />
-            <h1 className="text-5xl md:text-7xl font-bold text-white">
+            <h1 className="text-2xl md:text-3xl font-bold text-white">
               Ngbuka <span className="text-orange-400">Forum</span>
             </h1>
           </div>
@@ -358,12 +424,11 @@ const HeroSection = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
             <Link
               href="/forum/home"
-              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg flex items-center justify-center"
+              className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 transform hover:scale-105 hover:-translate-y-1 active:scale-100 active:translate-y-0 shadow-xl hover:shadow-2xl flex items-center justify-center border-2 border-orange-400 hover:border-orange-500"
             >
               <MessageIcon className="w-6 h-6 mr-2" />
-              Join Discussions
+              Visit Forum
             </Link>
-
           </div>
         </div>
 
@@ -598,7 +663,6 @@ const CTASection = () => (
             Start Discussing Now
             <ArrowRightIcon className="w-5 h-5 ml-3" />
           </Link>
-          
         </div>
 
         <div className="mt-12 text-sm text-gray-400">
@@ -613,6 +677,7 @@ const CTASection = () => (
 const NgbukaLandingPage = () => {
   return (
     <div className="min-h-screen">
+      <Navbar />
       <HeroSection />
       <FeaturesSection />
       <StatsSection />

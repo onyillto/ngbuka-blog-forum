@@ -12,6 +12,7 @@ import {
   CheckCircleIcon,
   UserIcon,
   CarIcon,
+  FilterIcon,
 } from "../../../component/Icons";
 
 interface Category {
@@ -32,6 +33,7 @@ const NgbukaForumDashboard = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [showCategoryFilter, setShowCategoryFilter] = useState(false);
   const [stats, setStats] = useState<ForumStats>({
     activeDiscussions: 0,
     solvedToday: 0,
@@ -104,90 +106,65 @@ const NgbukaForumDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-7xl mx-auto px-4 sm:px-0 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statsLoading ? (
-            <>
-              {/* Basic skeleton loaders */}
-              <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse h-32"></div>
-              <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse h-32"></div>
-              <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse h-32"></div>
-              <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse h-32"></div>
-            </>
-          ) : (
-            <>
-              <StatsCard
-                title="Active Discussions"
-                value={stats.activeDiscussions?.toLocaleString() ?? "0"}
-                icon={<MessageIcon />}
-                color="blue"
-              />
-              <StatsCard
-                title="Solved Today"
-                value={stats.solvedToday?.toLocaleString() ?? "0"}
-                icon={<CheckCircleIcon />}
-                color="green"
-              />
-              <StatsCard
-                title="Expert Members"
-                value={stats.expertMembers?.toLocaleString() ?? "0"}
-                icon={<UserIcon />}
-                color="yellow"
-              />
-              <StatsCard
-                title="Car Models"
-                value={stats.carModels?.toLocaleString() ?? "0"}
-                icon={<CarIcon />}
-                color="red"
-              />
-            </>
-          )}
-        </div>
-
         {/* Spare Parts Filter */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
+          {/* Mobile Filter Button */}
+          <button
+            onClick={() => setShowCategoryFilter(!showCategoryFilter)}
+            className="sm:hidden flex items-center justify-between w-full mb-4"
+          >
             <h3 className="text-lg font-semibold text-gray-900">
-              Popular Spare Parts & Categories
+              Filter by Category
             </h3>
-            {selectedCategories.length > 0 && !categoriesLoading && (
-              <button
-                onClick={() => setSelectedCategories([])}
-                className="text-sm text-gray-600 hover:text-gray-900"
-              >
-                Clear all ({selectedCategories.length})
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {categoriesLoading ? (
-              <p className="text-sm text-gray-500">Loading categories...</p>
-            ) : categoriesError ? (
-              <p className="text-sm text-red-500">{categoriesError}</p>
-            ) : (
-              categories.map((category) => (
-                <SparePartChip
-                  key={category._id}
-                  part={category.name}
-                  selected={selectedCategories.includes(category._id)}
-                  onClick={() => toggleCategory(category._id)}
-                />
-              ))
-            )}
-          </div>
-          {selectedCategories.length > 0 && (
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800">
-                Filtering by:{" "}
-                <span className="font-medium">
-                  {selectedCategories
-                    .map(
-                      (id) => categories.find((c) => c._id === id)?.name || id
-                    )
-                    .join(", ")}
-                </span>
-              </p>
+            <FilterIcon className="w-5 h-5 text-gray-600" />
+          </button>
+
+          {/* Desktop Title */}
+          <h3 className="hidden sm:block text-lg font-semibold text-gray-900 mb-4">
+            Popular Spare Parts & Categories
+          </h3>
+
+          {/* Categories List (conditionally rendered on mobile) */}
+          <div
+            className={`${showCategoryFilter ? "block" : "hidden"} sm:block`}
+          >
+            <div className="flex flex-wrap gap-3">
+              {categoriesLoading ? (
+                <p className="text-sm text-gray-500">Loading categories...</p>
+              ) : categoriesError ? (
+                <p className="text-sm text-red-500">{categoriesError}</p>
+              ) : (
+                categories.map((category) => (
+                  <SparePartChip
+                    key={category._id}
+                    part={category.name}
+                    selected={selectedCategories.includes(category._id)}
+                    onClick={() => toggleCategory(category._id)}
+                  />
+                ))
+              )}
             </div>
-          )}
+            {selectedCategories.length > 0 && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg flex items-center justify-between">
+                <p className="text-sm text-blue-800">
+                  Filtering by:{" "}
+                  <span className="font-medium">
+                    {selectedCategories
+                      .map(
+                        (id) => categories.find((c) => c._id === id)?.name || id
+                      )
+                      .join(", ")}
+                  </span>
+                </p>
+                <button
+                  onClick={() => setSelectedCategories([])}
+                  className="text-sm text-blue-700 hover:text-blue-900 font-medium"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Dashboard Grid */}

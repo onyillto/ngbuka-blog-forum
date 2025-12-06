@@ -172,7 +172,7 @@ const UserAvatar: React.FC<{ user: UserInfo | null; size?: number }> = ({
       <Image
         src={user.avatar}
         alt="avatar"
-        width={size}
+        width={size} // Use the size prop for width
         height={size}
         className="rounded-full object-cover"
       />
@@ -204,23 +204,46 @@ const Navbar: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Auth check
-  useEffect(() => {
-    const token = Cookies.get("token");
-    const userInfoStr = localStorage.getItem("user_info");
+  const fetchAndSetUser = async () => {
+    try {
+      const token = Cookies.get("token");
+      const userInfoStr = localStorage.getItem("user_info");
 
-    if (token && userInfoStr) {
-      try {
-        const userInfo: UserInfo = JSON.parse(userInfoStr);
-        if (userInfo._id && userInfo.email) {
-          setUser(userInfo);
+      if (token && userInfoStr) {
+        const storedUser: UserInfo = JSON.parse(userInfoStr);
+        if (storedUser?._id) {
+          const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+          const response = await fetch(
+            `${apiBaseUrl}/user/profile/${storedUser._id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            // If token is invalid or expired, log the user out
+            if (response.status === 401 || response.status === 403) {
+              handleLogout();
+            }
+            throw new Error("Failed to fetch fresh profile data.");
+          }
+
+          const result = await response.json();
+          if (result.success && result.data) {
+            setUser(result.data);
+            localStorage.setItem("user_info", JSON.stringify(result.data));
+          }
         }
-      } catch {
-        Cookies.remove("token");
-        localStorage.removeItem("user_info");
       }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      // Fallback to stored info or logout if fetch fails
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, []);
+  };
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -241,6 +264,10 @@ const Navbar: React.FC = () => {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    fetchAndSetUser();
   }, []);
 
   // Prevent body scroll on mobile menu or search open
@@ -342,6 +369,13 @@ const Navbar: React.FC = () => {
               Ngbuka
             </span>
           </Link>
+          {/* <Link
+            href="/"
+            className="hidden md:flex items-center gap-2 ml-4 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition"
+          >
+            <Home className="h-4 w-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">Home</span>
+          </Link> */}
         </div>
 
         {/* Center: Search (Button on mobile, Input on desktop) */}
@@ -430,10 +464,13 @@ const Navbar: React.FC = () => {
               {/* Mobile User Button */}
               <button
                 onClick={() => setShowMobileMenu(true)}
-                className="sm:hidden p-1.5 rounded-lg hover:bg-gray-100 transition"
+                className="sm:hidden flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition"
                 aria-label="Profile"
               >
-                <UserAvatar user={user} size={28} />
+                <span className="text-sm font-medium text-gray-700 truncate">
+                  Hi, {getDisplayName()}
+                </span>
+                <UserAvatar user={user} size={24} />
               </button>
 
               {/* Desktop User Dropdown */}
