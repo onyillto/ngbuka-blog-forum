@@ -2,30 +2,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  SparePartChip,
-  TrendingDiscussions,
-  StatsCard,
-} from "../../../component/index";
-import {
-  MessageIcon,
-  CheckCircleIcon,
-  UserIcon,
-  CarIcon,
-  FilterIcon,
-} from "../../../component/Icons";
+import { SparePartChip, TrendingDiscussions } from "../../../component/index";
+import { FilterIcon } from "../../../component/Icons";
 
 interface Category {
   _id: string;
   name: string;
   slug: string;
-}
-
-interface ForumStats {
-  activeDiscussions: number;
-  solvedToday: number;
-  expertMembers: number;
-  carModels: number;
 }
 
 const NgbukaForumDashboard = () => {
@@ -34,13 +17,6 @@ const NgbukaForumDashboard = () => {
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showCategoryFilter, setShowCategoryFilter] = useState(false);
-  const [stats, setStats] = useState<ForumStats>({
-    activeDiscussions: 0,
-    solvedToday: 0,
-    expertMembers: 0,
-    carModels: 0,
-  });
-  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -65,31 +41,6 @@ const NgbukaForumDashboard = () => {
       }
     };
     fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      setStatsLoading(true);
-      try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
-        // Assuming an endpoint like this exists. You may need to create it.
-        const response = await fetch(`${apiBaseUrl}/stats/forum-overview`);
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          throw new Error(result.message || "Failed to fetch stats.");
-        }
-
-        setStats(result.data);
-      } catch (error) {
-        console.error("Failed to fetch stats:", error);
-        // You could set a statsError state here if you want to show an error message
-      } finally {
-        setStatsLoading(false);
-      }
-    };
-
-    fetchStats();
   }, []);
 
   const toggleCategory = (categoryId: string) => {
