@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+<<<<<<< HEAD
 import {
   SparePartChip,
   TrendingDiscussions,
@@ -15,18 +16,15 @@ import {
   FilterIcon,
   ShareIcon,
 } from "../../../component/Icons";
+=======
+import { SparePartChip, TrendingDiscussions } from "../../../component/index";
+import { FilterIcon } from "../../../component/Icons";
+>>>>>>> main
 
 interface Category {
   _id: string;
   name: string;
   slug: string;
-}
-
-interface ForumStats {
-  activeDiscussions: number;
-  solvedToday: number;
-  expertMembers: number;
-  carModels: number;
 }
 
 const NgbukaForumDashboard = () => {
@@ -35,13 +33,6 @@ const NgbukaForumDashboard = () => {
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showCategoryFilter, setShowCategoryFilter] = useState(false);
-  const [stats, setStats] = useState<ForumStats>({
-    activeDiscussions: 0,
-    solvedToday: 0,
-    expertMembers: 0,
-    carModels: 0,
-  });
-  const [statsLoading, setStatsLoading] = useState(true);
 
   // --- Fetch Categories ---
   useEffect(() => {
@@ -69,6 +60,7 @@ const NgbukaForumDashboard = () => {
     fetchCategories();
   }, []);
 
+<<<<<<< HEAD
   // --- Fetch Forum Stats ---
   useEffect(() => {
     const fetchStats = async () => {
@@ -96,6 +88,8 @@ const NgbukaForumDashboard = () => {
   }, []);
 
   // --- Category Filter Logic ---
+=======
+>>>>>>> main
   const toggleCategory = (categoryId: string) => {
     setSelectedCategories((prevSelected) => {
       // If the clicked category is already selected, deselect it.
