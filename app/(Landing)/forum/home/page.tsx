@@ -2,24 +2,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-<<<<<<< HEAD
-import {
-  SparePartChip,
-  TrendingDiscussions,
-  StatsCard,
-} from "../../../component/index";
-import {
-  MessageIcon,
-  CheckCircleIcon,
-  UserIcon,
-  CarIcon,
-  FilterIcon,
-  ShareIcon,
-} from "../../../component/Icons";
-=======
 import { SparePartChip, TrendingDiscussions } from "../../../component/index";
 import { FilterIcon } from "../../../component/Icons";
->>>>>>> main
 
 interface Category {
   _id: string;
@@ -34,7 +18,6 @@ const NgbukaForumDashboard = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showCategoryFilter, setShowCategoryFilter] = useState(false);
 
-  // --- Fetch Categories ---
   useEffect(() => {
     const fetchCategories = async () => {
       setCategoriesLoading(true);
@@ -60,36 +43,6 @@ const NgbukaForumDashboard = () => {
     fetchCategories();
   }, []);
 
-<<<<<<< HEAD
-  // --- Fetch Forum Stats ---
-  useEffect(() => {
-    const fetchStats = async () => {
-      setStatsLoading(true);
-      try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
-        // Assuming an endpoint like this exists. You may need to create it.
-        const response = await fetch(`${apiBaseUrl}/stats/forum-overview`);
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          throw new Error(result.message || "Failed to fetch stats.");
-        }
-
-        setStats(result.data);
-      } catch (error) {
-        console.error("Failed to fetch stats:", error);
-        // You could set a statsError state here if you want to show an error message
-      } finally {
-        setStatsLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
-
-  // --- Category Filter Logic ---
-=======
->>>>>>> main
   const toggleCategory = (categoryId: string) => {
     setSelectedCategories((prevSelected) => {
       // If the clicked category is already selected, deselect it.
@@ -101,23 +54,10 @@ const NgbukaForumDashboard = () => {
     });
   };
 
-  // --- Share Page Logic ---
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: "Ngbuka Forum - Car Discussions and Spare Parts",
-        text: "Check out the Ngbuka Forum for discussions on car maintenance, repairs, and finding spare parts!",
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert("Link copied to clipboard!");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-7xl mx-auto px-4 sm:px-0 py-8">
+        {/* Spare Parts Filter */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           {/* Mobile Filter Button */}
           <button
@@ -130,18 +70,10 @@ const NgbukaForumDashboard = () => {
             <FilterIcon className="w-5 h-5 text-gray-600" />
           </button>
 
-          {/* Desktop Title & Share Button */}
-          <div className="hidden sm:flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Popular Spare Parts & Categories
-            </h3>
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-800 transition-colors"
-            >
-              <ShareIcon className="w-4 h-4" /> Share Page
-            </button>
-          </div>
+          {/* Desktop Title */}
+          <h3 className="hidden sm:block text-lg font-semibold text-gray-900 mb-4">
+            Popular Spare Parts & Categories
+          </h3>
 
           {/* Categories List (conditionally rendered on mobile) */}
           <div
@@ -186,12 +118,14 @@ const NgbukaForumDashboard = () => {
           </div>
         </div>
 
+        {/* Dashboard Grid */}
         <div className="space-y-8">
           {/* Main Content */}
           <TrendingDiscussions
             key={selectedCategories.join("-")}
             filterCategories={selectedCategories}
           />
+          {/* <SolvedIssues /> */}
         </div>
 
         {/* Footer Section */}

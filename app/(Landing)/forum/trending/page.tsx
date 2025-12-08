@@ -92,18 +92,21 @@ const TrendingPage = () => {
           throw new Error(result.message || "Failed to fetch posts.");
         }
 
-        const filteredData = result.data.filter(
+        // First, try to get strictly "trending" posts.
+        let dataToShow = result.data.filter(
           (post: Post) => post.commentCount > 10
         );
 
+        // If the strict filter yields no results on the first page, fall back to showing any available posts.
+        if (!append && dataToShow.length === 0 && result.data.length > 0) {
+          dataToShow = result.data;
+        }
+
         if (append) {
-          setDiscussions((prev) => {
-            console.log("Appending data:", filteredData);
-            return [...prev, ...filteredData];
-          });
+          setDiscussions((prev) => [...prev, ...dataToShow]);
         } else {
           // Check if the current user has liked each post
-          const postsWithLikeStatus = filteredData.map((post: Post) => ({
+          const postsWithLikeStatus = dataToShow.map((post: Post) => ({
             ...post,
             hasLiked: currentUserId
               ? post.likes.includes(currentUserId)
@@ -486,7 +489,13 @@ const TrendingPage = () => {
                     const isFirst = index === 0;
                     const imageCount = discussion.images.length;
 
-                    if (!image) return null;
+                    // Ensure the image is a valid, absolute URL string to prevent errors.
+                    if (
+                      typeof image !== "string" ||
+                      !image.startsWith("http")
+                    ) {
+                      return null;
+                    }
 
                     return (
                       <div

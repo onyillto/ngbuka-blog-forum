@@ -6,7 +6,7 @@ import Cookies from "js-cookie";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 import { MessageIcon, HeartIcon, PlusIcon, Loader2, ShareIcon } from "./Icons";
 
 interface Author {
@@ -228,11 +228,13 @@ export const TrendingDiscussions = ({
     const postUrl = `${window.location.origin}/forum/post/${discussion._id}`;
 
     if (navigator.share) {
-      navigator.share({
-        title: discussion.title,
-        text: `Check out this post on Ngbuka Forum: "${discussion.title}"`,
-        url: postUrl,
-      });
+      navigator
+        .share({
+          title: discussion.title,
+          text: `Check out this post on Ngbuka Forum: "${discussion.title}"`,
+          url: postUrl,
+        })
+        .catch((error) => console.log("Error sharing:", error));
     } else {
       navigator.clipboard.writeText(postUrl);
       toast.success("Link copied to clipboard!");
@@ -467,7 +469,13 @@ export const TrendingDiscussions = ({
                     const isFirst = index === 0;
                     const imageCount = discussion.images.length;
 
-                    if (!image) return null;
+                    // Ensure the image is a valid, non-empty string before rendering to prevent "Invalid URL" errors.
+                    if (
+                      typeof image !== "string" ||
+                      !image.startsWith("http")
+                    ) {
+                      return null;
+                    }
 
                     return (
                       <div
@@ -536,8 +544,6 @@ export const TrendingDiscussions = ({
                       <ShareIcon
                         className={`w-4 h-4 mr-1.5 text-gray-400 group-hover/share:text-blue-600 transition-colors`}
                       />
-                      {/* Optional: add a share count if your API supports it */}
-                      {/* <span className="font-medium">0</span> */}
                     </button>
                     <div className="flex items-center text-gray-500">
                       <span className="font-medium">{discussion.views}</span>
