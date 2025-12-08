@@ -450,7 +450,13 @@ export const TrendingDiscussions = ({
                     const isFirst = index === 0;
                     const imageCount = discussion.images.length;
 
-                    if (!image) return null;
+                    // Ensure the image is a valid, non-empty string before rendering to prevent "Invalid URL" errors.
+                    if (
+                      typeof image !== "string" ||
+                      !image.startsWith("http")
+                    ) {
+                      return null;
+                    }
 
                     return (
                       <div
