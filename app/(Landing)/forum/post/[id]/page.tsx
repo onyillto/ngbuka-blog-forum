@@ -214,6 +214,7 @@ export default async function PostDetailPage({ params, searchParams }: Props) {
             </div>
             <PostInteractionWrapper
               postId={post._id}
+              postTitle={post.title}
               initialStats={post.stats}
             />
           </div>

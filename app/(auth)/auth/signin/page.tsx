@@ -189,7 +189,7 @@ function AutoEscrowAuth() {
         const errorMessage = err.message;
         if (errorMessage.includes("Your account has been banned")) {
           toast.error(
-            "Your account has been banned. Please contact support for assistance."
+            "Your account has been banned, To appeal this ban, please email appeals@forum.ngbuka.com using the email linked to your account"
           );
         }
         setError(getFriendlyErrorMessage(errorMessage));

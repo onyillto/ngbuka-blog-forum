@@ -1,5 +1,6 @@
 "use client";
 
+import { PostPayload } from "@/app/component/CreatePostModal";
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -24,7 +25,10 @@ import {
   ArrowLeft,
   Trash2,
   AlertTriangle,
+  ShieldAlert,
+  Edit,
 } from "lucide-react";
+import EditPostModal from "@/app/component/EditPostModal";
 
 interface User {
   _id: string;
@@ -141,6 +145,10 @@ const UserProfilePage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [postToEdit, setPostToEdit] = useState<Post | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const fetchProfile = async () => {
     setIsLoading(true);
@@ -182,6 +190,116 @@ const UserProfilePage = () => {
       fetchProfile();
     }
   }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const openEditModal = (post: Post) => {
+    setPostToEdit(post);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdatePost = async (data: PostPayload, postId: string) => {
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      const token = Cookies.get("token");
+      let imageUrls: string[] = [];
+
+      // Step 1: Upload NEW images if any exist
+      if (data.images.length > 0) {
+        const imageFormData = new FormData();
+        data.images.forEach((image) => {
+          imageFormData.append("images", image);
+        });
+
+        const imageUploadResponse = await fetch(
+          `${apiBaseUrl}/posts/upload-images`,
+          {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: imageFormData,
+          }
+        );
+
+        const imageResult = await imageUploadResponse.json();
+        if (!imageUploadResponse.ok || !imageResult.success) {
+          throw new Error(imageResult.message || "Failed to upload images.");
+        }
+        if (imageResult.data && Array.isArray(imageResult.data.urls)) {
+          imageUrls = imageResult.data.urls.filter(Boolean);
+        }
+      }
+
+      const finalPostPayload = {
+        title: data.title,
+        content: data.content,
+        categoryId: data.categoryId,
+        tags: data.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        images: imageUrls,
+      };
+
+      const postResponse = await fetch(`${apiBaseUrl}/posts/${postId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(finalPostPayload),
+      });
+
+      const result = await postResponse.json();
+      if (!postResponse.ok || !result.success) {
+        throw new Error(result.message || "Failed to update post.");
+      }
+
+      toast.success("Post updated successfully!");
+      setIsEditModalOpen(false);
+      await fetchProfile();
+    } catch (err: unknown) {
+      setSaveError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleWarnPost = async (e: React.MouseEvent, post: Post) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const token = Cookies.get("token");
+    if (!token) {
+      toast.error("You must be logged in to report a post.");
+      return;
+    }
+
+    if (!user) {
+      toast.error("Cannot report a post without an author.");
+      return;
+    }
+
+    const payload = {
+      userId: user._id,
+      message: `Post "${post.title}" by ${user.fullName} has been flagged for review.`,
+    };
+
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      const response = await fetch(`${apiBaseUrl}/notifications/warning`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error("Failed to send warning.");
+      toast.success("A warning has been sent to the user.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "An unknown error occurred.");
+    }
+  };
 
   const openDeleteModal = (postId: string) => {
     setPostToDelete(postId);
@@ -282,7 +400,7 @@ const UserProfilePage = () => {
   }) => (
     <div className="bg-white p-6 rounded-lg border border-gray-200">
       <div className="flex items-center gap-3 mb-2">
-        <div className="p-2 bg-blue-50 rounded-lg">
+        <div className="p-2 bg-blue-50 rounded-lg ">
           <Icon className="h-5 w-5 text-blue-800" />
         </div>
         <span className="text-sm text-gray-600">{label}</span>
@@ -294,6 +412,15 @@ const UserProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <EditPostModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleUpdatePost}
+        isSaving={isSaving}
+        error={saveError}
+        // The Post type from this page is compatible with what EditPostModal expects
+        post={postToEdit as never}
+      />
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -587,7 +714,10 @@ const UserProfilePage = () => {
                       >
                         <Link href={`/forum/post/${post._id}`}>
                           <div className="flex gap-4">
-                            {post.images[0] && (
+                            {post.images &&
+                            post.images.length > 0 &&
+                            typeof post.images[0] === "string" &&
+                            post.images[0].startsWith("http") ? (
                               <div className="relative h-24 w-32 shrink-0 rounded-lg overflow-hidden">
                                 <Image
                                   src={post.images[0]}
@@ -596,12 +726,12 @@ const UserProfilePage = () => {
                                   className="object-cover"
                                 />
                               </div>
-                            )}
+                            ) : null}
                             <div className="flex-1 min-w-0">
                               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                {post.title}
+                                {post.title} 
                               </h3>
-                              <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                              <p className="text-sm text-gray-600 line-clamp-2 mb-3 break-words">
                                 {post.content}
                               </p>
                               <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -641,16 +771,38 @@ const UserProfilePage = () => {
                             </div>
                           </div>
                         </Link>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openDeleteModal(post._id);
-                          }}
-                          className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
-                          aria-label="Delete post"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(post);
+                            }}
+                            className="p-2 rounded-lg text-gray-400 hover:bg-green-50 hover:text-green-600 transition-colors"
+                            aria-label="Edit post"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleWarnPost(e, post);
+                            }}
+                            className="p-2 rounded-lg text-gray-400 hover:bg-yellow-50 hover:text-yellow-600 transition-colors"
+                            aria-label="Warn user about post"
+                          >
+                            <ShieldAlert size={16} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openDeleteModal(post._id);
+                            }}
+                            className="p-2 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                            aria-label="Delete post"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

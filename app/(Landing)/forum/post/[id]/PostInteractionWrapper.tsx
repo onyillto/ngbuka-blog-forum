@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import ShareButton from "./ShareButton";
 
 interface CommentAuthor {
   _id: string;
@@ -35,6 +36,7 @@ interface Comment {
 
 interface PostInteractionWrapperProps {
   postId: string;
+  postTitle: string;
   initialStats: {
     likeCount: number;
     hasLiked: boolean;
@@ -213,6 +215,7 @@ const CommentComponent = ({
 
 export default function PostInteractionWrapper({
   postId,
+  postTitle,
   initialStats,
 }: PostInteractionWrapperProps) {
   const router = useRouter();
@@ -406,6 +409,7 @@ export default function PostInteractionWrapper({
             {stats.commentCount} Comments
           </span>
         </div>
+        <ShareButton title={postTitle} postId={postId} />
       </div>
 
       {/* Comments Section */}

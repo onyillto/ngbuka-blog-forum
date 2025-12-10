@@ -14,6 +14,7 @@ import {
   HeartIcon,
   PlusIcon,
   Loader2,
+  ShareIcon,
 } from "../../../component/Icons";
 
 interface Author {
@@ -91,18 +92,21 @@ const TrendingPage = () => {
           throw new Error(result.message || "Failed to fetch posts.");
         }
 
-        const filteredData = result.data.filter(
+        // First, try to get strictly "trending" posts.
+        let dataToShow = result.data.filter(
           (post: Post) => post.commentCount > 10
         );
 
+        // If the strict filter yields no results on the first page, fall back to showing any available posts.
+        if (!append && dataToShow.length === 0 && result.data.length > 0) {
+          dataToShow = result.data;
+        }
+
         if (append) {
-          setDiscussions((prev) => {
-            console.log("Appending data:", filteredData);
-            return [...prev, ...filteredData];
-          });
+          setDiscussions((prev) => [...prev, ...dataToShow]);
         } else {
           // Check if the current user has liked each post
-          const postsWithLikeStatus = filteredData.map((post: Post) => ({
+          const postsWithLikeStatus = dataToShow.map((post: Post) => ({
             ...post,
             hasLiked: currentUserId
               ? post.likes.includes(currentUserId)
@@ -231,6 +235,24 @@ const TrendingPage = () => {
           return disc;
         })
       );
+    }
+  };
+
+  const handleSharePost = (e: React.MouseEvent, discussion: Post) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const postUrl = `${window.location.origin}/forum/post/${discussion._id}`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: discussion.title,
+        text: `Check out this post on Ngbuka Forum: "${discussion.title}"`,
+        url: postUrl,
+      });
+    } else {
+      navigator.clipboard.writeText(postUrl);
+      toast.success("Link copied to clipboard!");
     }
   };
 
@@ -467,7 +489,13 @@ const TrendingPage = () => {
                     const isFirst = index === 0;
                     const imageCount = discussion.images.length;
 
-                    if (!image) return null;
+                    // Ensure the image is a valid, absolute URL string to prevent errors.
+                    if (
+                      typeof image !== "string" ||
+                      !image.startsWith("http")
+                    ) {
+                      return null;
+                    }
 
                     return (
                       <div
@@ -528,6 +556,15 @@ const TrendingPage = () => {
                       <span className="font-medium">
                         {discussion.likes.length}
                       </span>
+                    </button>
+                    <button
+                      onClick={(e) => handleSharePost(e, discussion)}
+                      className="flex items-center group/share"
+                    >
+                      <ShareIcon
+                        className={`w-4 h-4 mr-1.5 text-gray-400 group-hover/share:text-blue-600 transition-colors`}
+                      />
+                      {/* <span className="font-medium">0</span> */}
                     </button>
                     <div className="flex items-center text-gray-500">
                       <span className="font-medium">{discussion.views}</span>

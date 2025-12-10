@@ -1,13 +1,21 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  Fragment,
+} from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Cookies from "js-cookie";
+import { Dialog, Transition } from "@headlessui/react";
 import { toast } from "sonner";
 import {
   Loader2,
+  AlertTriangle,
   Users,
   Search,
   MoreVertical,
@@ -25,7 +33,12 @@ import {
   UserCheck,
   RefreshCcw,
   Download,
+  Trash2,
+  FolderPlus,
 } from "lucide-react";
+import CreateCategoryModal, {
+  CategoryPayload,
+} from "../../../component/CreateCategoryModal";
 
 interface User {
   _id: string;
@@ -82,6 +95,110 @@ const formatRelativeTime = (dateString: string) => {
   return "Just now";
 };
 
+// --- Inlined Confirmation Modal ---
+interface ConfirmationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  isConfirming?: boolean;
+}
+
+const DeleteConfirmationModal: React.FC<ConfirmationModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  isConfirming = false,
+}) => {
+  return (
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                      <AlertTriangle
+                        className="h-6 w-6 text-red-600"
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <Dialog.Title
+                      as="h3"
+                      className="text-lg font-semibold leading-6 text-gray-900"
+                    >
+                      {title}
+                    </Dialog.Title>
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="p-1 rounded-full hover:bg-gray-100"
+                  >
+                    <X className="h-5 w-5 text-gray-500" />
+                  </button>
+                </div>
+                <div className="mt-4 ml-14">
+                  <p className="text-sm text-gray-600">{message}</p>
+                </div>
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                    onClick={onClose}
+                    disabled={isConfirming}
+                  >
+                    {cancelText}
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex justify-center items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={onConfirm}
+                    disabled={isConfirming}
+                  >
+                    {isConfirming && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    {confirmText}
+                  </button>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
+  );
+};
+
 const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -93,6 +210,15 @@ const UsersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    userId: string | null;
+  }>({ isOpen: false, userId: null });
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -259,6 +385,93 @@ const UsersPage = () => {
     }
   };
 
+  const handleCreateCategory = async (data: CategoryPayload) => {
+    setIsSavingCategory(true);
+    setCategoryError(null);
+
+    const token = Cookies.get("token");
+    if (!token) {
+      toast.error("Authentication required");
+      setIsSavingCategory(false);
+      return;
+    }
+
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      const response = await fetch(`${apiBaseUrl}/categories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to create category.");
+      }
+
+      toast.success("Category created successfully!");
+      setIsCategoryModalOpen(false);
+    } catch (err) {
+      setCategoryError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsSavingCategory(false);
+    }
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    setDeleteConfirmation({ isOpen: true, userId });
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!deleteConfirmation.userId) return;
+
+    setIsDeleting(true);
+    const token = Cookies.get("token");
+    if (!token) {
+      toast.error("Authentication required");
+      setIsDeleting(false);
+      return;
+    }
+
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      const response = await fetch(
+        `${apiBaseUrl}/user/${deleteConfirmation.userId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.message || "Failed to delete user.");
+      }
+
+      toast.success("User has been permanently deleted.");
+      setUsers((prevUsers) =>
+        prevUsers.filter((u) => u._id !== deleteConfirmation.userId)
+      );
+      setActiveDropdown(null);
+      setDeleteConfirmation({ isOpen: false, userId: null });
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete user."
+      );
+      console.error("Delete user error:", err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleViewProfile = (userId: string) => {
     router.push(`/dashboard/users/${userId}`);
     setActiveDropdown(null);
@@ -349,7 +562,7 @@ const UsersPage = () => {
                   onClick={() => handlePageChange(pageNum)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     currentPage === pageNum
-                      ? "bg-blue-600 text-white"
+                      ? "bg-blue-900 text-white"
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
@@ -372,13 +585,29 @@ const UsersPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+      <CreateCategoryModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        onSave={handleCreateCategory}
+        isSaving={isSavingCategory}
+        error={categoryError}
+      />
+      <DeleteConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={() => setDeleteConfirmation({ isOpen: false, userId: null })}
+        onConfirm={confirmDeleteUser}
+        title="Delete User"
+        message="Are you sure you want to permanently delete this user? This action cannot be undone and all associated data may be lost."
+        confirmText="Delete"
+        isConfirming={isDeleting}
+      />
       <div className="max-w-[1600px] mx-auto p-6 lg:p-8">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3 mb-2">
-                <div className="p-3 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-lg">
+                <div className="p-3 bg-gradient-to-br from-blue-900 to-blue-700 rounded-xl shadow-lg">
                   <Users className="text-white h-8 w-8" />
                 </div>
                 User Management
@@ -401,6 +630,18 @@ const UsersPage = () => {
               >
                 Forum Home
               </Link>
+              <Link
+                href="/dashboard/users/deleted-posts"
+                className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium hover:bg-white transition-colors shadow-sm"
+              >
+                Deleted Posts
+              </Link>
+              <button
+                onClick={() => setIsCategoryModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-blue-900 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                <FolderPlus className="h-4 w-4" /> Create Category
+              </button>
             </div>
           </div>
 
@@ -417,7 +658,7 @@ const UsersPage = () => {
                   </p>
                 </div>
                 <div className="p-3 bg-blue-100 rounded-lg">
-                  <Users className="h-6 w-6 text-blue-600" />
+                  <Users className="h-6 w-6 text-blue-900" />
                 </div>
               </div>
             </div>
@@ -521,7 +762,7 @@ const UsersPage = () => {
                   onClick={() => setActiveFilter(option.id)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                     activeFilter === option.id
-                      ? "bg-blue-600 text-white shadow-md"
+                      ? "bg-blue-900 text-white shadow-md"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
@@ -574,7 +815,7 @@ const UsersPage = () => {
                 {isLoading ? (
                   <tr>
                     <td colSpan={7} className="text-center py-16">
-                      <Loader2 className="mx-auto h-10 w-10 animate-spin text-blue-600" />
+                      <Loader2 className="mx-auto h-10 w-10 animate-spin text-blue-900" />
                       <p className="mt-3 text-sm text-gray-500 font-medium">
                         Loading users...
                       </p>
@@ -681,7 +922,7 @@ const UsersPage = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1.5">
-                            <FileText className="h-4 w-4 text-blue-600" />
+                            <FileText className="h-4 w-4 text-blue-900" />
                             <span className="text-sm font-medium text-gray-900">
                               {user.postCount}
                             </span>
@@ -774,6 +1015,12 @@ const UsersPage = () => {
                                     className="text-red-600 hover:bg-red-50"
                                   />
                                 )}
+                                <ActionButton
+                                  onClick={() => handleDeleteUser(user._id)}
+                                  icon={Trash2}
+                                  label="Delete User"
+                                  className="text-red-600 hover:bg-red-50"
+                                />
                               </div>
                             </div>
                           )}

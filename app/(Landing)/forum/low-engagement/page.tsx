@@ -14,6 +14,7 @@ import {
   HeartIcon,
   PlusIcon,
   Loader2,
+  ShareIcon,
 } from "../../../component/Icons";
 import { Eye } from "lucide-react";
 
@@ -216,6 +217,24 @@ const UnreadPage = () => {
     }
   };
 
+  const handleSharePost = (e: React.MouseEvent, discussion: Post) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const postUrl = `${window.location.origin}/forum/post/${discussion._id}`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: discussion.title,
+        text: `Check out this post on Ngbuka Forum: "${discussion.title}"`,
+        url: postUrl,
+      });
+    } else {
+      navigator.clipboard.writeText(postUrl);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   const handleSavePost = async (postData: PostPayload) => {
     setIsSaving(true);
     setSaveError(null);
@@ -330,7 +349,9 @@ const UnreadPage = () => {
   );
 
   return (
-    <div className="bg-white rounded-none sm:rounded-xl shadow-none sm:shadow-lg p-4 sm:p-6 overflow-x-hidden"> {/* Adjust padding and remove rounded/shadow on mobile, add overflow-x-hidden */}
+    <div className="bg-white rounded-none sm:rounded-xl shadow-none sm:shadow-lg p-4 sm:p-6 overflow-x-hidden">
+      {" "}
+      {/* Adjust padding and remove rounded/shadow on mobile, add overflow-x-hidden */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900 flex items-center">
           <Eye className="mr-2 text-orange-600 w-5 h-5" />
@@ -349,8 +370,9 @@ const UnreadPage = () => {
           </button>
         </div>
       </div>
-
-      <div className="space-y-4 px-0 sm:px-0"> {/* Ensure no extra padding here */}
+      <div className="space-y-4 px-0 sm:px-0">
+        {" "}
+        {/* Ensure no extra padding here */}
         {loading ? (
           Array.from({ length: LIMIT }).map((_, index) => (
             <div key={`skeleton-${index}`}>{renderSkeleton()}</div>
@@ -422,7 +444,13 @@ const UnreadPage = () => {
                     const isFirst = index === 0;
                     const imageCount = discussion.images.length;
 
-                    if (!image) return null;
+                    // Ensure the image is a valid, absolute URL string to prevent errors.
+                    if (
+                      typeof image !== "string" ||
+                      !image.startsWith("http")
+                    ) {
+                      return null;
+                    }
 
                     return (
                       <div
@@ -480,6 +508,15 @@ const UnreadPage = () => {
                       <span className="font-medium">
                         {discussion.likes.length}
                       </span>
+                    </button>
+                    <button
+                      onClick={(e) => handleSharePost(e, discussion)}
+                      className="flex items-center group/share"
+                    >
+                      <ShareIcon
+                        className={`w-4 h-4 mr-1.5 text-gray-400 group-hover/share:text-blue-600 transition-colors`}
+                      />
+                      {/* <span className="font-medium">0</span> */}
                     </button>
                     <div className="flex items-center text-gray-500">
                       <span className="font-medium">{discussion.views}</span>
