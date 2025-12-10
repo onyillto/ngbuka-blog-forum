@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Search,
   User,
@@ -15,10 +15,16 @@ import {
   Home,
   MessageCircle,
   ShieldCheck,
+  Bell,
+  MailOpen,
+  Eye,
 } from "lucide-react";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import Image from "next/image";
+import NotificationViewerModal from "./NotificationViewerModal";
+import NotificationItem from "../(Landing)/forum/notification/NotificationItem";
+import { formatTimeAgo } from "./utils";
 
 // ============ TYPES ============
 interface UserInfo {
@@ -41,123 +47,85 @@ interface Post {
   commentCount: number;
 }
 
-// ============ UTILITIES ============
-const formatTimeAgo = (dateString: string) => {
-  const seconds = Math.floor(
-    (Date.now() - new Date(dateString).getTime()) / 1000
-  );
-  if (seconds < 60) return `${seconds}s ago`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d ago`;
-  if (seconds < 31536000) return `${Math.floor(seconds / 2592000)}mo ago`;
-  return `${Math.floor(seconds / 31536000)}y ago`;
-};
+interface Notification {
+  _id: string;
+  user: string;
+  type: "post_deleted" | "new_comment" | "new_like" | string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  link?: string;
+  sender?: string;
+}
+// ** NOTIFICATION INTEGRATION END **
 
-// ============ SUB-COMPONENTS ============
-
-// Search Results Component
-const SearchResults: React.FC<{
-  results: Post[];
-  isSearching: boolean;
-  error: string | null;
-  searchTerm: string;
-  onResultClick: () => void;
-}> = ({ results, isSearching, error, searchTerm, onResultClick }) => {
-  if (isSearching) {
+// ** NOTIFICATION COMPONENT START **
+const NotificationDropdown: React.FC<{
+  notifications: Notification[];
+  onOpenModal: (notification: Notification) => void;
+  onMarkAllRead: () => void;
+  onMarkOneRead: (id: string) => void;
+  // 🚨 CHANGE 1: Renamed for clarity and simplification
+  onCloseDropdown: () => void;
+}> = ({
+  notifications,
+  onOpenModal,
+  onMarkAllRead,
+  onMarkOneRead,
+  onCloseDropdown, // 🚨 Using the new prop name
+}) => {
+  if (notifications.length === 0) {
     return (
-      <div className="p-8 text-center">
-        <div className="inline-flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-orange-600" />
-          <span className="text-sm text-gray-600">Searching...</span>
-        </div>
+      <div className="p-8 text-center text-gray-500">
+        <Bell className="h-6 w-6 mx-auto mb-2" />
+        <p className="text-sm">No new notifications.</p>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="p-8 text-center">
-        <div className="w-12 h-12 rounded-full bg-red-100 mx-auto mb-3 flex items-center justify-center">
-          <X className="h-6 w-6 text-red-600" />
-        </div>
-        <p className="text-sm text-red-600 font-medium">{error}</p>
-        <p className="text-xs text-gray-500 mt-1">Please try again</p>
-      </div>
-    );
-  }
-
-  if (results.length === 0) {
-    return (
-      <div className="p-8 text-center">
-        <div className="w-12 h-12 rounded-full bg-gray-100 mx-auto mb-3 flex items-center justify-center">
-          <Search className="h-6 w-6 text-gray-400" />
-        </div>
-        <p className="text-sm text-gray-700 font-medium">No results found</p>
-        <p className="text-xs text-gray-500 mt-1">Try different keywords</p>
-      </div>
-    );
-  }
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
-    <div className="max-h-[500px] overflow-y-auto">
-      <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase">
-          Results ({results.length})
+    <div className="max-h-[500px] w-80 sm:w-96 flex flex-col">
+      <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 flex justify-between items-center">
+        <p className="text-sm font-semibold text-gray-800">
+          Notifications ({unreadCount} unread)
         </p>
-      </div>
-      <div className="divide-y divide-gray-100">
-        {results.map((post) => (
-          <Link
-            href={`/forum/post/${post._id}`}
-            key={post._id}
-            onClick={onResultClick}
-            className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition group"
+        {unreadCount > 0 && (
+          <button
+            onClick={onMarkAllRead}
+            className="text-xs font-medium text-orange-600 hover:text-orange-700 transition"
           >
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center shrink-0 mt-1">
-              <Search className="h-4 w-4 text-orange-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-semibold text-gray-900 group-hover:text-orange-600 line-clamp-2 mb-1">
-                {post.title}
-              </h4>
-              <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                <span className="font-medium text-gray-700">
-                  {post.author?.fullName || "Anonymous"}
-                </span>
-                <span className="w-1 h-1 rounded-full bg-gray-300" />
-                <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full">
-                  {post.categoryDetails?.name || "Uncategorized"}
-                </span>
-              </div>
-              <div className="flex items-center gap-3 text-xs text-gray-400">
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatTimeAgo(post.createdAt)}
-                </span>
-                <span className="flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" />
-                  {post.views} views
-                </span>
-              </div>
-            </div>
-          </Link>
+            Mark all read
+          </button>
+        )}
+      </div>
+      <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+        {notifications.map((n) => (
+          <NotificationItem
+            key={n._id}
+            notification={n}
+            onMarkAsRead={onMarkOneRead}
+            onOpenModal={onOpenModal}
+            // Use the close prop on item click as well
+            onDropdownClose={onCloseDropdown}
+          />
         ))}
       </div>
-      {results.length >= 5 && (
-        <div className="border-t border-gray-100 p-3">
-          <Link
-            href={`/search?q=${encodeURIComponent(searchTerm)}`}
-            onClick={onResultClick}
-            className="block text-center text-sm font-medium text-orange-600 hover:bg-orange-50 py-2 rounded-lg transition"
-          >
-            View all results →
-          </Link>
-        </div>
-      )}
+      <div className="sticky bottom-0 bg-white/90 backdrop-blur-sm border-t border-gray-100 px-4 py-2.5">
+        <Link
+          href="/forum/notification"
+          // 🚨 CHANGE 2: Call the closing function here, and let the Link handle navigation
+          onClick={onCloseDropdown}
+          className="block text-center text-sm font-medium text-orange-600 hover:text-orange-700 transition"
+        >
+          View all notifications
+        </Link>
+      </div>
     </div>
   );
 };
+// ** NOTIFICATION COMPONENT END **
 
 // User Avatar Component
 const UserAvatar: React.FC<{ user: UserInfo | null; size?: number }> = ({
@@ -185,6 +153,75 @@ const UserAvatar: React.FC<{ user: UserInfo | null; size?: number }> = ({
   </div>
 );
 
+interface SearchResultsProps {
+  results: Post[];
+  isSearching: boolean;
+  error: string | null;
+  searchTerm: string;
+  onResultClick: () => void;
+}
+
+// Search Results Component
+const SearchResults: React.FC<SearchResultsProps> = ({
+  results,
+  isSearching,
+  error,
+  searchTerm,
+  onResultClick,
+}) => {
+  if (
+    isSearching &&
+    typeof searchTerm === "string" &&
+    searchTerm.trim().length > 2
+  ) {
+    return <div className="p-4 text-center text-gray-500">Searching...</div>;
+  }
+  if (error) {
+    return <div className="p-4 text-center text-red-500">Error: {error}</div>;
+  }
+  if (results.length === 0) {
+    return (
+      <div className="p-4 text-center text-gray-500">
+        No results found for &ldquo;{searchTerm}&quot;.
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-2 divide-y divide-gray-100 max-h-80 overflow-y-auto">
+      {results.map((post: Post) => (
+        <Link
+          key={post._id}
+          href={`/forum/posts/${post._id}`}
+          onClick={onResultClick}
+          className="flex flex-col p-2 hover:bg-gray-50 rounded-lg transition"
+        >
+          <p className="text-sm font-medium text-gray-800 line-clamp-1">
+            {post.title}
+          </p>
+          <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+            <span className="flex items-center">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              {post.views} views
+            </span>
+            <span className="flex items-center">
+              <MessageCircle className="h-3 w-3 mr-1" />
+              {post.commentCount} comments
+            </span>
+          </div>
+        </Link>
+      ))}
+      <Link
+        href={`/forum/search?q=${encodeURIComponent(searchTerm)}`}
+        onClick={onResultClick}
+        className="block text-center text-sm font-medium text-orange-600 hover:text-orange-700 py-3 transition border-t mt-2"
+      >
+        View all results
+      </Link>
+    </div>
+  );
+};
+
 // ============ MAIN NAVBAR ============
 const Navbar: React.FC = () => {
   const [user, setUser] = useState<UserInfo | null>(null);
@@ -198,48 +235,99 @@ const Navbar: React.FC = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
+  // ** NOTIFICATION INTEGRATION START **
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotificationDropdown, setShowNotificationDropdown] =
+    useState(false);
+  const notificationDropdownRef = useRef<HTMLDivElement>(null);
+  const [selectedNotification, setSelectedNotification] =
+    useState<Notification | null>(null);
+  // ** NOTIFICATION INTEGRATION END **
+
   const pathname = usePathname();
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
-  // Auth check
+  // Auth check and Notification Fetch
   const fetchAndSetUser = async () => {
+    const token = Cookies.get("token");
+    const userInfoStr = localStorage.getItem("user_info");
+    let storedUser: UserInfo | null = null;
+
+    if (userInfoStr) {
+      try {
+        storedUser = JSON.parse(userInfoStr);
+      } catch (e) {
+        console.error("Failed to parse user info from localStorage", e);
+      }
+    }
+
     try {
-      const token = Cookies.get("token");
-      const userInfoStr = localStorage.getItem("user_info");
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_BaseURL || "http://localhost:5080/api";
+      let shouldFetchNotifications = false;
 
-      if (token && userInfoStr) {
-        const storedUser: UserInfo = JSON.parse(userInfoStr);
-        if (storedUser?._id) {
-          const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
-          const response = await fetch(
-            `${apiBaseUrl}/user/profile/${storedUser._id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
+      if (token && storedUser?._id) {
+        // 1. Fetch Fresh User Profile Data
+        const userProfileResponse = await fetch(
+          `${apiBaseUrl}/user/profile/${storedUser._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!userProfileResponse.ok) {
+          // If token is invalid or expired, log the user out
+          if (
+            userProfileResponse.status === 401 ||
+            userProfileResponse.status === 403
+          ) {
+            handleLogout(false); // Don't redirect immediately
+            throw new Error("Token invalid/expired. Logging out.");
+          }
+          throw new Error("Failed to fetch fresh profile data.");
+        }
+
+        const profileResult = await userProfileResponse.json();
+        if (profileResult.success && profileResult.data) {
+          setUser(profileResult.data);
+          localStorage.setItem("user_info", JSON.stringify(profileResult.data));
+          shouldFetchNotifications = true;
+        }
+      }
+
+      // 2. Fetch Notifications (Requires authentication)
+      if (shouldFetchNotifications) {
+        const notificationResponse = await fetch(
+          `${apiBaseUrl}/notifications`, // Your endpoint
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (notificationResponse.ok) {
+          const notificationResult = await notificationResponse.json();
+          if (
+            notificationResult.success &&
+            notificationResult.data?.notifications
+          ) {
+            setNotifications(notificationResult.data.notifications);
+          }
+        } else {
+          console.warn(
+            "Failed to fetch notifications:",
+            notificationResponse.statusText
           );
-
-          if (!response.ok) {
-            // If token is invalid or expired, log the user out
-            if (response.status === 401 || response.status === 403) {
-              handleLogout();
-            }
-            throw new Error("Failed to fetch fresh profile data.");
-          }
-
-          const result = await response.json();
-          if (result.success && result.data) {
-            setUser(result.data);
-            localStorage.setItem("user_info", JSON.stringify(result.data));
-          }
         }
       }
     } catch (error) {
-      console.error("Error fetching user profile:", error);
-      // Fallback to stored info or logout if fetch fails
+      console.error("Error during auth/notification fetch:", error);
     } finally {
       setIsLoading(false);
     }
@@ -248,12 +336,14 @@ const Navbar: React.FC = () => {
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
+      // User Dropdown
       if (
         userDropdownRef.current &&
         !userDropdownRef.current.contains(e.target as Node)
       ) {
         setShowUserDropdown(false);
       }
+      // Search Dropdown
       if (
         !searchInputRef.current?.contains(e.target as Node) &&
         searchDropdownRef.current &&
@@ -261,6 +351,15 @@ const Navbar: React.FC = () => {
       ) {
         setShowSearchDropdown(false);
       }
+      // ** NOTIFICATION INTEGRATION START **
+      // Use this ref on the button/div containing the button in the main navbar
+      if (
+        notificationDropdownRef.current &&
+        !notificationDropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowNotificationDropdown(false);
+      }
+      // ** NOTIFICATION INTEGRATION END **
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -272,7 +371,12 @@ const Navbar: React.FC = () => {
 
   // Prevent body scroll on mobile menu or search open
   useEffect(() => {
-    if (showMobileMenu || mobileSearchOpen) {
+    if (
+      showMobileMenu ||
+      mobileSearchOpen ||
+      showNotificationDropdown ||
+      selectedNotification
+    ) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -280,7 +384,12 @@ const Navbar: React.FC = () => {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [showMobileMenu, mobileSearchOpen]);
+  }, [
+    showMobileMenu,
+    mobileSearchOpen,
+    showNotificationDropdown,
+    selectedNotification,
+  ]);
 
   // Search with debounce
   useEffect(() => {
@@ -302,6 +411,8 @@ const Navbar: React.FC = () => {
     setShowMobileMenu(false);
     setMobileSearchOpen(false);
     setShowSearchDropdown(false);
+    setShowNotificationDropdown(false); // Close notifications on route change
+    setSelectedNotification(null);
   }, [pathname]);
 
   const fetchSearchResults = async (query: string) => {
@@ -324,13 +435,16 @@ const Navbar: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = (shouldRedirect = true) => {
     Cookies.remove("token");
     localStorage.removeItem("user_info");
     setUser(null);
+    setNotifications([]); // Clear notifications on logout
     setShowUserDropdown(false);
     setShowMobileMenu(false);
-    window.location.href = "/";
+    if (shouldRedirect) {
+      window.location.href = "/";
+    }
   };
 
   const closeAllMenus = () => {
@@ -338,7 +452,87 @@ const Navbar: React.FC = () => {
     setSearchTerm("");
     setShowMobileMenu(false);
     setMobileSearchOpen(false);
+    setShowNotificationDropdown(false); // Close notifications
+    setSelectedNotification(null);
   };
+
+  // 🚨 CHANGE 3: Simplified the dropdown close handler.
+  const handleCloseNotificationDropdown = () => {
+    setShowNotificationDropdown(false);
+  };
+
+  const handleOpenNotificationModal = (notification: Notification) => {
+    console.log(
+      "[3/4] Navbar: handleOpenNotificationModal called. Setting state.",
+      notification
+    );
+    setSelectedNotification(notification);
+  };
+
+  // ** NOTIFICATION INTEGRATION START **
+  const handleMarkAllRead = async () => {
+    const apiBaseUrl =
+      process.env.NEXT_PUBLIC_BaseURL || "http://localhost:5080/api";
+    const token = Cookies.get("token");
+
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/notifications/read`, // Corrected endpoint
+        {
+          method: "POST", // Corrected method
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        // Optimistically update the UI
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      } else {
+        console.error("Failed to mark all notifications as read.");
+      }
+    } catch (error) {
+      console.error("Error marking notifications as read:", error);
+    }
+  };
+
+  const handleMarkOneRead = async (notificationId: string) => {
+    const apiBaseUrl =
+      process.env.NEXT_PUBLIC_BaseURL || "http://localhost:5080/api";
+    const token = Cookies.get("token");
+
+    if (!token) return;
+
+    // Optimistically update the UI first
+    setNotifications((prev) =>
+      prev.map((n) => (n._id === notificationId ? { ...n, isRead: true } : n))
+    );
+
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/notifications/${notificationId}/read`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("API call failed");
+      }
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  // ** NOTIFICATION INTEGRATION END **
 
   const getDisplayName = () =>
     user?.firstName || user?.fullName || user?.email.split("@")[0] || "User";
@@ -369,13 +563,6 @@ const Navbar: React.FC = () => {
               Ngbuka
             </span>
           </Link>
-          {/* <Link
-            href="/"
-            className="hidden md:flex items-center gap-2 ml-4 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition"
-          >
-            <Home className="h-4 w-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Home</span>
-          </Link> */}
         </div>
 
         {/* Center: Search (Button on mobile, Input on desktop) */}
@@ -437,8 +624,31 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
-        {/* Right: Auth */}
+        {/* Right: Auth & Notifications */}
         <div className="flex items-center justify-end gap-1 sm:gap-2 flex-1 min-w-0">
+          {/* ** NOTIFICATION BUTTON ** */}
+          {user && (
+            <div
+              // This ref is crucial for the outside click detection
+              ref={notificationDropdownRef}
+              className="relative hidden sm:block"
+            >
+              <button
+                onClick={() => setShowNotificationDropdown((prev) => !prev)}
+                className="p-2 rounded-full hover:bg-gray-100 transition relative"
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5 text-gray-700" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-0 right-0 w-4 h-4 text-xs font-bold bg-red-600 text-white rounded-full flex items-center justify-center ring-2 ring-white">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
+          {/* ** NOTIFICATION BUTTON END ** */}
+
           {/* User Menu */}
           {user ? (
             <div ref={userDropdownRef} className="relative">
@@ -461,7 +671,7 @@ const Navbar: React.FC = () => {
                 />
               </button>
 
-              {/* Mobile User Button */}
+              {/* Mobile User/Menu Button (Delegates to Mobile Menu Overlay) */}
               <button
                 onClick={() => setShowMobileMenu(true)}
                 className="sm:hidden flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition"
@@ -475,7 +685,7 @@ const Navbar: React.FC = () => {
 
               {/* Desktop User Dropdown */}
               {showUserDropdown && (
-                <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-lg py-2">
+                <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-lg py-2 z-50">
                   <div className="px-4 py-3 border-b border-gray-100">
                     <p className="text-sm font-semibold text-gray-800 truncate">
                       {getDisplayName()}
@@ -511,7 +721,7 @@ const Navbar: React.FC = () => {
                     My Posts
                   </Link>
                   <button
-                    onClick={handleLogout}
+                    onClick={() => handleLogout(true)}
                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50"
                   >
                     <LogOut className="h-4 w-4 shrink-0" />
@@ -612,6 +822,26 @@ const Navbar: React.FC = () => {
                 <span className="text-sm font-medium text-gray-700">Home</span>
               </Link>
 
+              {/* ** MOBILE NOTIFICATION LINK/BUTTON ** */}
+              {user && (
+                <div
+                  onClick={() => {
+                    setShowMobileMenu(false);
+                    setShowNotificationDropdown(true); // Open the global overlay
+                  }}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 relative cursor-pointer"
+                >
+                  <Bell className="h-5 w-5 text-gray-500 shrink-0" />
+                  <span className="text-sm font-medium">Notifications</span>
+                  {unreadCount > 0 && (
+                    <span className="ml-auto px-2 py-0.5 text-xs font-bold bg-red-600 text-white rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
+              )}
+              {/* ** MOBILE NOTIFICATION END ** */}
+
               {user ? (
                 <>
                   <Link
@@ -641,7 +871,7 @@ const Navbar: React.FC = () => {
                     <span className="text-sm font-medium">My Posts</span>
                   </Link>
                   <button
-                    onClick={handleLogout}
+                    onClick={() => handleLogout(true)}
                     className="flex items-center gap-3 w-full p-3 text-red-600 hover:bg-red-50 rounded-lg"
                   >
                     <LogOut className="h-5 w-5 shrink-0" />
@@ -661,6 +891,37 @@ const Navbar: React.FC = () => {
             </div>
           </div>
         </>
+      )}
+
+      {/* ** GLOBAL NOTIFICATION DROPDOWN OVERLAY (Handles all screen sizes) ** */}
+      {showNotificationDropdown && (
+        <div
+          className="fixed inset-0 z-[60] flex justify-center items-start pt-16 sm:justify-end sm:items-start sm:pt-16 sm:pr-4"
+          onClick={(e) => {
+            // Only close if click is on the backdrop, not the dropdown content
+            if (e.target === e.currentTarget) {
+              handleCloseNotificationDropdown();
+            }
+          }}
+        >
+          <div className="bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden w-full max-w-sm sm:w-80 md:w-96 mt-2">
+            <NotificationDropdown
+              notifications={notifications}
+              onOpenModal={handleOpenNotificationModal}
+              onMarkAllRead={handleMarkAllRead}
+              onMarkOneRead={handleMarkOneRead}
+              // 🚨 CHANGE 4: Passing the simplified closing function
+              onCloseDropdown={handleCloseNotificationDropdown}
+            />
+          </div>
+        </div>
+      )}
+
+      {selectedNotification && (
+        <NotificationViewerModal
+          notification={selectedNotification}
+          onClose={() => setSelectedNotification(null)}
+        />
       )}
     </>
   );

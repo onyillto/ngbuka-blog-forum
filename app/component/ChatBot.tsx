@@ -76,28 +76,24 @@ export function CarChatbot() {
     }
   };
 
-  // Styling classes for the fixed position of the chatbot
-  const baseClasses =
-    "fixed bottom-4 right-4 z-50 shadow-2xl rounded-lg transition-all duration-300 ease-in-out";
-
   const toggleButton = (
     <button
       onClick={() => setIsOpen(!isOpen)}
-      className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-transform duration-200 transform hover:scale-105"
+      className="bg-orange-600 hover:bg-orange-700 text-white p-4 rounded-full shadow-lg transition-transform duration-200 transform hover:scale-105"
       aria-label={isOpen ? "Close Chat" : "Open Car Chatbot"}
     >
       {isOpen ? <X size={24} /> : <Car size={24} />}
     </button>
   );
 
+  // The toggle button is always fixed to the bottom right
   if (!isOpen) {
-    return <div className={baseClasses}>{toggleButton}</div>;
+    return <div className="fixed bottom-4 right-4 z-50">{toggleButton}</div>;
   }
 
+  // When open, the chatbot is full-screen on mobile and a floating box on desktop
   return (
-    <div
-      className={`${baseClasses} w-80 h-[400px] bg-white border border-gray-200 flex flex-col`}
-    >
+    <div className="fixed inset-0 z-50 flex flex-col border border-gray-200 bg-white shadow-2xl transition-all duration-300 ease-in-out sm:inset-auto sm:bottom-4 sm:right-4 sm:h-[400px] sm:w-80 sm:rounded-lg">
       {/* Header */}
       <div className="bg-blue-600 text-white p-3 flex justify-between items-center rounded-t-lg">
         <div className="flex items-center">
@@ -106,7 +102,7 @@ export function CarChatbot() {
         </div>
         <button
           onClick={() => setIsOpen(false)}
-          className="p-1 hover:bg-blue-700 rounded-full"
+          className="p-1 hover:bg-blue-900 rounded-full"
         >
           <X size={20} />
         </button>
@@ -130,7 +126,7 @@ export function CarChatbot() {
             <div
               className={`max-w-[75%] p-2 rounded-lg text-sm shadow-md ${
                 msg.sender === "user"
-                  ? "bg-blue-500 text-white rounded-br-none"
+                  ? "bg-blue-800 text-white rounded-br-none"
                   : "bg-gray-200 text-gray-800 rounded-tl-none"
               }`}
             >
@@ -162,7 +158,7 @@ export function CarChatbot() {
         <button
           type="submit"
           disabled={input.trim() === "" || isLoading}
-          className="bg-blue-600 text-white p-2 rounded-r-lg hover:bg-blue-700 disabled:bg-gray-400"
+          className="bg-blue-600 text-white p-2 rounded-r-lg hover:bg-blue-900 disabled:bg-gray-400"
           aria-label="Send Message"
         >
           <Send size={24} />

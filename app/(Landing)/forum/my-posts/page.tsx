@@ -9,6 +9,7 @@ import Link from "next/link";
 import CreatePostModal, {
   PostPayload,
 } from "../../../component/CreatePostModal";
+import EditPostModal from "../../../component/EditPostModal";
 import {
   MessageIcon,
   FireIcon,
@@ -17,8 +18,9 @@ import {
   PlusIcon,
   TrashIcon,
   ShareIcon,
+  EditIcon,
 } from "../../../component/Icons";
-import { Eye, Filter, Loader2, AlertTriangle } from "lucide-react";
+import { Eye, Filter, Loader2, AlertTriangle, Edit } from "lucide-react";
 import { LogIn } from "lucide-react";
 interface Post {
   _id: string;
@@ -72,6 +74,9 @@ const MyPostsPage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [postToEdit, setPostToEdit] = useState<Post | null>(null);
+
   const router = useRouter();
 
   const formatTimeAgo = (timestamp: string) => {
@@ -217,6 +222,78 @@ const MyPostsPage = () => {
     }
   };
 
+  const handleUpdatePost = async (data: PostPayload, postId: string) => {
+    setIsSavingPost(true);
+    setSaveError(null);
+
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BaseURL;
+      const token = Cookies.get("token");
+      let imageUrls: string[] = [];
+
+      // Step 1: Upload NEW images if any exist
+      if (data.images.length > 0) {
+        const imageFormData = new FormData();
+        data.images.forEach((image) => {
+          imageFormData.append("images", image);
+        });
+
+        const imageUploadResponse = await fetch(
+          `${apiBaseUrl}/posts/upload-images`,
+          {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: imageFormData,
+          }
+        );
+
+        const imageResult = await imageUploadResponse.json();
+        if (!imageUploadResponse.ok || !imageResult.success) {
+          throw new Error(imageResult.message || "Failed to upload images.");
+        }
+        if (imageResult.data && Array.isArray(imageResult.data.urls)) {
+          imageUrls = imageResult.data.urls.filter(Boolean);
+        }
+      }
+
+      // Step 2: Create the final payload. The backend should handle merging image arrays.
+      const finalPostPayload = {
+        title: data.title,
+        content: data.content,
+        categoryId: data.categoryId,
+        tags: data.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        images: imageUrls, // Send only new image URLs
+      };
+
+      const postResponse = await fetch(`${apiBaseUrl}/posts/${postId}`, {
+        method: "PUT", // Use PUT for updates
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(finalPostPayload),
+      });
+
+      const result = await postResponse.json();
+      if (!postResponse.ok || !result.success) {
+        throw new Error(result.message || "Failed to update post.");
+      }
+
+      toast.success("Post updated successfully!");
+      setIsEditModalOpen(false);
+      await fetchPosts();
+    } catch (err: unknown) {
+      setSaveError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsSavingPost(false);
+    }
+  };
+
   const openDeleteModal = (postId: string) => {
     setPostToDelete(postId);
     setIsDeleteModalOpen(true);
@@ -266,6 +343,11 @@ const MyPostsPage = () => {
     }
   };
 
+  const openEditModal = (post: Post) => {
+    setPostToEdit(post);
+    setIsEditModalOpen(true);
+  };
+
   const handleNewPostClick = () => {
     const token = Cookies.get("token");
     if (!token) {
@@ -292,7 +374,6 @@ const MyPostsPage = () => {
       toast.success("Post link copied to clipboard!");
     }
   };
-
 
   const getUserStats = () => {
     const totalPosts = posts.length;
@@ -358,6 +439,14 @@ const MyPostsPage = () => {
         onSave={handleCreatePost}
         isSaving={isSavingPost}
         error={saveError}
+      />
+      <EditPostModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleUpdatePost}
+        isSaving={isSavingPost}
+        error={saveError}
+        post={postToEdit}
       />
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
@@ -545,6 +634,12 @@ const MyPostsPage = () => {
                       className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
                     >
                       <ShareIcon className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => openEditModal(post)}
+                      className="text-gray-400 hover:text-green-600 hover:bg-green-50 p-2 rounded-lg transition-all"
+                    >
+                      <EditIcon className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => openDeleteModal(post._id)}
