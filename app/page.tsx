@@ -56,7 +56,9 @@ const carDisplayProps = (
   };
 };
 
-const FEATURED_CARS_ENDPOINT = "http://localhost:5080/api/featured-cars";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_BaseURL || "http://localhost:5080/api";
+const FEATURED_CARS_ENDPOINT = `${API_BASE_URL}/featured-cars`;
 
 // =======================================================
 // ICONS (Keep as is)
