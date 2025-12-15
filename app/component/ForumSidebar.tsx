@@ -69,6 +69,7 @@ const ForumSidebar = () => {
       href: "/forum/low-engagement",
     },
     { id: "my-posts", name: "My Posts", icon: Star, href: "/forum/my-posts" },
+    
   ];
 
   const mobileNavItems = [

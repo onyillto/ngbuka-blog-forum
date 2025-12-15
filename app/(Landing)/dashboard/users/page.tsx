@@ -616,6 +616,7 @@ const UsersPage = () => {
                 Manage and monitor all platform users
               </p>
             </div>
+
             <div className="flex items-center gap-3">
               <button
                 onClick={() => fetchUsers(currentPage)}
@@ -635,6 +636,12 @@ const UsersPage = () => {
                 className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium hover:bg-white transition-colors shadow-sm"
               >
                 Deleted Posts
+              </Link>
+              <Link
+                href="/dashboard/feautured-cares"
+                className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium hover:bg-white transition-colors shadow-sm"
+              >
+                Featured Cars
               </Link>
               <button
                 onClick={() => setIsCategoryModalOpen(true)}
