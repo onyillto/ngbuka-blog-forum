@@ -23,7 +23,9 @@ import Cookies from "js-cookie";
 import Link from "next/link";
 import Image from "next/image";
 import NotificationViewerModal from "./NotificationViewerModal";
-import NotificationItem from "../(Landing)/forum/notification/NotificationItem";
+import NotificationItem from "../(Landing)/forum/notifications/NotificationItem";
+import DesktopUserMenu from "./DesktopUserMenu";
+import MobileMenu from "./MobileMenu";
 import { formatTimeAgo } from "./utils";
 
 // ============ TYPES ============
@@ -107,21 +109,20 @@ const NotificationDropdown: React.FC<{
             notification={n}
             onMarkAsRead={onMarkOneRead}
             onOpenModal={onOpenModal}
-            // Use the close prop on item click as well
-            onDropdownClose={onCloseDropdown}
           />
         ))}
       </div>
-      <div className="sticky bottom-0 bg-white/90 backdrop-blur-sm border-t border-gray-100 px-4 py-2.5">
+      {/* <div className="sticky bottom-0 bg-white/90 backdrop-blur-sm border-t border-gray-100 px-4 py-2.5">
         <Link
           href="/forum/notification"
-          // 🚨 CHANGE 2: Call the closing function here, and let the Link handle navigation
-          onClick={onCloseDropdown}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
           className="block text-center text-sm font-medium text-orange-600 hover:text-orange-700 transition"
         >
           View all notifications
         </Link>
-      </div>
+      </div> */}
     </div>
   );
 };
@@ -685,49 +686,12 @@ const Navbar: React.FC = () => {
 
               {/* Desktop User Dropdown */}
               {showUserDropdown && (
-                <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-lg py-2 z-50">
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <p className="text-sm font-semibold text-gray-800 truncate">
-                      {getDisplayName()}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {user.email}
-                    </p>
-                  </div>
-                  <Link
-                    href="/forum/profile"
-                    onClick={() => setShowUserDropdown(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <User className="h-4 w-4 shrink-0" />
-                    Profile
-                  </Link>
-                  {user.role === "admin" && (
-                    <Link
-                      href="/dashboard/users"
-                      onClick={() => setShowUserDropdown(false)}
-                      className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      <ShieldCheck className="h-4 w-4 shrink-0" />
-                      Dashboard
-                    </Link>
-                  )}
-                  <Link
-                    href="/forum/my-posts"
-                    onClick={() => setShowUserDropdown(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <MessageCircle className="h-4 w-4 shrink-0" />
-                    My Posts
-                  </Link>
-                  <button
-                    onClick={() => handleLogout(true)}
-                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    <LogOut className="h-4 w-4 shrink-0" />
-                    Logout
-                  </button>
-                </div>
+                <DesktopUserMenu
+                  user={user}
+                  displayName={getDisplayName()}
+                  onClose={() => setShowUserDropdown(false)}
+                  onLogout={() => handleLogout(true)}
+                />
               )}
             </div>
           ) : (
@@ -781,116 +745,17 @@ const Navbar: React.FC = () => {
 
       {/* Mobile Menu Overlay */}
       {showMobileMenu && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-40 sm:hidden"
-            onClick={() => setShowMobileMenu(false)}
-          />
-          <div className="fixed right-0 top-0 h-full w-72 sm:w-80 bg-white shadow-2xl z-50 sm:hidden overflow-y-auto">
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-gray-900">Menu</h2>
-                <button
-                  onClick={() => setShowMobileMenu(false)}
-                  className="p-2 rounded-lg hover:bg-gray-100"
-                >
-                  <X className="h-6 w-6 text-gray-600" />
-                </button>
-              </div>
-              {user && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg flex items-center gap-3">
-                  <UserAvatar user={user} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-gray-800 truncate">
-                      {getDisplayName()}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {user.email}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="p-4 space-y-2">
-              <Link
-                href="/"
-                onClick={() => setShowMobileMenu(false)}
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
-              >
-                <Home className="h-5 w-5 text-gray-500 shrink-0" />
-                <span className="text-sm font-medium text-gray-700">Home</span>
-              </Link>
-
-              {/* ** MOBILE NOTIFICATION LINK/BUTTON ** */}
-              {user && (
-                <div
-                  onClick={() => {
-                    setShowMobileMenu(false);
-                    setShowNotificationDropdown(true); // Open the global overlay
-                  }}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 relative cursor-pointer"
-                >
-                  <Bell className="h-5 w-5 text-gray-500 shrink-0" />
-                  <span className="text-sm font-medium">Notifications</span>
-                  {unreadCount > 0 && (
-                    <span className="ml-auto px-2 py-0.5 text-xs font-bold bg-red-600 text-white rounded-full">
-                      {unreadCount}
-                    </span>
-                  )}
-                </div>
-              )}
-              {/* ** MOBILE NOTIFICATION END ** */}
-
-              {user ? (
-                <>
-                  <Link
-                    href="/forum/profile"
-                    onClick={() => setShowMobileMenu(false)}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
-                  >
-                    <User className="h-5 w-5 text-gray-500 shrink-0" />
-                    <span className="text-sm font-medium">Profile</span>
-                  </Link>
-                  {user.role === "admin" && (
-                    <Link
-                      href="/dashboard/users"
-                      onClick={() => setShowMobileMenu(false)}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
-                    >
-                      <ShieldCheck className="h-5 w-5 text-gray-500 shrink-0" />
-                      <span className="text-sm font-medium">Dashboard</span>
-                    </Link>
-                  )}
-                  <Link
-                    href="/forum/my-posts"
-                    onClick={() => setShowMobileMenu(false)}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
-                  >
-                    <MessageCircle className="h-5 w-5 text-gray-500 shrink-0" />
-                    <span className="text-sm font-medium">My Posts</span>
-                  </Link>
-                  <button
-                    onClick={() => handleLogout(true)}
-                    className="flex items-center gap-3 w-full p-3 text-red-600 hover:bg-red-50 rounded-lg"
-                  >
-                    <LogOut className="h-5 w-5 shrink-0" />
-                    <span className="text-sm font-medium">Logout</span>
-                  </button>
-                </>
-              ) : (
-                <Link
-                  href="/auth/signin"
-                  onClick={() => setShowMobileMenu(false)}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100"
-                >
-                  <LogIn className="h-5 w-5 text-gray-500 shrink-0" />
-                  <span className="text-sm font-medium">Login</span>
-                </Link>
-              )}
-            </div>
-          </div>
-        </>
+        <MobileMenu
+          user={user}
+          displayName={getDisplayName()}
+          unreadCount={unreadCount}
+          onClose={() => setShowMobileMenu(false)}
+          onLogout={() => handleLogout(true)}
+          onOpenNotifications={() => {
+            setShowMobileMenu(false);
+            setShowNotificationDropdown(true);
+          }}
+        />
       )}
 
       {/* ** GLOBAL NOTIFICATION DROPDOWN OVERLAY (Handles all screen sizes) ** */}

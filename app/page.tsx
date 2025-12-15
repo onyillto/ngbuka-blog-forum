@@ -4,7 +4,64 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-// Icons
+// =======================================================
+// INTERFACES AND TYPES
+// =======================================================
+
+interface FeaturedCar {
+  _id: string;
+  brand: string;
+  carModel: string;
+  year: string;
+  category: string;
+  description: string;
+  price: string;
+  imageUrl: string;
+}
+
+interface CarDataDisplay extends FeaturedCar {
+  // Add properties needed for display/styling
+  model: string; // Alias for carModel for existing components
+  color: string;
+  features: string[];
+}
+
+// =======================================================
+// CONSTANTS & UTILITIES (Replacing the old static carsData)
+// =======================================================
+
+// Map colors and features based on brand/model (Simulated data processing)
+const carDisplayProps = (
+  car: FeaturedCar
+): Pick<CarDataDisplay, "color" | "features" | "model"> => {
+  let color = "from-gray-500 to-gray-700";
+  let features: string[] = ["Standard Safety", "ABS"];
+
+  // Custom logic to assign colors and features based on known brands
+  if (car.brand.toLowerCase() === "tesla") {
+    color = "from-indigo-600 to-indigo-800";
+    features = ["Autopilot", "Supercharging", "OTA Updates"];
+  } else if (car.brand.toLowerCase() === "toyota") {
+    color = "from-orange-400 to-orange-600";
+    features = ["Hybrid Engine", "Safety Sense", "Reliable"];
+  } else if (car.brand.toLowerCase() === "bmw") {
+    color = "from-indigo-700 to-indigo-900";
+    features = ["Turbo Engine", "All-Wheel Drive", "Premium Audio"];
+  }
+
+  return {
+    color,
+    features,
+    model: car.carModel, // Use carModel from the API as 'model'
+  };
+};
+
+const FEATURED_CARS_ENDPOINT = "http://localhost:5080/api/featured-cars";
+
+// =======================================================
+// ICONS (Keep as is)
+// =======================================================
+
 const CarIcon = ({ className }: { className?: string }) => (
   <svg
     className={`w-6 h-6 ${className || ""}`}
@@ -36,16 +93,6 @@ const ArrowRightIcon = ({ className }: { className?: string }) => (
       strokeWidth={2}
       d="M17 8l4 4m0 0l-4 4m4-4H3"
     />
-  </svg>
-);
-
-const PlayIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={`w-6 h-6 ${className || ""}`}
-    fill="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path d="M8 5v14l11-7z" />
   </svg>
 );
 
@@ -119,110 +166,17 @@ const UsersIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Car data with theme colors
-// Car data with theme colors
-const carsData = [
-  {
-    id: 1,
-    brand: "Toyota",
-    model: "Camry Hybrid",
-    year: "2024",
-    category: "Sedan",
-    description:
-      "Reliable hybrid sedan with exceptional fuel efficiency and Toyota's renowned durability. Perfect for daily commuting.",
-    features: ["Hybrid Engine", "Safety Sense 2.0", "Spacious Interior"],
-    color: "from-orange-400 to-orange-600",
-    image: "🚗",
-    price: "$28,400",
-    imageUrl: "/car2.jpg",
-  },
-  {
-    id: 2,
-    brand: "BMW",
-    model: "X3 M40i",
-    year: "2024",
-    category: "SUV",
-    description:
-      "Luxury performance SUV combining BMW's driving dynamics with practical utility. Premium materials throughout.",
-    features: ["Turbo Engine", "All-Wheel Drive", "Premium Audio"],
-    color: "from-indigo-700 to-indigo-900",
-    image: "/car.jpg",
-    price: "$56,300",
-    imageUrl: "/car.jpg",
-  },
-  {
-    id: 3,
-    brand: "Honda",
-    model: "Civic Type R",
-    year: "2024",
-    category: "Sport",
-    description:
-      "Track-ready hot hatch with aggressive styling and race-tuned suspension. Built for driving enthusiasts.",
-    features: ["Manual Transmission", "Track Mode", "Brembo Brakes"],
-    color: "from-orange-500 to-orange-700",
-    image: "🏎️",
-    price: "$43,735",
-    imageUrl: "/car7.jpeg",
-  },
-  {
-    id: 4,
-    brand: "Tesla",
-    model: "Model 3",
-    year: "2024",
-    category: "Electric",
-    description:
-      "Revolutionary electric sedan with autopilot capabilities and over-the-air updates. Zero emissions driving.",
-    features: ["Autopilot", "Supercharging", "OTA Updates"],
-    color: "from-indigo-600 to-indigo-800",
-    image: "⚡",
-    price: "$38,990",
-    imageUrl: "/car5.jpg",
-  },
-  {
-    id: 5,
-    brand: "Ford",
-    model: "F-150 Lightning",
-    year: "2024",
-    category: "Truck",
-    description:
-      "America's best-selling truck goes electric with impressive towing capacity and innovative features.",
-    features: ["Electric Powertrain", "11,000 lbs Towing", "Pro Power Onboard"],
-    color: "from-orange-600 to-orange-800",
-    image: "🛻",
-    price: "$59,974",
-    imageUrl: "/car1.jpeg",
-  },
-  {
-    id: 6,
-    brand: "Porsche",
-    model: "911 Turbo S",
-    year: "2024",
-    category: "Sports Car",
-    description:
-      "Iconic sports car with legendary performance and timeless design. The ultimate driving machine.",
-    features: ["Turbo Engine", "PDK Transmission", "Sport Chrono"],
-    color: "from-orange-500 to-orange-700",
-    image: "🏁",
-    price: "$230,400",
-    imageUrl: "/car3.jpg",
-  },
-];
+// =======================================================
+// CAR CARD COMPONENT (Updated type definition)
+// =======================================================
 
-// Car Card Component
-type Car = {
-  id: number;
-  brand: string;
-  model: string;
-  year: string;
-  category: string;
-  description: string;
-  features: string[];
-  color: string;
-  image: string;
-  price: string;
-  imageUrl: string;
-};
-const CarCard = ({ car, isActive }: { car: Car; isActive: boolean }) => {
+const CarCard = ({
+  car,
+  isActive,
+}: {
+  car: CarDataDisplay;
+  isActive: boolean;
+}) => {
   const [imageSrc, setImageSrc] = useState(car.imageUrl);
 
   return (
@@ -240,11 +194,18 @@ const CarCard = ({ car, isActive }: { car: Car; isActive: boolean }) => {
             className="object-cover transition-transform duration-700 group-hover:scale-110"
             fill
             sizes="400px"
+            // Handle Freepik URL or placeholder image failures
             onError={() => {
-              // Fallback to placeholder if image fails to load
-              setImageSrc(
-                `https://via.placeholder.com/400x300/1A1A7A/FFFFFF?text=${car.brand}+${car.model}`
-              );
+              // Generate a robust, offline-first SVG placeholder
+              const text = `${car.brand} ${car.model}`;
+              const svg = `
+                <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+                  <rect width="100%" height="100%" fill="#1A1A7A"/>
+                  <text x="50%" y="50%" font-family="sans-serif" font-size="24" fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">${text}</text>
+                </svg>
+              `;
+              const placeholderUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
+              setImageSrc(placeholderUrl);
             }}
           />
 
@@ -263,7 +224,7 @@ const CarCard = ({ car, isActive }: { car: Car; isActive: boolean }) => {
           {/* Price Badge */}
           <div className="absolute top-4 right-4">
             <span className="bg-black/70 backdrop-blur-sm text-white text-sm font-bold px-3 py-1 rounded-full">
-              {car.price}
+              ₦{car.price.replace("$", "")}
             </span>
           </div>
         </div>
@@ -299,20 +260,15 @@ const CarCard = ({ car, isActive }: { car: Car; isActive: boolean }) => {
             )}
           </div>
         </div>
-
-        {/* Hover Overlay */}
-        {/* <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-          <div className="p-6 w-full">
-            <button className="w-full bg-white text-gray-900 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors">
-              View Details
-            </button>
-          </div>
-        </div> */}
       </div>
     </div>
   );
 };
-// Navbar Component - Add this before the HeroSection
+
+// =======================================================
+// NAVBAR COMPONENT (Keep as is)
+// =======================================================
+
 const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200">
@@ -333,38 +289,8 @@ const Navbar = () => {
             </div>
           </Link>
 
-          {/* Navigation Links - Hidden on mobile */}
-          {/* <div className="hidden md:flex items-center space-x-8">
-            <Link
-              href="#features"
-              className="text-gray-700 hover:text-orange-500 font-medium transition-colors"
-            >
-              Features
-            </Link>
-            <Link
-              href="#community"
-              className="text-gray-700 hover:text-orange-500 font-medium transition-colors"
-            >
-              Community
-            </Link>
-            <Link
-              href="#about"
-              className="text-gray-700 hover:text-orange-500 font-medium transition-colors"
-            >
-              About
-            </Link>
-          </div> */}
-
           {/* Action Buttons */}
           <div className="flex items-center space-x-4">
-            {/* Sign In Button */}
-            <Link
-              href="/auth/signin"
-              className="hidden sm:flex items-center px-6 py-2.5 rounded-lg font-semibold text-gray-700 hover:text-indigo-700 hover:bg-gray-100 transition-all duration-200"
-            >
-              Sign In
-            </Link>
-
             {/* Visit Forum Button - Styled like your button */}
             <Link
               href="/forum/home"
@@ -379,17 +305,104 @@ const Navbar = () => {
     </nav>
   );
 };
-// Hero Section with Sliding Cars
+
+// =======================================================
+// HERO SECTION (Modified to fetch data)
+// =======================================================
+
 const HeroSection = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [featuredCars, setFeaturedCars] = useState<CarDataDisplay[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // 1. Fetch data from the endpoint
   useEffect(() => {
+    const fetchCars = async () => {
+      try {
+        const response = await fetch(FEATURED_CARS_ENDPOINT);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const apiData = await response.json();
+
+        // 2. Map the API data to the component's required structure
+        const processedCars: CarDataDisplay[] = apiData.map(
+          (car: FeaturedCar, index: number) => ({
+            ...car,
+            id: index, // Use index or _id for key, using index here for simplicity
+            ...carDisplayProps(car), // Get colors and features
+          })
+        );
+
+        // Use a Set to filter out duplicates based on _id, then convert back to array
+        const uniqueCars = Array.from(
+          new Set(processedCars.map((c) => c._id))
+        ).map((_id) =>
+          processedCars.find((c) => c._id === _id)
+        ) as CarDataDisplay[];
+
+        setFeaturedCars(uniqueCars);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch featured cars:", error);
+        // Fallback or error handling can go here
+        setIsLoading(false);
+      }
+    };
+
+    fetchCars();
+  }, []); // Run only once on mount
+
+  // 3. Auto-advance logic
+  useEffect(() => {
+    if (featuredCars.length === 0) return;
+
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % carsData.length);
+      setCurrentIndex((prev) => (prev + 1) % featuredCars.length);
     }, 4000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [featuredCars]); // Depend on featuredCars to start only when data is loaded
+
+  // 4. Loading state rendering
+  if (isLoading) {
+    return (
+      <section
+        className="relative min-h-screen flex items-center justify-center"
+        style={{
+          background:
+            "linear-gradient(135deg, #1A1A7A 0%, #2D2D9A 50%, #FF8E05 100%)",
+        }}
+      >
+        <div className="text-white text-2xl animate-pulse">
+          Loading featured cars...
+        </div>
+      </section>
+    );
+  }
+
+  // 5. Empty state rendering
+  if (featuredCars.length === 0 && !isLoading) {
+    return (
+      <section
+        className="relative min-h-screen flex items-center justify-center"
+        style={{
+          background:
+            "linear-gradient(135deg, #1A1A7A 0%, #2D2D9A 50%, #FF8E05 100%)",
+        }}
+      >
+        <div className="text-white text-xl text-center">
+          <p className="mb-4">No featured cars found from the API.</p>
+          <Link
+            href="/forum/home"
+            className="text-orange-400 underline hover:text-orange-500"
+          >
+            Go to Forum Home
+          </Link>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -407,7 +420,7 @@ const HeroSection = () => {
       </div>
 
       <div className="relative z-10 container mx-auto px-6 py-20">
-        {/* Header */}
+        {/* Header (Keep as is) */}
         <div className="text-center mb-16 mt-5">
           <div className="flex items-center justify-center mb-6">
             <CarIcon className="w-12 h-12 text-orange-400 mr-4" />
@@ -448,13 +461,14 @@ const HeroSection = () => {
             <div
               className="flex gap-8 transition-transform duration-1000 ease-in-out"
               style={{
+                // Calculate translation based on the number of cars fetched
                 transform: `translateX(-${currentIndex * (384 + 32)}px)`,
-                width: `${carsData.length * (384 + 32)}px`,
+                width: `${featuredCars.length * (384 + 32)}px`,
               }}
             >
-              {carsData.map((car, index) => (
+              {featuredCars.map((car, index) => (
                 <CarCard
-                  key={car.id}
+                  key={car._id}
                   car={car}
                   isActive={index === currentIndex}
                 />
@@ -464,7 +478,7 @@ const HeroSection = () => {
 
           {/* Slider Controls */}
           <div className="flex justify-center mt-8 space-x-2">
-            {carsData.map((_, index) => (
+            {featuredCars.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
@@ -488,7 +502,7 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Floating Elements */}
+      {/* Floating Elements (Keep as is) */}
       <div className="absolute top-1/4 left-10 text-6xl opacity-20 animate-bounce">
         🚗
       </div>
@@ -502,7 +516,7 @@ const HeroSection = () => {
   );
 };
 
-// Features Section
+// Features Section (Keep as is)
 const FeaturesSection = () => {
   const features = [
     {
@@ -580,7 +594,7 @@ const FeaturesSection = () => {
   );
 };
 
-// Stats Section
+// Stats Section (Keep as is)
 const StatsSection = () => {
   const stats = [
     { number: "50K+", label: "Active Members", icon: "👥" },
@@ -633,7 +647,7 @@ const StatsSection = () => {
   );
 };
 
-// CTA Section
+// CTA Section (Keep as is)
 const CTASection = () => (
   <section className="py-20 text-white" style={{ backgroundColor: "#1A1A7A" }}>
     <div className="container mx-auto px-6 text-center">
@@ -673,7 +687,7 @@ const CTASection = () => (
   </section>
 );
 
-// Main Landing Page Component
+// Main Landing Page Component (Keep as is)
 const NgbukaLandingPage = () => {
   return (
     <div className="min-h-screen">

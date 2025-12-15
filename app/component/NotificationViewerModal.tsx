@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Clock } from "lucide-react";
-import { Notification } from "../../app/(Landing)/forum/notification/types";
+import { Notification } from "../(Landing)/forum/notifications/types";
 import Cookies from "js-cookie";
 
 const NotificationViewerModal: React.FC<{
@@ -72,10 +72,10 @@ const NotificationViewerModal: React.FC<{
           <h3 className="text-xl font-bold text-gray-900">Notification</h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-full text-gray-500 hover:bg-gray-100"
+            className="p-2 rounded-full text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-colors"
             aria-label="Close notification viewer"
           >
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5" />
           </button>
         </div>
         {isLoading ? (
