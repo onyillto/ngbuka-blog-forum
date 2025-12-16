@@ -267,7 +267,7 @@ const Navbar: React.FC = () => {
 
     try {
       const apiBaseUrl =
-        process.env.NEXT_PUBLIC_BaseURL || "http://localhost:5080/api";
+        process.env.NEXT_PUBLIC_BaseURL ;
       let shouldFetchNotifications = false;
 
       if (token && storedUser?._id) {
@@ -473,7 +473,7 @@ const Navbar: React.FC = () => {
   // ** NOTIFICATION INTEGRATION START **
   const handleMarkAllRead = async () => {
     const apiBaseUrl =
-      process.env.NEXT_PUBLIC_BaseURL || "http://localhost:5080/api";
+      process.env.NEXT_PUBLIC_BaseURL ;
     const token = Cookies.get("token");
 
     if (!token) return;
@@ -502,7 +502,7 @@ const Navbar: React.FC = () => {
 
   const handleMarkOneRead = async (notificationId: string) => {
     const apiBaseUrl =
-      process.env.NEXT_PUBLIC_BaseURL || "http://localhost:5080/api";
+      process.env.NEXT_PUBLIC_BaseURL;
     const token = Cookies.get("token");
 
     if (!token) return;

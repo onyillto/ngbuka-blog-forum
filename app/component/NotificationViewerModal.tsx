@@ -26,7 +26,7 @@ const NotificationViewerModal: React.FC<{
 
       try {
         const apiBaseUrl =
-          process.env.NEXT_PUBLIC_BaseURL || "http://localhost:5080/api";
+          process.env.NEXT_PUBLIC_BaseURL ;
         const response = await fetch(
           `${apiBaseUrl}/notifications/${notification._id}`,
           {

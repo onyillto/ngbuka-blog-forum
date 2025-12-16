@@ -35,8 +35,7 @@ interface FormData {
 // =======================================================
 
 const API_BASE_URL =
-  `${process.env.NEXT_PUBLIC_BaseURL}/featured-cars` ||
-  "http://localhost:5080/api/featured-cars";
+  `${process.env.NEXT_PUBLIC_BaseURL}/featured-cars`;
 const MAX_CARS = 6;
 const DEFAULT_FORM_STATE: FormData = {
   brand: "",

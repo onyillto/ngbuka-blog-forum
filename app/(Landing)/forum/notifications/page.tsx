@@ -28,7 +28,7 @@ const NotificationsPage = () => {
 
       try {
         const apiBaseUrl =
-          process.env.NEXT_PUBLIC_BaseURL || "http://localhost:5080/api";
+          process.env.NEXT_PUBLIC_BaseURL;
         const response = await fetch(`${apiBaseUrl}/notifications`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -63,7 +63,7 @@ const NotificationsPage = () => {
     // In a real app, you might add more robust error handling here.
     const token = Cookies.get("token");
     const apiBaseUrl =
-      process.env.NEXT_PUBLIC_BaseURL || "http://localhost:5080/api";
+      process.env.NEXT_PUBLIC_BaseURL ;
     await fetch(`${apiBaseUrl}/notifications/${notificationId}/read`, {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token}` },

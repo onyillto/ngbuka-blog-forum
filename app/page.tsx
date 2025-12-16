@@ -57,7 +57,7 @@ const carDisplayProps = (
 };
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_BaseURL || "http://localhost:5080/api";
+  process.env.NEXT_PUBLIC_BaseURL;
 const FEATURED_CARS_ENDPOINT = `${API_BASE_URL}/featured-cars`;
 
 // =======================================================
