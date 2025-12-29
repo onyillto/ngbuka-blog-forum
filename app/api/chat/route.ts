@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 // Initialize the GoogleGenAI client
 // It will automatically look for the GEMINI_API_KEY environment variable.
-const ai = new GoogleGenAI({});
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Define the system instruction to constrain the bot's responses
 // 💡 REMOVE or COMMENT OUT THE STRICT CAR-ONLY INSTRUCTION
